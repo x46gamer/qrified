@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,6 +7,10 @@ import { Switch } from "@/components/ui/switch";
 import { QRCode } from '@/types/qrCode';
 import { toast } from "sonner";
 import { supabase } from '@/integrations/supabase/client';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Eye } from "lucide-react";
+import { generateQRCode } from '@/utils/qrCodeUtils';
 
 interface QRCodeManagerProps {
   qrCodes: QRCode[];
@@ -18,6 +21,9 @@ interface QRCodeManagerProps {
 const QRCodeManager = ({ qrCodes, onUpdateQRCode, onRefresh }: QRCodeManagerProps) => {
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [currentPage, setCurrentPage] = useState<number>(1);
+  const [selectedQRCode, setSelectedQRCode] = useState<QRCode | null>(null);
+  const [previewOpen, setPreviewOpen] = useState<boolean>(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const itemsPerPage = 10;
   
   const filteredQRCodes = qrCodes.filter((qrCode) => 
@@ -81,6 +87,26 @@ const QRCodeManager = ({ qrCodes, onUpdateQRCode, onRefresh }: QRCodeManagerProp
     toast.success(`QR Code #${qrCode.sequentialNumber} reset successfully`);
   };
 
+  const handlePreviewQRCode = async (qrCode: QRCode) => {
+    setSelectedQRCode(qrCode);
+
+    try {
+      // If we already have a data URL stored, use it
+      if (qrCode.dataUrl) {
+        setPreviewUrl(qrCode.dataUrl);
+      } else {
+        // Otherwise, regenerate the QR code
+        // Use the URL as the data for the QR code
+        const generatedUrl = await generateQRCode(qrCode.url);
+        setPreviewUrl(generatedUrl);
+      }
+      setPreviewOpen(true);
+    } catch (error) {
+      console.error('Error generating QR code preview:', error);
+      toast.error('Failed to generate QR code preview');
+    }
+  };
+
   return (
     <div className="w-full">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
@@ -130,15 +156,24 @@ const QRCodeManager = ({ qrCodes, onUpdateQRCode, onRefresh }: QRCodeManagerProp
                     </div>
                   </TableCell>
                   <TableCell>
-                    {qrCode.isScanned && (
+                    <div className="flex items-center space-x-2">
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => resetQRCode(qrCode)}
+                        onClick={() => handlePreviewQRCode(qrCode)}
                       >
-                        Reset
+                        <Eye className="h-4 w-4 mr-1" /> Preview
                       </Button>
-                    )}
+                      {qrCode.isScanned && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => resetQRCode(qrCode)}
+                        >
+                          Reset
+                        </Button>
+                      )}
+                    </div>
                   </TableCell>
                 </TableRow>
               ))
@@ -186,6 +221,38 @@ const QRCodeManager = ({ qrCodes, onUpdateQRCode, onRefresh }: QRCodeManagerProp
           </div>
         )}
       </div>
+
+      {/* QR Code Preview Dialog */}
+      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>QR Code #{selectedQRCode?.sequentialNumber}</DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col items-center justify-center p-4 bg-white rounded-lg">
+            {previewUrl ? (
+              <div className="flex flex-col items-center space-y-4">
+                <img 
+                  src={previewUrl} 
+                  alt={`QR Code ${selectedQRCode?.sequentialNumber}`} 
+                  className="w-64 h-64 object-contain border border-gray-200 p-2 rounded-lg" 
+                />
+                <div className="text-sm text-gray-500">
+                  <p>ID: {selectedQRCode?.id}</p>
+                  <p>Created: {selectedQRCode?.createdAt && new Date(selectedQRCode.createdAt).toLocaleString()}</p>
+                  {selectedQRCode?.isScanned && selectedQRCode?.scannedAt && (
+                    <p>Scanned: {new Date(selectedQRCode.scannedAt).toLocaleString()}</p>
+                  )}
+                  <p>Status: {selectedQRCode?.isEnabled ? 'Enabled' : 'Disabled'}</p>
+                </div>
+              </div>
+            ) : (
+              <div className="w-64 h-64 flex items-center justify-center border border-gray-200 rounded-lg">
+                <p className="text-gray-400">Loading QR code...</p>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

@@ -7,6 +7,7 @@ import QRCodeManager from '@/components/QRCodeManager';
 import QRCodeAnalytics from '@/components/QRCodeAnalytics';
 import { QRCode } from '@/types/qrCode';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from "sonner";
 
 const Index = () => {
   const [qrCodes, setQRCodes] = useState<QRCode[]>([]);
@@ -32,6 +33,7 @@ const Index = () => {
       
       if (error) {
         console.error('Error fetching QR codes:', error);
+        toast.error('Failed to fetch QR codes');
         return;
       }
       
@@ -50,9 +52,11 @@ const Index = () => {
         }));
         
         setQRCodes(mappedQrCodes);
+        console.log('Fetched QR codes:', mappedQrCodes);
       }
     } catch (error) {
       console.error('Error loading QR codes:', error);
+      toast.error('An error occurred while loading QR codes');
     } finally {
       setIsLoading(false);
     }
@@ -108,8 +112,8 @@ const Index = () => {
   
   const handleTabChange = (value: string) => {
     setActiveTab(value);
-    // Refresh data when switching to analytics tab
-    if (value === 'analytics') {
+    // Refresh data when switching to analytics or manage tab
+    if (value === 'analytics' || value === 'manage') {
       fetchQRCodes();
     }
   };

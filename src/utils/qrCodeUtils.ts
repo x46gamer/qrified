@@ -175,3 +175,35 @@ export const normalizeQRData = (data: string): string => {
     return data;
   }
 };
+
+// New utility to fetch a QR code directly by its ID
+export const fetchQRCodeById = async (id: string) => {
+  try {
+    const { supabase } = await import('@/integrations/supabase/client');
+    const { data, error } = await supabase
+      .from('qr_codes')
+      .select('*')
+      .eq('id', id)
+      .maybeSingle();
+    
+    if (error) {
+      console.error('Error fetching QR code by ID:', error);
+      throw new Error(`Failed to fetch QR code: ${error.message}`);
+    }
+    
+    return data ? {
+      id: data.id,
+      sequentialNumber: data.sequential_number,
+      encryptedData: data.encrypted_data,
+      url: data.url,
+      isScanned: data.is_scanned,
+      isEnabled: data.is_enabled,
+      createdAt: data.created_at,
+      scannedAt: data.scanned_at,
+      dataUrl: data.data_url
+    } : null;
+  } catch (error) {
+    console.error('Exception fetching QR code by ID:', error);
+    throw error;
+  }
+};
