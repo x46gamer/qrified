@@ -37,13 +37,13 @@ const QRCodeGenerator = ({ onQRCodesGenerated, lastSequentialNumber }: QRCodeGen
     setIsGenerating(true);
     
     try {
-      // Update the counter in the database - fix type issue by casting to any
+      // Update the counter in the database - proper typing for RPC call
       const { data: counterData, error: counterError } = await supabase.rpc(
         'increment_counter', 
         {
           counter_id: 'qr_code_sequential',
           increment_by: quantity
-        } as any
+        }
       );
       
       if (counterError) {
