@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -16,12 +16,6 @@ import { supabase } from '@/integrations/supabase/client';
 interface QRCodeGeneratorProps {
   onQRCodesGenerated: (qrCodes: QRCode[]) => void;
   lastSequentialNumber: number;
-}
-
-// Define interface for the RPC parameters to fix the type error
-interface IncrementCounterParams {
-  counter_id: string;
-  increment_by: number;
 }
 
 const QRCodeGenerator = ({ onQRCodesGenerated, lastSequentialNumber }: QRCodeGeneratorProps) => {
@@ -43,32 +37,39 @@ const QRCodeGenerator = ({ onQRCodesGenerated, lastSequentialNumber }: QRCodeGen
     setIsGenerating(true);
     
     try {
-      // Update the counter in the database - with proper parameter typing
-      const { data: counterData, error: counterError } = await supabase.rpc<number>(
-        'increment_counter', 
-        {
-          counter_id: 'qr_code_sequential',
-          increment_by: quantity
-        }
-      );
+      // Get the current counter value first
+      const { data: counterData, error: counterError } = await supabase
+        .from('sequence_counters')
+        .select('current_value')
+        .eq('id', 'qr_code_sequential')
+        .single();
       
       if (counterError) {
-        console.error('Error incrementing counter:', counterError);
+        console.error('Error getting counter:', counterError);
         toast.error('Failed to generate QR codes');
         setIsGenerating(false);
         return;
       }
       
-      if (counterData === null) {
-        console.error('Counter data is null');
+      // Calculate the new counter value
+      const currentValue = counterData?.current_value || lastSequentialNumber;
+      const newValue = currentValue + quantity;
+      
+      // Update the counter
+      const { error: updateError } = await supabase
+        .from('sequence_counters')
+        .update({ current_value: newValue })
+        .eq('id', 'qr_code_sequential');
+      
+      if (updateError) {
+        console.error('Error updating counter:', updateError);
         toast.error('Failed to generate QR codes');
         setIsGenerating(false);
         return;
       }
       
       // Calculate the starting sequential number
-      // Fix the type issue by ensuring counterData is treated as a number
-      const startingNumber = (counterData as number) - quantity + 1;
+      const startingNumber = currentValue + 1;
       
       const generatedQRCodes: QRCode[] = [];
       const dbInserts = [];
