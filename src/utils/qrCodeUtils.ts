@@ -19,9 +19,14 @@ export const encryptData = (data: string): string => {
 
 // Decrypt the QR code data
 export const decryptData = (encryptedData: string): string => {
-  const decoded = decodeURIComponent(encryptedData);
-  const decrypted = CryptoJS.AES.decrypt(decoded, SECRET_KEY).toString(CryptoJS.enc.Utf8);
-  return decrypted;
+  try {
+    const decoded = decodeURIComponent(encryptedData);
+    const decrypted = CryptoJS.AES.decrypt(decoded, SECRET_KEY).toString(CryptoJS.enc.Utf8);
+    return decrypted;
+  } catch (error) {
+    console.error('Error decrypting data:', error);
+    throw new Error('Failed to decrypt QR code data');
+  }
 };
 
 // Generate QR code as data URL
@@ -83,4 +88,17 @@ export const getTimeAgo = (dateString: string): string => {
   }
   
   return seconds < 10 ? 'just now' : `${Math.floor(seconds)} seconds ago`;
+};
+
+// Debug function to validate encrypted data format
+export const validateEncryptedData = (encryptedData: string | null): boolean => {
+  if (!encryptedData) return false;
+  try {
+    // Attempt to decode URI component to check if it's valid
+    const decoded = decodeURIComponent(encryptedData);
+    return decoded.length > 0;
+  } catch (error) {
+    console.error('Invalid encrypted data format:', error);
+    return false;
+  }
 };

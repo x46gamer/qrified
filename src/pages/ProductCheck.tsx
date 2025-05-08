@@ -1,42 +1,70 @@
 
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { decryptData } from '@/utils/qrCodeUtils';
+import { decryptData, validateEncryptedData } from '@/utils/qrCodeUtils';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from "sonner";
 
 const ProductCheck = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [isValid, setIsValid] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [debugInfo, setDebugInfo] = useState<string | null>(null);
 
   useEffect(() => {
     const validateQRCode = async () => {
       try {
         const encryptedData = searchParams.get('qr');
+        console.log('Received encrypted data:', encryptedData);
         
         if (!encryptedData) {
+          console.error('No encrypted data found in URL');
+          setDebugInfo('Missing QR data in URL');
           setIsValid(false);
           setIsLoading(false);
           return;
         }
         
+        // Validate the encrypted data format
+        if (!validateEncryptedData(encryptedData)) {
+          console.error('Invalid encrypted data format');
+          setDebugInfo('Invalid QR code format');
+          setIsValid(false);
+          setIsLoading(false);
+          return;
+        }
+
         // Query the database for the QR code
+        console.log('Querying database for QR code:', encryptedData);
         const { data: qrCode, error } = await supabase
           .from('qr_codes')
           .select('*')
           .eq('encrypted_data', encryptedData)
           .single();
         
-        if (error || !qrCode) {
+        if (error) {
           console.error('Error fetching QR code:', error);
+          setDebugInfo(`Database error: ${error.message}`);
           setIsValid(false);
           setIsLoading(false);
           return;
         }
         
+        if (!qrCode) {
+          console.error('QR code not found in database');
+          setDebugInfo('QR code not found in database');
+          setIsValid(false);
+          setIsLoading(false);
+          return;
+        }
+
+        console.log('QR code found:', qrCode);
+        
         // Check if the QR code is enabled and not scanned
         if (qrCode.is_enabled && !qrCode.is_scanned) {
+          console.log('QR code is valid and not scanned');
+          
           // Mark as scanned
           const { error: updateError } = await supabase
             .from('qr_codes')
@@ -48,14 +76,29 @@ const ProductCheck = () => {
           
           if (updateError) {
             console.error('Error updating QR code:', updateError);
+            setDebugInfo(`Error marking as scanned: ${updateError.message}`);
+            // Still consider valid even if update fails
           }
           
+          toast.success('Product authenticated successfully');
           setIsValid(true);
         } else {
+          console.log('QR code is either disabled or already scanned', {
+            is_enabled: qrCode.is_enabled,
+            is_scanned: qrCode.is_scanned
+          });
+          
+          if (!qrCode.is_enabled) {
+            setDebugInfo('QR code is disabled');
+          } else if (qrCode.is_scanned) {
+            setDebugInfo('QR code has already been scanned');
+          }
+          
           setIsValid(false);
         }
       } catch (error) {
         console.error('Error validating QR code:', error);
+        setDebugInfo(`Validation error: ${error instanceof Error ? error.message : 'Unknown error'}`);
         setIsValid(false);
       } finally {
         setIsLoading(false);
@@ -82,14 +125,14 @@ const ProductCheck = () => {
         <div className="max-w-md w-full mx-auto bg-white rounded-xl shadow-lg overflow-hidden">
           <div className="p-8">
             <div className="flex justify-center">
-              <div className="w-24 h-24 bg-verified rounded-full flex items-center justify-center">
+              <div className="w-24 h-24 bg-green-500 rounded-full flex items-center justify-center">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
             </div>
             
-            <h1 className="mt-6 text-3xl font-bold text-center text-verified">Product Verified</h1>
+            <h1 className="mt-6 text-3xl font-bold text-center text-green-600">Product Verified</h1>
             
             <p className="mt-4 text-lg text-center">
               This product is legitimate and original. Thank you for checking its authenticity.
@@ -120,14 +163,14 @@ const ProductCheck = () => {
       <div className="max-w-md w-full mx-auto bg-white rounded-xl shadow-lg overflow-hidden">
         <div className="p-8">
           <div className="flex justify-center">
-            <div className="w-24 h-24 bg-counterfeit rounded-full flex items-center justify-center">
+            <div className="w-24 h-24 bg-red-500 rounded-full flex items-center justify-center">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </div>
           </div>
           
-          <h1 className="mt-6 text-3xl font-bold text-center text-counterfeit">Not Authentic</h1>
+          <h1 className="mt-6 text-3xl font-bold text-center text-red-600">Not Authentic</h1>
           
           <p className="mt-4 text-lg text-center">
             This product could not be verified as authentic. It may be counterfeit or has been previously verified.
@@ -136,6 +179,11 @@ const ProductCheck = () => {
           <div className="mt-8 bg-red-50 p-4 rounded-lg">
             <p className="text-sm text-center text-red-800">
               If you believe this is an error, please contact the product manufacturer.
+              {debugInfo && (
+                <span className="block mt-2 p-2 bg-red-100 text-xs rounded">
+                  Debug info: {debugInfo}
+                </span>
+              )}
             </p>
           </div>
           
