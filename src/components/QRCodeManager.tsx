@@ -5,16 +5,17 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 import { QRCode } from '@/types/qrCode';
 import { toast } from "sonner";
+import { supabase } from '@/integrations/supabase/client';
 
 interface QRCodeManagerProps {
   qrCodes: QRCode[];
   onUpdateQRCode: (qrCode: QRCode) => void;
+  onRefresh: () => void;
 }
 
-const QRCodeManager = ({ qrCodes, onUpdateQRCode }: QRCodeManagerProps) => {
+const QRCodeManager = ({ qrCodes, onUpdateQRCode, onRefresh }: QRCodeManagerProps) => {
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [currentPage, setCurrentPage] = useState<number>(1);
   const itemsPerPage = 10;
@@ -39,14 +40,43 @@ const QRCodeManager = ({ qrCodes, onUpdateQRCode }: QRCodeManagerProps) => {
     }
   };
   
-  const handleToggleEnabled = (qrCode: QRCode) => {
+  const handleToggleEnabled = async (qrCode: QRCode) => {
     const updatedQRCode = { ...qrCode, isEnabled: !qrCode.isEnabled };
+    
+    // Update in the database
+    const { error } = await supabase
+      .from('qr_codes')
+      .update({ is_enabled: updatedQRCode.isEnabled })
+      .eq('id', qrCode.id);
+    
+    if (error) {
+      console.error('Error updating QR code:', error);
+      toast.error(`Failed to ${updatedQRCode.isEnabled ? 'enable' : 'disable'} QR Code`);
+      return;
+    }
+    
     onUpdateQRCode(updatedQRCode);
     toast.success(`QR Code #${qrCode.sequentialNumber} ${updatedQRCode.isEnabled ? 'enabled' : 'disabled'}`);
   };
   
-  const resetQRCode = (qrCode: QRCode) => {
+  const resetQRCode = async (qrCode: QRCode) => {
     const updatedQRCode = { ...qrCode, isScanned: false, scannedAt: undefined };
+    
+    // Update in the database
+    const { error } = await supabase
+      .from('qr_codes')
+      .update({ 
+        is_scanned: false,
+        scanned_at: null
+      })
+      .eq('id', qrCode.id);
+    
+    if (error) {
+      console.error('Error resetting QR code:', error);
+      toast.error('Failed to reset QR Code');
+      return;
+    }
+    
     onUpdateQRCode(updatedQRCode);
     toast.success(`QR Code #${qrCode.sequentialNumber} reset successfully`);
   };
@@ -123,29 +153,39 @@ const QRCodeManager = ({ qrCodes, onUpdateQRCode }: QRCodeManagerProps) => {
         </Table>
       </div>
       
-      {totalPages > 1 && (
-        <div className="flex items-center justify-end space-x-2 py-4">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handlePrevPage}
-            disabled={currentPage === 1}
-          >
-            Previous
-          </Button>
-          <div className="text-sm">
-            Page {currentPage} of {totalPages}
+      <div className="flex justify-between items-center mt-4">
+        <Button 
+          variant="outline"
+          onClick={onRefresh}
+          size="sm"
+        >
+          Refresh Data
+        </Button>
+        
+        {totalPages > 1 && (
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handlePrevPage}
+              disabled={currentPage === 1}
+            >
+              Previous
+            </Button>
+            <div className="text-sm">
+              Page {currentPage} of {totalPages}
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleNextPage}
+              disabled={currentPage === totalPages}
+            >
+              Next
+            </Button>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleNextPage}
-            disabled={currentPage === totalPages}
-          >
-            Next
-          </Button>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 };

@@ -9,7 +9,57 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      qr_codes: {
+        Row: {
+          created_at: string
+          data_url: string | null
+          encrypted_data: string
+          id: string
+          is_enabled: boolean
+          is_scanned: boolean
+          scanned_at: string | null
+          sequential_number: string
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          data_url?: string | null
+          encrypted_data: string
+          id?: string
+          is_enabled?: boolean
+          is_scanned?: boolean
+          scanned_at?: string | null
+          sequential_number: string
+          url: string
+        }
+        Update: {
+          created_at?: string
+          data_url?: string | null
+          encrypted_data?: string
+          id?: string
+          is_enabled?: boolean
+          is_scanned?: boolean
+          scanned_at?: string | null
+          sequential_number?: string
+          url?: string
+        }
+        Relationships: []
+      }
+      sequence_counters: {
+        Row: {
+          current_value: number
+          id: string
+        }
+        Insert: {
+          current_value?: number
+          id: string
+        }
+        Update: {
+          current_value?: number
+          id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

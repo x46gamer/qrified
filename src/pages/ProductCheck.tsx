@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { decryptData } from '@/utils/qrCodeUtils';
-import { QRCode } from '@/types/qrCode';
+import { supabase } from '@/integrations/supabase/client';
 
 const ProductCheck = () => {
   const [searchParams] = useSearchParams();
@@ -21,41 +21,34 @@ const ProductCheck = () => {
           return;
         }
         
-        // In a real app, this would make a request to the server/database
-        // For now, we'll use localStorage
-        const savedQRCodes = localStorage.getItem('qrCodes');
+        // Query the database for the QR code
+        const { data: qrCode, error } = await supabase
+          .from('qr_codes')
+          .select('*')
+          .eq('encrypted_data', encryptedData)
+          .single();
         
-        if (!savedQRCodes) {
-          setIsValid(false);
-          setIsLoading(false);
-          return;
-        }
-        
-        const qrCodes: QRCode[] = JSON.parse(savedQRCodes);
-        const matchingQRCode = qrCodes.find(qrCode => qrCode.encryptedData === encryptedData);
-        
-        if (!matchingQRCode) {
+        if (error || !qrCode) {
+          console.error('Error fetching QR code:', error);
           setIsValid(false);
           setIsLoading(false);
           return;
         }
         
         // Check if the QR code is enabled and not scanned
-        if (matchingQRCode.isEnabled && !matchingQRCode.isScanned) {
+        if (qrCode.is_enabled && !qrCode.is_scanned) {
           // Mark as scanned
-          const updatedQRCodes = qrCodes.map(qrCode => {
-            if (qrCode.id === matchingQRCode.id) {
-              return {
-                ...qrCode,
-                isScanned: true,
-                scannedAt: new Date().toISOString()
-              };
-            }
-            return qrCode;
-          });
+          const { error: updateError } = await supabase
+            .from('qr_codes')
+            .update({
+              is_scanned: true,
+              scanned_at: new Date().toISOString()
+            })
+            .eq('id', qrCode.id);
           
-          // Save the updated QR codes
-          localStorage.setItem('qrCodes', JSON.stringify(updatedQRCodes));
+          if (updateError) {
+            console.error('Error updating QR code:', updateError);
+          }
           
           setIsValid(true);
         } else {

@@ -5,37 +5,78 @@ import QRCodeGenerator from '@/components/QRCodeGenerator';
 import QRCodeDisplay from '@/components/QRCodeDisplay';
 import QRCodeManager from '@/components/QRCodeManager';
 import { QRCode } from '@/types/qrCode';
-import { generateQRCode } from '@/utils/qrCodeUtils';
+import { supabase } from '@/integrations/supabase/client';
 
 const Index = () => {
-  // In a real application, this would come from a database
   const [qrCodes, setQRCodes] = useState<QRCode[]>([]);
   const [displayQRCodes, setDisplayQRCodes] = useState<(QRCode & { dataUrl: string })[]>([]);
   const [lastSequentialNumber, setLastSequentialNumber] = useState<number>(0);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   
-  // Load from localStorage on mount
+  // Load QR codes from Supabase on mount
   useEffect(() => {
-    const savedQRCodes = localStorage.getItem('qrCodes');
-    const savedLastNumber = localStorage.getItem('lastSequentialNumber');
-    
-    if (savedQRCodes) {
-      setQRCodes(JSON.parse(savedQRCodes));
-    }
-    
-    if (savedLastNumber) {
-      setLastSequentialNumber(parseInt(savedLastNumber));
-    }
+    fetchQRCodes();
+    fetchLastSequentialNumber();
   }, []);
   
-  // Save to localStorage when qrCodes change
-  useEffect(() => {
-    localStorage.setItem('qrCodes', JSON.stringify(qrCodes));
-  }, [qrCodes]);
+  const fetchQRCodes = async () => {
+    setIsLoading(true);
+    try {
+      // Fetch all QR codes
+      const { data, error } = await supabase
+        .from('qr_codes')
+        .select('*')
+        .order('sequential_number', { ascending: false });
+      
+      if (error) {
+        console.error('Error fetching QR codes:', error);
+        return;
+      }
+      
+      if (data) {
+        // Map database fields to our app's QRCode type
+        const mappedQrCodes = data.map(qr => ({
+          id: qr.id,
+          sequentialNumber: qr.sequential_number,
+          encryptedData: qr.encrypted_data,
+          url: qr.url,
+          isScanned: qr.is_scanned,
+          isEnabled: qr.is_enabled,
+          createdAt: qr.created_at,
+          scannedAt: qr.scanned_at,
+          dataUrl: qr.data_url
+        }));
+        
+        setQRCodes(mappedQrCodes);
+      }
+    } catch (error) {
+      console.error('Error loading QR codes:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
   
-  // Save last sequential number when it changes
-  useEffect(() => {
-    localStorage.setItem('lastSequentialNumber', lastSequentialNumber.toString());
-  }, [lastSequentialNumber]);
+  const fetchLastSequentialNumber = async () => {
+    try {
+      // Fetch the current counter value
+      const { data, error } = await supabase
+        .from('sequence_counters')
+        .select('current_value')
+        .eq('id', 'qr_code_sequential')
+        .single();
+      
+      if (error) {
+        console.error('Error fetching counter:', error);
+        return;
+      }
+      
+      if (data) {
+        setLastSequentialNumber(data.current_value);
+      }
+    } catch (error) {
+      console.error('Error loading sequence counter:', error);
+    }
+  };
   
   const handleQRCodesGenerated = async (newQRCodes: QRCode[]) => {
     // Update the state with the new QR codes
@@ -43,17 +84,14 @@ const Index = () => {
     
     // Update the last sequential number
     if (newQRCodes.length > 0) {
-      const lastCode = newQRCodes[0];
-      setLastSequentialNumber(parseInt(lastCode.sequentialNumber));
+      await fetchLastSequentialNumber();
     }
     
-    // Generate dataUrls for display
-    const codesWithDataUrls = await Promise.all(
-      newQRCodes.map(async (code) => {
-        const dataUrl = await generateQRCode(code.url);
-        return { ...code, dataUrl };
-      })
-    );
+    // Set the display QR codes
+    const codesWithDataUrls = newQRCodes.map(code => ({
+      ...code,
+      dataUrl: code.dataUrl || ''
+    }));
     
     setDisplayQRCodes(codesWithDataUrls);
   };
@@ -127,6 +165,7 @@ const Index = () => {
           <QRCodeManager 
             qrCodes={qrCodes}
             onUpdateQRCode={handleUpdateQRCode}
+            onRefresh={fetchQRCodes}
           />
         </TabsContent>
       </Tabs>

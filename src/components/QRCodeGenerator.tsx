@@ -1,5 +1,5 @@
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -11,6 +11,7 @@ import {
   formatSequentialNumber 
 } from '@/utils/qrCodeUtils';
 import { QRCode } from '@/types/qrCode';
+import { supabase } from '@/integrations/supabase/client';
 
 interface QRCodeGeneratorProps {
   onQRCodesGenerated: (qrCodes: QRCode[]) => void;
@@ -21,7 +22,6 @@ const QRCodeGenerator = ({ onQRCodesGenerated, lastSequentialNumber }: QRCodeGen
   const [quantity, setQuantity] = useState<number>(1);
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
   const baseUrl = window.location.origin;
-  const currentSequentialNumber = useRef<number>(lastSequentialNumber);
   
   const handleGenerateQRCodes = async () => {
     if (quantity <= 0) {
@@ -37,17 +37,34 @@ const QRCodeGenerator = ({ onQRCodesGenerated, lastSequentialNumber }: QRCodeGen
     setIsGenerating(true);
     
     try {
+      // Update the counter in the database
+      const { data: counterData, error: counterError } = await supabase.rpc('increment_counter', {
+        counter_id: 'qr_code_sequential',
+        increment_by: quantity
+      });
+      
+      if (counterError) {
+        console.error('Error incrementing counter:', counterError);
+        toast.error('Failed to generate QR codes');
+        setIsGenerating(false);
+        return;
+      }
+      
+      // Calculate the starting sequential number
+      const startingNumber = counterData - quantity + 1;
+      
       const generatedQRCodes: QRCode[] = [];
+      const dbInserts = [];
       
       for (let i = 0; i < quantity; i++) {
-        const nextNumber = currentSequentialNumber.current + 1;
+        const seqNumber = startingNumber + i;
         const uniqueId = generateUniqueId();
-        const sequentialNumber = formatSequentialNumber(nextNumber);
+        const sequentialNumber = formatSequentialNumber(seqNumber);
         const encryptedData = encryptData(uniqueId);
         const url = `${baseUrl}/product-check/?qr=${encryptedData}`;
         const qrCodeDataUrl = await generateQRCode(url);
         
-        generatedQRCodes.push({
+        const qrCode = {
           id: uniqueId,
           sequentialNumber,
           encryptedData,
@@ -55,9 +72,31 @@ const QRCodeGenerator = ({ onQRCodesGenerated, lastSequentialNumber }: QRCodeGen
           isScanned: false,
           isEnabled: true,
           createdAt: new Date().toISOString(),
-        });
+          dataUrl: qrCodeDataUrl,
+        };
         
-        currentSequentialNumber.current = nextNumber;
+        generatedQRCodes.push(qrCode);
+        
+        // Prepare database insert
+        dbInserts.push({
+          id: uniqueId,
+          sequential_number: sequentialNumber,
+          encrypted_data: encryptedData,
+          url: url,
+          data_url: qrCodeDataUrl
+        });
+      }
+      
+      // Insert all QR codes into the database
+      const { error: insertError } = await supabase
+        .from('qr_codes')
+        .insert(dbInserts);
+      
+      if (insertError) {
+        console.error('Error inserting QR codes:', insertError);
+        toast.error('Failed to save QR codes to database');
+        setIsGenerating(false);
+        return;
       }
       
       onQRCodesGenerated(generatedQRCodes);
@@ -99,7 +138,7 @@ const QRCodeGenerator = ({ onQRCodesGenerated, lastSequentialNumber }: QRCodeGen
             </Button>
           </div>
           <div className="text-sm text-muted-foreground">
-            Next sequential number: {formatSequentialNumber(currentSequentialNumber.current + 1)}
+            Next sequential number: {formatSequentialNumber(lastSequentialNumber + 1)}
           </div>
         </div>
       </CardContent>
