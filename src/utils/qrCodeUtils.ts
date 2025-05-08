@@ -1,15 +1,14 @@
 
 import QRCode from 'qrcode';
 import CryptoJS from 'crypto-js';
+import { v4 as uuidv4 } from 'crypto';
 
 // Secret key for encryption
 const SECRET_KEY = 'qrcode-secret-key';
 
-// Generate a unique string for QR code
+// Generate a proper UUID for QR code
 export const generateUniqueId = (): string => {
-  const timestamp = new Date().getTime().toString();
-  const random = Math.random().toString(36).substring(2, 15);
-  return `${timestamp}-${random}`;
+  return uuidv4();
 };
 
 // Encrypt the QR code data
