@@ -50,6 +50,13 @@ const QRCodeGenerator = ({ onQRCodesGenerated, lastSequentialNumber }: QRCodeGen
         return;
       }
       
+      if (counterData === null) {
+        console.error('Counter data is null');
+        toast.error('Failed to generate QR codes');
+        setIsGenerating(false);
+        return;
+      }
+      
       // Calculate the starting sequential number
       const startingNumber = counterData - quantity + 1;
       
