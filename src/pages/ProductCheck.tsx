@@ -4,6 +4,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { decryptData, validateEncryptedData } from '@/utils/qrCodeUtils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from "sonner";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const ProductCheck = () => {
   const [searchParams] = useSearchParams();
@@ -11,11 +12,13 @@ const ProductCheck = () => {
   const [isValid, setIsValid] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [debugInfo, setDebugInfo] = useState<string | null>(null);
+  const [rawEncryptedData, setRawEncryptedData] = useState<string | null>(null);
 
   useEffect(() => {
     const validateQRCode = async () => {
       try {
         const encryptedData = searchParams.get('qr');
+        setRawEncryptedData(encryptedData);
         console.log('Received encrypted data:', encryptedData);
         
         if (!encryptedData) {
@@ -35,13 +38,15 @@ const ProductCheck = () => {
           return;
         }
 
-        // Query the database for the QR code
+        // Query the database for the QR code - IMPORTANT: Using .maybeSingle() instead of .single()
         console.log('Querying database for QR code:', encryptedData);
         const { data: qrCode, error } = await supabase
           .from('qr_codes')
           .select('*')
           .eq('encrypted_data', encryptedData)
-          .single();
+          .maybeSingle(); // Using maybeSingle() instead of single() to avoid errors when no records are found
+        
+        console.log('Database response:', { qrCode, error });
         
         if (error) {
           console.error('Error fetching QR code:', error);
@@ -176,15 +181,24 @@ const ProductCheck = () => {
             This product could not be verified as authentic. It may be counterfeit or has been previously verified.
           </p>
           
-          <div className="mt-8 bg-red-50 p-4 rounded-lg">
+          <div className="mt-8 p-4 rounded-lg">
             <p className="text-sm text-center text-red-800">
               If you believe this is an error, please contact the product manufacturer.
-              {debugInfo && (
-                <span className="block mt-2 p-2 bg-red-100 text-xs rounded">
-                  Debug info: {debugInfo}
-                </span>
-              )}
             </p>
+            {debugInfo && (
+              <Alert className="mt-3 bg-red-50 border-red-200">
+                <AlertDescription className="text-xs text-red-700">
+                  Debug info: {debugInfo}
+                </AlertDescription>
+              </Alert>
+            )}
+            {rawEncryptedData && (
+              <Alert className="mt-3 bg-red-50 border-red-200">
+                <AlertDescription className="text-xs text-red-700 break-all">
+                  Raw QR code: {rawEncryptedData}
+                </AlertDescription>
+              </Alert>
+            )}
           </div>
           
           <div className="mt-8 flex justify-center">

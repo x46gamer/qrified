@@ -102,3 +102,14 @@ export const validateEncryptedData = (encryptedData: string | null): boolean => 
     return false;
   }
 };
+
+// Function to extract the "qr" parameter from a URL
+export const extractQRCodeFromURL = (url: string): string | null => {
+  try {
+    const urlObj = new URL(url);
+    return urlObj.searchParams.get('qr');
+  } catch (error) {
+    console.error('Error extracting QR code from URL:', error);
+    return null;
+  }
+};
