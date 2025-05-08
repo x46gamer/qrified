@@ -44,12 +44,12 @@ const QRCodeGenerator = ({ onQRCodesGenerated, lastSequentialNumber }: QRCodeGen
     
     try {
       // Update the counter in the database - with proper parameter typing
-      const { data: counterData, error: counterError } = await supabase.rpc<number>(
+      const { data: counterData, error: counterError } = await supabase.rpc<number, IncrementCounterParams>(
         'increment_counter', 
         {
           counter_id: 'qr_code_sequential',
           increment_by: quantity
-        } as IncrementCounterParams
+        }
       );
       
       if (counterError) {
