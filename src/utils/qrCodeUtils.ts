@@ -1,7 +1,7 @@
 
 import QRCode from 'qrcode';
 import CryptoJS from 'crypto-js';
-import { v4 as uuidv4 } from 'crypto';
+import { v4 as uuidv4 } from 'uuid'; // Using browser-compatible uuid package
 
 // Secret key for encryption
 const SECRET_KEY = 'qrcode-secret-key';
