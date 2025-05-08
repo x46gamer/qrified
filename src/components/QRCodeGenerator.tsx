@@ -18,6 +18,12 @@ interface QRCodeGeneratorProps {
   lastSequentialNumber: number;
 }
 
+// Define interface for the RPC parameters to fix the type error
+interface IncrementCounterParams {
+  counter_id: string;
+  increment_by: number;
+}
+
 const QRCodeGenerator = ({ onQRCodesGenerated, lastSequentialNumber }: QRCodeGeneratorProps) => {
   const [quantity, setQuantity] = useState<number>(1);
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
@@ -37,13 +43,13 @@ const QRCodeGenerator = ({ onQRCodesGenerated, lastSequentialNumber }: QRCodeGen
     setIsGenerating(true);
     
     try {
-      // Update the counter in the database - proper typing for RPC call
-      const { data: counterData, error: counterError } = await supabase.rpc(
+      // Update the counter in the database - with proper parameter typing
+      const { data: counterData, error: counterError } = await supabase.rpc<number>(
         'increment_counter', 
         {
           counter_id: 'qr_code_sequential',
           increment_by: quantity
-        }
+        } as IncrementCounterParams
       );
       
       if (counterError) {
