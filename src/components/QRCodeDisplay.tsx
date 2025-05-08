@@ -6,7 +6,7 @@ import { QRCode as QRCodeType } from '@/types/qrCode';
 import { toast } from "sonner";
 
 interface QRCodeDisplayProps {
-  qrCodes: QRCodeType[];
+  qrCodes: (QRCodeType & { dataUrl: string })[];
 }
 
 const QRCodeDisplay = ({ qrCodes }: QRCodeDisplayProps) => {

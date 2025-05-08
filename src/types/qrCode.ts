@@ -8,4 +8,5 @@ export interface QRCode {
   isEnabled: boolean;
   createdAt: string;
   scannedAt?: string;
+  dataUrl?: string; // Add this property for the image data URL
 }
