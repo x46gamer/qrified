@@ -37,11 +37,14 @@ const QRCodeGenerator = ({ onQRCodesGenerated, lastSequentialNumber }: QRCodeGen
     setIsGenerating(true);
     
     try {
-      // Update the counter in the database
-      const { data: counterData, error: counterError } = await supabase.rpc('increment_counter', {
-        counter_id: 'qr_code_sequential',
-        increment_by: quantity
-      });
+      // Update the counter in the database - fix type issue by casting to any
+      const { data: counterData, error: counterError } = await supabase.rpc(
+        'increment_counter', 
+        {
+          counter_id: 'qr_code_sequential',
+          increment_by: quantity
+        } as any
+      );
       
       if (counterError) {
         console.error('Error incrementing counter:', counterError);
@@ -58,7 +61,8 @@ const QRCodeGenerator = ({ onQRCodesGenerated, lastSequentialNumber }: QRCodeGen
       }
       
       // Calculate the starting sequential number
-      const startingNumber = counterData - quantity + 1;
+      // Fix the type issue by ensuring counterData is treated as a number
+      const startingNumber = (counterData as number) - quantity + 1;
       
       const generatedQRCodes: QRCode[] = [];
       const dbInserts = [];
