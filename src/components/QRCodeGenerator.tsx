@@ -8,7 +8,8 @@ import {
   generateUniqueId, 
   encryptData, 
   generateQRCode, 
-  formatSequentialNumber 
+  formatSequentialNumber,
+  debugVerifyQRCodeInDatabase
 } from '@/utils/qrCodeUtils';
 import { QRCode } from '@/types/qrCode';
 import { supabase } from '@/integrations/supabase/client';
@@ -46,7 +47,7 @@ const QRCodeGenerator = ({ onQRCodesGenerated, lastSequentialNumber }: QRCodeGen
       
       if (counterError) {
         console.error('Error getting counter:', counterError);
-        toast.error('Failed to generate QR codes');
+        toast.error('Failed to generate QR codes: Counter error');
         setIsGenerating(false);
         return;
       }
@@ -63,7 +64,7 @@ const QRCodeGenerator = ({ onQRCodesGenerated, lastSequentialNumber }: QRCodeGen
       
       if (updateError) {
         console.error('Error updating counter:', updateError);
-        toast.error('Failed to generate QR codes');
+        toast.error('Failed to generate QR codes: Counter update error');
         setIsGenerating(false);
         return;
       }
@@ -101,14 +102,20 @@ const QRCodeGenerator = ({ onQRCodesGenerated, lastSequentialNumber }: QRCodeGen
           sequential_number: sequentialNumber,
           encrypted_data: encryptedData,
           url: url,
-          data_url: qrCodeDataUrl
+          data_url: qrCodeDataUrl,
+          is_enabled: true,
+          is_scanned: false,
+          created_at: new Date().toISOString()
         });
       }
       
+      console.log('Inserting QR codes to database:', dbInserts);
+      
       // Insert all QR codes into the database
-      const { error: insertError } = await supabase
+      const { error: insertError, data: insertedData } = await supabase
         .from('qr_codes')
-        .insert(dbInserts);
+        .insert(dbInserts)
+        .select();
       
       if (insertError) {
         console.error('Error inserting QR codes:', insertError);
@@ -117,11 +124,26 @@ const QRCodeGenerator = ({ onQRCodesGenerated, lastSequentialNumber }: QRCodeGen
         return;
       }
       
+      console.log('Successfully inserted QR codes:', insertedData);
+      
+      // Verify the first QR code was actually stored
+      if (dbInserts.length > 0) {
+        const verificationResult = await debugVerifyQRCodeInDatabase(dbInserts[0].encrypted_data);
+        console.log('Verification of first QR code after insertion:', verificationResult);
+        
+        if (!verificationResult.exists) {
+          console.warn('QR code verification failed after insertion!', {
+            encryptedData: dbInserts[0].encrypted_data,
+            result: verificationResult
+          });
+        }
+      }
+      
       onQRCodesGenerated(generatedQRCodes);
       toast.success(`${quantity} QR code(s) generated successfully`);
     } catch (error) {
       console.error('Error generating QR codes:', error);
-      toast.error('Failed to generate QR codes');
+      toast.error('Failed to generate QR codes: ' + (error instanceof Error ? error.message : 'Unknown error'));
     } finally {
       setIsGenerating(false);
     }

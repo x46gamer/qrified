@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { decryptData, validateEncryptedData } from '@/utils/qrCodeUtils';
+import { decryptData, validateEncryptedData, debugVerifyQRCodeInDatabase } from '@/utils/qrCodeUtils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -13,6 +13,7 @@ const ProductCheck = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [debugInfo, setDebugInfo] = useState<string | null>(null);
   const [rawEncryptedData, setRawEncryptedData] = useState<string | null>(null);
+  const [detailedDebugInfo, setDetailedDebugInfo] = useState<any>(null);
 
   useEffect(() => {
     const validateQRCode = async () => {
@@ -33,6 +34,18 @@ const ProductCheck = () => {
         if (!validateEncryptedData(encryptedData)) {
           console.error('Invalid encrypted data format');
           setDebugInfo('Invalid QR code format');
+          setIsValid(false);
+          setIsLoading(false);
+          return;
+        }
+
+        // Perform a debug check to see if the QR code exists in the database
+        const debugVerifyResult = await debugVerifyQRCodeInDatabase(encryptedData);
+        setDetailedDebugInfo(debugVerifyResult);
+        console.log('Debug verification result:', debugVerifyResult);
+        
+        if (!debugVerifyResult.exists) {
+          setDebugInfo(`QR code not found in database: ${debugVerifyResult.message || 'No matching record'}`);
           setIsValid(false);
           setIsLoading(false);
           return;
@@ -196,6 +209,18 @@ const ProductCheck = () => {
               <Alert className="mt-3 bg-red-50 border-red-200">
                 <AlertDescription className="text-xs text-red-700 break-all">
                   Raw QR code: {rawEncryptedData}
+                </AlertDescription>
+              </Alert>
+            )}
+            {detailedDebugInfo && (
+              <Alert className="mt-3 bg-red-50 border-red-200">
+                <AlertDescription className="text-xs text-red-700">
+                  <details>
+                    <summary>Detailed debug info (click to expand)</summary>
+                    <pre className="text-xs mt-2 overflow-x-auto">
+                      {JSON.stringify(detailedDebugInfo, null, 2)}
+                    </pre>
+                  </details>
                 </AlertDescription>
               </Alert>
             )}

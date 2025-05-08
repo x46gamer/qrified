@@ -13,15 +13,20 @@ export const generateUniqueId = (): string => {
 
 // Encrypt the QR code data
 export const encryptData = (data: string): string => {
+  console.log('Encrypting data:', data);
   const encrypted = CryptoJS.AES.encrypt(data, SECRET_KEY).toString();
-  return encodeURIComponent(encrypted);
+  const encoded = encodeURIComponent(encrypted);
+  console.log('Encrypted and encoded data:', encoded);
+  return encoded;
 };
 
 // Decrypt the QR code data
 export const decryptData = (encryptedData: string): string => {
   try {
+    console.log('Decrypting data:', encryptedData);
     const decoded = decodeURIComponent(encryptedData);
     const decrypted = CryptoJS.AES.decrypt(decoded, SECRET_KEY).toString(CryptoJS.enc.Utf8);
+    console.log('Decrypted data:', decrypted);
     return decrypted;
   } catch (error) {
     console.error('Error decrypting data:', error);
@@ -96,6 +101,7 @@ export const validateEncryptedData = (encryptedData: string | null): boolean => 
   try {
     // Attempt to decode URI component to check if it's valid
     const decoded = decodeURIComponent(encryptedData);
+    console.log('Validated encrypted data, decoded:', decoded);
     return decoded.length > 0;
   } catch (error) {
     console.error('Invalid encrypted data format:', error);
@@ -111,5 +117,33 @@ export const extractQRCodeFromURL = (url: string): string | null => {
   } catch (error) {
     console.error('Error extracting QR code from URL:', error);
     return null;
+  }
+};
+
+// Debug utility to check if a QR code exists in the database
+export const debugVerifyQRCodeInDatabase = async (encryptedData: string) => {
+  const { supabase } = await import('@/integrations/supabase/client');
+  if (!encryptedData) return { exists: false, message: 'No encrypted data provided' };
+  
+  try {
+    console.log('Debug: Checking database for QR code:', encryptedData);
+    const { data, error, count } = await supabase
+      .from('qr_codes')
+      .select('*', { count: 'exact' })
+      .eq('encrypted_data', encryptedData);
+    
+    if (error) {
+      return { exists: false, message: `Error: ${error.message}`, error };
+    }
+    
+    console.log('Debug: Database results:', { data, count });
+    return { 
+      exists: data && data.length > 0, 
+      count, 
+      data: data && data.length > 0 ? data[0] : null 
+    };
+  } catch (e) {
+    console.error('Debug verification error:', e);
+    return { exists: false, message: `Exception: ${e instanceof Error ? e.message : String(e)}` };
   }
 };
