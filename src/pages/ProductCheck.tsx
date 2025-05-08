@@ -18,13 +18,28 @@ const ProductCheck = () => {
   useEffect(() => {
     const validateQRCode = async () => {
       try {
-        const encryptedData = searchParams.get('qr');
+        // Get the encrypted data from URL
+        let encryptedData = searchParams.get('qr');
+        
+        // First, save the raw encrypted data for debugging
         setRawEncryptedData(encryptedData);
-        console.log('Received encrypted data:', encryptedData);
+        console.log('Raw encrypted data from URL:', encryptedData);
         
         if (!encryptedData) {
           console.error('No encrypted data found in URL');
           setDebugInfo('Missing QR data in URL');
+          setIsValid(false);
+          setIsLoading(false);
+          return;
+        }
+        
+        // We need to decode the URL parameter
+        try {
+          encryptedData = decodeURIComponent(encryptedData);
+          console.log('Decoded encrypted data:', encryptedData);
+        } catch (e) {
+          console.error('Error decoding URL parameter:', e);
+          setDebugInfo('Invalid QR format: Could not decode URL parameter');
           setIsValid(false);
           setIsLoading(false);
           return;
@@ -51,13 +66,13 @@ const ProductCheck = () => {
           return;
         }
 
-        // Query the database for the QR code - IMPORTANT: Using .maybeSingle() instead of .single()
+        // Query the database for the QR code
         console.log('Querying database for QR code:', encryptedData);
         const { data: qrCode, error } = await supabase
           .from('qr_codes')
           .select('*')
           .eq('encrypted_data', encryptedData)
-          .maybeSingle(); // Using maybeSingle() instead of single() to avoid errors when no records are found
+          .maybeSingle();
         
         console.log('Database response:', { qrCode, error });
         

@@ -14,18 +14,23 @@ export const generateUniqueId = (): string => {
 // Encrypt the QR code data
 export const encryptData = (data: string): string => {
   console.log('Encrypting data:', data);
-  const encrypted = CryptoJS.AES.encrypt(data, SECRET_KEY).toString();
-  const encoded = encodeURIComponent(encrypted);
-  console.log('Encrypted and encoded data:', encoded);
-  return encoded;
+  try {
+    const encrypted = CryptoJS.AES.encrypt(data, SECRET_KEY).toString();
+    // Important: We're NOT using encodeURIComponent here anymore as it causes issues with validation
+    console.log('Encrypted data:', encrypted);
+    return encrypted;
+  } catch (error) {
+    console.error('Error encrypting data:', error);
+    throw new Error('Failed to encrypt QR code data');
+  }
 };
 
 // Decrypt the QR code data
 export const decryptData = (encryptedData: string): string => {
   try {
     console.log('Decrypting data:', encryptedData);
-    const decoded = decodeURIComponent(encryptedData);
-    const decrypted = CryptoJS.AES.decrypt(decoded, SECRET_KEY).toString(CryptoJS.enc.Utf8);
+    // We're NOT using decodeURIComponent here anymore
+    const decrypted = CryptoJS.AES.decrypt(encryptedData, SECRET_KEY).toString(CryptoJS.enc.Utf8);
     console.log('Decrypted data:', decrypted);
     return decrypted;
   } catch (error) {
@@ -99,10 +104,9 @@ export const getTimeAgo = (dateString: string): string => {
 export const validateEncryptedData = (encryptedData: string | null): boolean => {
   if (!encryptedData) return false;
   try {
-    // Attempt to decode URI component to check if it's valid
-    const decoded = decodeURIComponent(encryptedData);
-    console.log('Validated encrypted data, decoded:', decoded);
-    return decoded.length > 0;
+    // Just check if the string has some length and isn't obviously malformed
+    console.log('Validating encrypted data:', encryptedData);
+    return encryptedData.length > 20; // Simple validation check
   } catch (error) {
     console.error('Invalid encrypted data format:', error);
     return false;
@@ -113,7 +117,9 @@ export const validateEncryptedData = (encryptedData: string | null): boolean => 
 export const extractQRCodeFromURL = (url: string): string | null => {
   try {
     const urlObj = new URL(url);
-    return urlObj.searchParams.get('qr');
+    const qrParam = urlObj.searchParams.get('qr');
+    console.log('Extracted QR param from URL:', qrParam);
+    return qrParam;
   } catch (error) {
     console.error('Error extracting QR code from URL:', error);
     return null;
@@ -127,12 +133,21 @@ export const debugVerifyQRCodeInDatabase = async (encryptedData: string) => {
   
   try {
     console.log('Debug: Checking database for QR code:', encryptedData);
+    // Log all records for debugging
+    const { data: allQrCodes } = await supabase
+      .from('qr_codes')
+      .select('encrypted_data')
+      .limit(10);
+    
+    console.log('Debug: First 10 QR codes in database:', allQrCodes);
+    
     const { data, error, count } = await supabase
       .from('qr_codes')
       .select('*', { count: 'exact' })
       .eq('encrypted_data', encryptedData);
     
     if (error) {
+      console.error('Debug: Database error:', error);
       return { exists: false, message: `Error: ${error.message}`, error };
     }
     
@@ -145,5 +160,18 @@ export const debugVerifyQRCodeInDatabase = async (encryptedData: string) => {
   } catch (e) {
     console.error('Debug verification error:', e);
     return { exists: false, message: `Exception: ${e instanceof Error ? e.message : String(e)}` };
+  }
+};
+
+// Normalize encoded data to ensure consistency between storage and retrieval
+export const normalizeQRData = (data: string): string => {
+  try {
+    // Replace problematic characters that might cause inconsistencies
+    return data.replace(/\+/g, '%2B')
+              .replace(/\//g, '%2F')
+              .replace(/=/g, '%3D');
+  } catch (error) {
+    console.error('Error normalizing QR data:', error);
+    return data;
   }
 };

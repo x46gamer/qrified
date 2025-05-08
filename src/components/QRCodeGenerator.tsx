@@ -79,8 +79,10 @@ const QRCodeGenerator = ({ onQRCodesGenerated, lastSequentialNumber }: QRCodeGen
         const seqNumber = startingNumber + i;
         const uniqueId = generateUniqueId();
         const sequentialNumber = formatSequentialNumber(seqNumber);
+        
+        // Generate raw encrypted data without URL encoding
         const encryptedData = encryptData(uniqueId);
-        const url = `${baseUrl}/product-check/?qr=${encryptedData}`;
+        const url = `${baseUrl}/product-check/?qr=${encodeURIComponent(encryptedData)}`;
         const qrCodeDataUrl = await generateQRCode(url);
         
         const qrCode = {
@@ -96,11 +98,11 @@ const QRCodeGenerator = ({ onQRCodesGenerated, lastSequentialNumber }: QRCodeGen
         
         generatedQRCodes.push(qrCode);
         
-        // Prepare database insert
+        // Prepare database insert with consistent format
         dbInserts.push({
           id: uniqueId,
           sequential_number: sequentialNumber,
-          encrypted_data: encryptedData,
+          encrypted_data: encryptedData, // Store raw encrypted data without encoding
           url: url,
           data_url: qrCodeDataUrl,
           is_enabled: true,
@@ -128,14 +130,16 @@ const QRCodeGenerator = ({ onQRCodesGenerated, lastSequentialNumber }: QRCodeGen
       
       // Verify the first QR code was actually stored
       if (dbInserts.length > 0) {
-        const verificationResult = await debugVerifyQRCodeInDatabase(dbInserts[0].encrypted_data);
+        const firstQrCode = dbInserts[0];
+        const verificationResult = await debugVerifyQRCodeInDatabase(firstQrCode.encrypted_data);
         console.log('Verification of first QR code after insertion:', verificationResult);
         
         if (!verificationResult.exists) {
           console.warn('QR code verification failed after insertion!', {
-            encryptedData: dbInserts[0].encrypted_data,
+            encryptedData: firstQrCode.encrypted_data,
             result: verificationResult
           });
+          // Still continue since we've shown the warning
         }
       }
       
