@@ -1,20 +1,19 @@
+export interface QRCodeData {
+  text: string;
+  template: TemplateType;
+  logo?: string;
+  foregroundColor?: string;
+  backgroundColor?: string;
+}
 
-import { TemplateType } from '@/components/QRCodeTemplates';
+// Make sure TemplateType is exported
+export type TemplateType = 'classic' | 'modern-blue' | 'modern-beige' | 'arabic';
 
 export interface QRCode {
   id: string;
-  sequentialNumber: string; // Ensure this is always a string
-  encryptedData: string;
+  userId: string;
+  data: QRCodeData;
   url: string;
-  isScanned: boolean;
-  isEnabled: boolean;
-  createdAt: string;
-  scannedAt: string | null;
-  dataUrl?: string;
-  template?: TemplateType;
-  headerText?: string;
-  instructionText?: string;
-  websiteUrl?: string;
-  footerText?: string;
-  directionRTL?: boolean;
+  createdAt: Date;
+  updatedAt: Date;
 }

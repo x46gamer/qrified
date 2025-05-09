@@ -12,10 +12,12 @@ import {
   ChevronRight, 
   ChevronDown,
   Users,
-  Home
+  LogOut,
+  Menu
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from './ui/button';
+import { Sidebar as SidebarComponent, SidebarContent, SidebarTrigger, useSidebar } from './ui/sidebar';
 
 interface SidebarItemProps {
   icon: React.ElementType;
@@ -35,6 +37,7 @@ const SidebarItem: React.FC<SidebarItemProps> = ({
   subItems
 }) => {
   const [expanded, setExpanded] = useState(false);
+  const { state } = useSidebar();
   
   const hasSubItems = subItems && subItems.length > 0;
   
@@ -45,6 +48,8 @@ const SidebarItem: React.FC<SidebarItemProps> = ({
     }
     if (onClick) onClick();
   };
+
+  const isCollapsed = state === "collapsed";
 
   return (
     <div className="mb-1">
@@ -59,8 +64,8 @@ const SidebarItem: React.FC<SidebarItemProps> = ({
         onClick={toggleExpand}
       >
         <Icon className={cn("h-5 w-5", active ? "text-white" : "text-blue-500")} />
-        <span className="flex-grow font-medium">{label}</span>
-        {hasSubItems && (
+        {!isCollapsed && <span className="flex-grow font-medium">{label}</span>}
+        {hasSubItems && !isCollapsed && (
           expanded ? (
             <ChevronDown className="h-4 w-4" />
           ) : (
@@ -69,7 +74,7 @@ const SidebarItem: React.FC<SidebarItemProps> = ({
         )}
       </Link>
       
-      {hasSubItems && expanded && (
+      {hasSubItems && expanded && !isCollapsed && (
         <div className="ml-8 mt-1 space-y-1 border-l-2 border-blue-200 pl-2">
           {subItems.map((item, i) => (
             <Link
@@ -88,8 +93,9 @@ const SidebarItem: React.FC<SidebarItemProps> = ({
 
 const Sidebar: React.FC = () => {
   const location = useLocation();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const isAdmin = user?.role === 'admin';
+  const { state, toggleSidebar } = useSidebar();
   
   const isActive = (path: string) => {
     return location.pathname === path;
@@ -100,100 +106,91 @@ const Sidebar: React.FC = () => {
   };
 
   return (
-    <div className="w-64 bg-white/80 backdrop-blur-sm border-r border-gray-100 shadow-md h-full overflow-y-auto py-6 px-2">
-      <div className="mb-8 text-center">
-        <div className="flex justify-center">
-          <h2 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent">
-            seQRity
-          </h2>
-        </div>
-        {user && (
-          <p className="text-sm text-muted-foreground mt-1">
-            Logged in as {user.role}
-          </p>
-        )}
-      </div>
-      
-      <div className="space-y-1">
-        <SidebarItem 
-          icon={Home} 
-          label="Home" 
-          href="/" 
-          active={isActive('/')}
-        />
+    <SidebarComponent>
+      <SidebarContent className="pt-6 px-2">
+        <Button 
+          variant="ghost" 
+          size="icon"
+          className="mb-4 ml-2"
+          onClick={toggleSidebar}
+        >
+          <Menu className="h-5 w-5" />
+          <span className="sr-only">Toggle sidebar</span>
+        </Button>
         
-        <SidebarItem 
-          icon={LayoutDashboard} 
-          label="Dashboard" 
-          href="/dashboard" 
-          active={isActive('/dashboard') && !location.search.includes('tab=')}
-        />
-        
-        <SidebarItem 
-          icon={QrCode} 
-          label="QR Codes" 
-          href="/dashboard?tab=generate" 
-          subItems={[
-            { label: 'Generate', href: '/dashboard?tab=generate' },
-            { label: 'Manage', href: '/dashboard?tab=manage' },
-          ]}
-          active={isDashboardTabActive('generate') || isDashboardTabActive('manage')}
-        />
-        
-        {isAdmin && (
-          <>
-            <SidebarItem 
-              icon={Palette} 
-              label="Appearance" 
-              href="/dashboard?tab=customize" 
-              active={isDashboardTabActive('customize')}
-            />
+        <div className="space-y-1">
+          <SidebarItem 
+            icon={LayoutDashboard} 
+            label="Dashboard" 
+            href="/dashboard" 
+            active={isActive('/dashboard') && !location.search.includes('tab=')}
+          />
           
-            <SidebarItem 
-              icon={BarChart3} 
-              label="Analytics" 
-              href="/dashboard?tab=analytics" 
-              active={isDashboardTabActive('analytics')}
-            />
+          <SidebarItem 
+            icon={QrCode} 
+            label="QR Codes" 
+            href="/dashboard?tab=generate" 
+            subItems={[
+              { label: 'Generate', href: '/dashboard?tab=generate' },
+              { label: 'Manage', href: '/dashboard?tab=manage' },
+            ]}
+            active={isDashboardTabActive('generate') || isDashboardTabActive('manage')}
+          />
+          
+          {isAdmin && (
+            <>
+              <SidebarItem 
+                icon={Palette} 
+                label="Appearance" 
+                href="/dashboard?tab=customize" 
+                active={isDashboardTabActive('customize')}
+              />
+            
+              <SidebarItem 
+                icon={BarChart3} 
+                label="Analytics" 
+                href="/dashboard?tab=analytics" 
+                active={isDashboardTabActive('analytics')}
+              />
 
-            <SidebarItem 
-              icon={Users} 
-              label="Team" 
-              href="/dashboard?tab=team" 
-              active={isDashboardTabActive('team')}
-            />
-          </>
-        )}
-        
-        <SidebarItem 
-          icon={Settings} 
-          label="Settings" 
-          href="/dashboard?tab=settings" 
-          active={isDashboardTabActive('settings')}
-        />
-        
-        <SidebarItem 
-          icon={FileText} 
-          label="About" 
-          href="/about" 
-          active={isActive('/about')}
-        />
-        
-        <SidebarItem 
-          icon={FileText} 
-          label="FAQ" 
-          href="/faq" 
-          active={isActive('/faq')}
-        />
-        
-        <SidebarItem 
-          icon={FileText} 
-          label="Contact" 
-          href="/contact" 
-          active={isActive('/contact')}
-        />
-      </div>
-    </div>
+              <SidebarItem 
+                icon={Users} 
+                label="Team" 
+                href="/dashboard?tab=team" 
+                active={isDashboardTabActive('team')}
+              />
+            </>
+          )}
+          
+          <SidebarItem 
+            icon={Settings} 
+            label="Settings" 
+            href="/dashboard?tab=settings" 
+            subItems={[
+              { label: 'Profile', href: '/dashboard?tab=settings&section=profile' },
+              { label: 'About', href: '/about' },
+              { label: 'FAQ', href: '/faq' },
+              { label: 'Contact', href: '/contact' },
+            ]}
+            active={isDashboardTabActive('settings')}
+          />
+          
+          <div className="mt-auto pt-4">
+            <Button 
+              variant="ghost" 
+              className={cn(
+                "flex w-full items-center gap-3 px-3 py-2 rounded-md transition-all text-gray-700 hover:text-red-600 hover:bg-white/60",
+                state === "collapsed" ? "justify-center" : "justify-start"
+              )}
+              onClick={logout}
+            >
+              <LogOut className="h-5 w-5" />
+              {state !== "collapsed" && <span>Log out</span>}
+            </Button>
+          </div>
+        </div>
+      </SidebarContent>
+    </SidebarComponent>
   );
 };
 

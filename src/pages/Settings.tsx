@@ -5,6 +5,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
+import { ExternalLink } from "lucide-react";
 
 const Settings = () => {
   return (
@@ -15,9 +17,10 @@ const Settings = () => {
       </header>
       
       <Tabs defaultValue="team" className="space-y-8">
-        <TabsList className="grid w-full max-w-md grid-cols-2">
+        <TabsList className="grid w-full max-w-md grid-cols-3">
           <TabsTrigger value="team">Team Management</TabsTrigger>
           <TabsTrigger value="system">System Settings</TabsTrigger>
+          <TabsTrigger value="help">Help & Resources</TabsTrigger>
         </TabsList>
         
         <TabsContent value="team">
@@ -77,6 +80,39 @@ const Settings = () => {
                 </div>
                 
                 <Button>Save Settings</Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="help">
+          <Card>
+            <CardHeader>
+              <CardTitle>Help & Resources</CardTitle>
+              <CardDescription>Get help and find information about our service</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid md:grid-cols-3 gap-4">
+                <Link to="/about" className="block border rounded-lg p-4 hover:bg-blue-50 transition-colors">
+                  <h3 className="font-medium flex items-center">
+                    About Us <ExternalLink className="ml-1 h-4 w-4" />
+                  </h3>
+                  <p className="text-sm text-gray-500 mt-1">Learn more about our company and mission</p>
+                </Link>
+                
+                <Link to="/faq" className="block border rounded-lg p-4 hover:bg-blue-50 transition-colors">
+                  <h3 className="font-medium flex items-center">
+                    Frequently Asked Questions <ExternalLink className="ml-1 h-4 w-4" />
+                  </h3>
+                  <p className="text-sm text-gray-500 mt-1">Find answers to common questions</p>
+                </Link>
+                
+                <Link to="/contact" className="block border rounded-lg p-4 hover:bg-blue-50 transition-colors">
+                  <h3 className="font-medium flex items-center">
+                    Contact Support <ExternalLink className="ml-1 h-4 w-4" />
+                  </h3>
+                  <p className="text-sm text-gray-500 mt-1">Get in touch with our support team</p>
+                </Link>
               </div>
             </CardContent>
           </Card>
