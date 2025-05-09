@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -162,12 +163,10 @@ const LandingPage: React.FC = () => {
       }`}>
         <div className="container mx-auto px-4 flex justify-between items-center">
           <Link to="/" className="flex items-center">
-            <img
-              src="https://files08.oaiusercontent.com/file-CeRPb526gbX59JCdmrAJuf?se=2025-05-09T19%3A19%3A47Z&sp=r&sv=2024-08-04&sr=b&rscc=max-age%3D299%2C%20immutable%2C%20private&rscd=attachment%3B%20filename%3D1fbd5402-f9f9-49b4-90f0-38d70c7dd216.png"
-              alt="SeQRity Logo"
-              className="h-8 w-auto"
-            />
-            <span className="ml-2 text-xs px-2 py-0.5 bg-blue-500/20 text-blue-700 rounded-full font-medium">BETA</span>
+            <h1 className="text-xl font-bold">
+              <span className="bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent">seQRity</span>
+              <span className="ml-2 text-xs px-2 py-0.5 bg-blue-500/20 text-blue-700 rounded-full font-medium">BETA</span>
+            </h1>
           </Link>
           
           <div className="flex items-center gap-3 md:gap-5">
@@ -1059,11 +1058,7 @@ const LandingPage: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
               <h3 className="font-bold text-lg mb-4">
-                <img
-                  src="https://files08.oaiusercontent.com/file-CeRPb526gbX59JCdmrAJuf?se=2025-05-09T19%3A19%3A47Z&sp=r&sv=2024-08-04&sr=b&rscc=max-age%3D299%2C%20immutable%2C%20private&rscd=attachment%3B%20filename%3D1fbd5402-f9f9-49b4-90f0-38d70c7dd216.png"
-                  alt="SeQRity Logo"
-                  className="h-6 w-auto"
-                />
+                <span className="bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent">seQRity</span>
               </h3>
               <p className="text-slate-600 text-sm mb-4">
                 Protect your products with smart QR authentication.

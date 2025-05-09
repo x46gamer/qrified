@@ -5,11 +5,9 @@ import { NavLink, useLocation } from 'react-router-dom';
 import { LayoutDashboard, QrCode, Brush, Settings, Users, ChevronRight, ChevronLeft, Globe, LineChart, MessageSquare } from 'lucide-react';
 import { Button } from './ui/button';
 import { useAuth } from '@/contexts/AuthContext';
-
 interface SidebarProps {
   className?: string;
 }
-
 const Sidebar: React.FC<SidebarProps> = ({
   className
 }) => {
@@ -23,24 +21,18 @@ const Sidebar: React.FC<SidebarProps> = ({
     user
   } = useAuth();
   const isAdmin = user?.role === 'admin';
-
   return <div className={cn('flex flex-col h-full bg-white border-r transition-all duration-300', isOpen ? 'w-64' : 'w-[70px]', className)}>
       <div className="flex-1 overflow-y-clip py-6">
         <div className="flex items-center justify-between px-3 mb-8">
           <div className="flex items-center">
-            <img
-              src="https://files08.oaiusercontent.com/file-CeRPb526gbX59JCdmrAJuf?se=2025-05-09T19%3A19%3A47Z&sp=r&sv=2024-08-04&sr=b&rscc=max-age%3D299%2C%20immutable%2C%20private&rscd=attachment%3B%20filename%3D1fbd5402-f9f9-49b4-90f0-38d70c7dd216.png"
-              alt="SeQRity Logo"
-              className={cn("w-10 h-10 object-contain")}
-            />
+            <div className={cn("w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center text-white font-bold text-xl")}>
+              S
+            </div>
             <span className={cn("ml-3 text-xl font-semibold tracking-tight transition-opacity duration-300", isOpen ? "opacity-100" : "opacity-0")}>
               SeQRity
             </span>
           </div>
-          <Button variant="ghost" size="icon" onClick={toggleSidebar} className="md:hidden">
-            {isOpen ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
-            <span className="sr-only">Toggle Sidebar</span>
-          </Button>
+          
         </div>
 
         <nav className="px-3 space-y-1">
@@ -132,5 +124,4 @@ const Sidebar: React.FC<SidebarProps> = ({
       </div>
     </div>;
 };
-
 export default Sidebar;
