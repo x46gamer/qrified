@@ -26,7 +26,4 @@ export interface QRCode {
   websiteUrl?: string;
   footerText?: string;
   directionRTL?: boolean;
-  arabicHeaderText?: string;
-  arabicInstructionText?: string;
-  arabicFooterText?: string;
 }

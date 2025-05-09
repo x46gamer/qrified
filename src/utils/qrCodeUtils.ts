@@ -1,7 +1,7 @@
 
 import QRCode from 'qrcode';
 import CryptoJS from 'crypto-js';
-import { v4 as uuidv4 } from 'uuid'; 
+import { v4 as uuidv4 } from 'uuid'; // Using browser-compatible uuid package
 
 // Secret key for encryption
 const SECRET_KEY = 'qrcode-secret-key';
@@ -16,6 +16,7 @@ export const encryptData = (data: string): string => {
   console.log('Encrypting data:', data);
   try {
     const encrypted = CryptoJS.AES.encrypt(data, SECRET_KEY).toString();
+    // Important: We're NOT using encodeURIComponent here anymore as it causes issues with validation
     console.log('Encrypted data:', encrypted);
     return encrypted;
   } catch (error) {
@@ -28,6 +29,7 @@ export const encryptData = (data: string): string => {
 export const decryptData = (encryptedData: string): string => {
   try {
     console.log('Decrypting data:', encryptedData);
+    // We're NOT using decodeURIComponent here anymore
     const decrypted = CryptoJS.AES.decrypt(encryptedData, SECRET_KEY).toString(CryptoJS.enc.Utf8);
     console.log('Decrypted data:', decrypted);
     return decrypted;
@@ -37,29 +39,17 @@ export const decryptData = (encryptedData: string): string => {
   }
 };
 
-// Generate QR code as data URL - ALWAYS IN BLACK AND WHITE
-export const generateQRCode = async (data: string, options = {}): Promise<string> => {
+// Generate QR code as data URL
+export const generateQRCode = async (data: string): Promise<string> => {
   try {
-    const defaultOptions = {
+    return await QRCode.toDataURL(data, {
       margin: 1,
       width: 300,
       color: {
         dark: '#000000',
         light: '#ffffff',
       },
-    };
-    
-    // Force black and white colors regardless of passed options
-    const finalOptions = {
-      ...defaultOptions,
-      ...options,
-      color: {
-        dark: '#000000',
-        light: '#ffffff',
-      },
-    };
-    
-    return await QRCode.toDataURL(data, finalOptions);
+    });
   } catch (error) {
     console.error('Error generating QR code:', error);
     throw new Error('Failed to generate QR code');
@@ -67,20 +57,16 @@ export const generateQRCode = async (data: string, options = {}): Promise<string
 };
 
 // Format a 6-digit number with leading zeros
-export const formatSequentialNumber = (number: number | string): string => {
-  if (typeof number === 'number') {
-    return number.toString().padStart(6, '0');
-  }
+export const formatSequentialNumber = (number: number): string => {
   return number.toString().padStart(6, '0');
 };
 
-// Calculate scan rate for analytics
+// Analytics utilities
 export const calculateScanRate = (total: number, scanned: number): number => {
   if (total === 0) return 0;
   return Math.round((scanned / total) * 100);
 };
 
-// Get time ago for display
 export const getTimeAgo = (dateString: string): string => {
   const date = new Date(dateString);
   const now = new Date();
@@ -118,8 +104,9 @@ export const getTimeAgo = (dateString: string): string => {
 export const validateEncryptedData = (encryptedData: string | null): boolean => {
   if (!encryptedData) return false;
   try {
+    // Just check if the string has some length and isn't obviously malformed
     console.log('Validating encrypted data:', encryptedData);
-    return encryptedData.length > 20; 
+    return encryptedData.length > 20; // Simple validation check
   } catch (error) {
     console.error('Invalid encrypted data format:', error);
     return false;
@@ -173,6 +160,19 @@ export const debugVerifyQRCodeInDatabase = async (encryptedData: string) => {
   } catch (e) {
     console.error('Debug verification error:', e);
     return { exists: false, message: `Exception: ${e instanceof Error ? e.message : String(e)}` };
+  }
+};
+
+// Normalize encoded data to ensure consistency between storage and retrieval
+export const normalizeQRData = (data: string): string => {
+  try {
+    // Replace problematic characters that might cause inconsistencies
+    return data.replace(/\+/g, '%2B')
+              .replace(/\//g, '%2F')
+              .replace(/=/g, '%3D');
+  } catch (error) {
+    console.error('Error normalizing QR data:', error);
+    return data;
   }
 };
 
