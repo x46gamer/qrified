@@ -40,14 +40,17 @@ export const decryptData = (encryptedData: string): string => {
 };
 
 // Generate QR code as data URL
-export const generateQRCode = async (data: string): Promise<string> => {
+export const generateQRCode = async (data: string, options?: {
+  primaryColor?: string;
+  secondaryColor?: string;
+}): Promise<string> => {
   try {
     return await QRCode.toDataURL(data, {
       margin: 1,
       width: 300,
       color: {
-        dark: '#000000',
-        light: '#ffffff',
+        dark: options?.primaryColor || '#000000',
+        light: options?.secondaryColor || '#ffffff',
       },
     });
   } catch (error) {

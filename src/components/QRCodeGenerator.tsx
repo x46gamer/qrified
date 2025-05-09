@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,11 +7,10 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ChevronRight, Printer, Download, RefreshCw, Plus } from 'lucide-react';
 import { generateQRCode, encryptData } from '@/utils/qrCodeUtils';
-import { QRCode } from '@/types/qrCode';
+import { QRCode, TemplateType } from '@/types/qrCode';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAppearanceSettings } from '@/contexts/AppearanceContext';
-import { TemplateType } from './QRCodeTemplates';
 import QRCodeTemplatePreview from './QRCodeTemplatePreview';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -123,21 +121,17 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ onQRCodesGenerated, l
         const url = `${window.location.origin}/check?id=${id}`;
         
         // Generate QR code as data URL
-        const dataUrl = await generateQRCode(url, {
-          primaryColor: theme.primaryColor,
-          secondaryColor: theme.secondaryColor
-        });
+        const dataUrl = await generateQRCode(url);
         
         // Create QR code object
         const qrCode: QRCode = {
           id,
-          sequentialNumber: currentSequentialNumber,
+          sequentialNumber: currentSequentialNumber.toString(),
           encryptedData,
           url,
           isScanned: false,
           isEnabled: true,
           createdAt: new Date().toISOString(),
-          scannedAt: null,
           dataUrl,
           template,
           headerText,
@@ -152,23 +146,23 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ onQRCodesGenerated, l
       
       // Insert QR codes into database
       if (newQRCodes.length > 0) {
-        const { error } = await supabase.from('qr_codes').insert(
-          newQRCodes.map(qr => ({
-            id: qr.id,
-            sequential_number: qr.sequentialNumber,
-            encrypted_data: qr.encryptedData,
-            url: qr.url,
-            is_scanned: qr.isScanned,
-            is_enabled: qr.isEnabled,
-            data_url: qr.dataUrl,
-            template: qr.template,
-            header_text: qr.headerText,
-            instruction_text: qr.instructionText,
-            website_url: qr.websiteUrl,
-            footer_text: qr.footerText,
-            direction_rtl: qr.directionRTL
-          }))
-        );
+        const insertData = newQRCodes.map(qr => ({
+          id: qr.id,
+          sequential_number: qr.sequentialNumber.toString(),
+          encrypted_data: qr.encryptedData,
+          url: qr.url,
+          is_scanned: qr.isScanned,
+          is_enabled: qr.isEnabled,
+          data_url: qr.dataUrl,
+          template: qr.template,
+          header_text: qr.headerText,
+          instruction_text: qr.instructionText,
+          website_url: qr.websiteUrl,
+          footer_text: qr.footerText,
+          direction_rtl: qr.directionRTL
+        }));
+        
+        const { error } = await supabase.from('qr_codes').insert(insertData);
         
         if (error) {
           throw error;
@@ -269,7 +263,19 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ onQRCodesGenerated, l
                         type="file" 
                         accept=".txt,.csv" 
                         ref={fileInputRef}
-                        onChange={handleFileUpload}
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          
+                          const reader = new FileReader();
+                          reader.onload = (event) => {
+                            const text = event.target?.result as string;
+                            const lines = text.split(/\r?\n/).filter(line => line.trim() !== '');
+                            setBulkProducts(lines);
+                            toast.success(`Loaded ${lines.length} product codes`);
+                          };
+                          reader.readAsText(file);
+                        }}
                         className="hidden"
                       />
                       <div className="grid grid-cols-2 gap-2">
@@ -394,10 +400,12 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ onQRCodesGenerated, l
             <CardContent className="flex justify-center pt-4">
               <QRCodeTemplatePreview 
                 template={template}
-                value={previewQrValue}
-                primaryColor={theme.primaryColor}
-                secondaryColor={theme.secondaryColor}
-                size={180}
+                qrCodeDataUrl={previewQrValue}
+                headerText={headerText || ""}
+                instructionText={instructionText || ""}
+                websiteUrl={websiteUrl || ""}
+                footerText={footerText || ""}
+                directionRTL={directionRTL || false}
               />
             </CardContent>
             <CardFooter className="flex flex-col gap-2">
