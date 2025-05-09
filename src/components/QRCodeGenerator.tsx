@@ -9,11 +9,11 @@ import { useForm } from "react-hook-form";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import QRCodeTemplatePreview from './QRCodeTemplatePreview';
 import { ShieldCheck, Loader2, QrCode } from 'lucide-react';
-import { TemplateType } from '@/types/qrCode';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { generateQRCodeImage, encryptData } from '@/utils/qrCodeUtils';
 import { supabase } from '@/integrations/supabase/client';
 import { v4 as uuidv4 } from 'uuid';
+import { TemplateType } from '@/types/qrCode';
 
 interface QRCodeGeneratorProps {
   onQRCodesGenerated: (qrCodes: any[]) => void;

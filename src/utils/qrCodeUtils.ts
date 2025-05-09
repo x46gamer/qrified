@@ -56,6 +56,30 @@ export const generateQRCode = async (data: string): Promise<string> => {
   }
 };
 
+// Generate QR code with template options - This is the missing function that was being imported
+export const generateQRCodeImage = async (data: string, options?: {
+  template?: string;
+  primaryColor?: string;
+  secondaryColor?: string;
+  size?: number;
+}): Promise<string> => {
+  try {
+    // For now, just use the basic QR code generator
+    // Template styling will be applied on the frontend
+    return await QRCode.toDataURL(data, {
+      margin: 1,
+      width: options?.size || 300,
+      color: {
+        dark: options?.primaryColor || '#000000',
+        light: '#ffffff',
+      },
+    });
+  } catch (error) {
+    console.error('Error generating QR code with template:', error);
+    throw new Error('Failed to generate QR code with template');
+  }
+};
+
 // Format a 6-digit number with leading zeros
 export const formatSequentialNumber = (number: number): string => {
   return number.toString().padStart(6, '0');
