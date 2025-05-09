@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,6 +12,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { AlertCircle, Upload } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
+import { Link } from 'react-router-dom';
+import { FileText } from "lucide-react";
 
 export type ThemeSettings = {
   // Color settings
@@ -305,6 +306,7 @@ export const AppearanceSettings = () => {
         </div>
         
         <CardContent className="space-y-6 pt-6">
+          
           <TabsContent value="general" className="space-y-6">
             {/* RTL Support */}
             <div className="flex items-center justify-between">
@@ -383,6 +385,83 @@ export const AppearanceSettings = () => {
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription>{uploadError}</AlertDescription>
                 </Alert>
+              )}
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="features" className="space-y-6">
+            {/* Reviews Feature Toggle */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="enable-reviews">Enable Reviews</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Allow customers to leave reviews after product verification
+                  </p>
+                </div>
+                <Switch 
+                  id="enable-reviews"
+                  checked={theme.enableReviews}
+                  onCheckedChange={(checked) => handleToggleChange(checked, 'enableReviews')}
+                />
+              </div>
+
+              {theme.enableReviews && (
+                <div className="ml-6 pl-2 border-l-2 border-primary/20">
+                  <p className="text-sm text-muted-foreground mb-2">
+                    When enabled, a review form will be displayed on the success page allowing customers to:
+                  </p>
+                  <ul className="text-sm text-muted-foreground list-disc list-inside space-y-1">
+                    <li>Rate their purchase with stars</li>
+                    <li>Upload product photos</li>
+                    <li>Leave text comments</li>
+                  </ul>
+                  
+                  <div className="mt-4">
+                    <Link to="/admin/feedback">
+                      <Button variant="outline" size="sm" className="flex items-center gap-2">
+                        <FileText className="h-4 w-4" />
+                        View All Reviews
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <Separator />
+
+            {/* Feedback Feature Toggle */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="enable-feedback">Enable Feedback Form</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Allow customers to submit improvement suggestions
+                  </p>
+                </div>
+                <Switch 
+                  id="enable-feedback"
+                  checked={theme.enableFeedback}
+                  onCheckedChange={(checked) => handleToggleChange(checked, 'enableFeedback')}
+                />
+              </div>
+
+              {theme.enableFeedback && (
+                <div className="ml-6 pl-2 border-l-2 border-primary/20">
+                  <p className="text-sm text-muted-foreground mb-2">
+                    When enabled, a feedback form will be shown on the success page for customers to suggest improvements.
+                  </p>
+                  
+                  <div className="mt-4">
+                    <Link to="/admin/feedback">
+                      <Button variant="outline" size="sm" className="flex items-center gap-2">
+                        <FileText className="h-4 w-4" />
+                        View All Feedback
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
               )}
             </div>
           </TabsContent>
@@ -478,67 +557,70 @@ export const AppearanceSettings = () => {
               </p>
             </div>
           </TabsContent>
-          
-          <TabsContent value="features" className="space-y-6">
-            {/* Reviews Feature Toggle */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label htmlFor="enable-reviews">Enable Reviews</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Allow customers to leave reviews after product verification
-                  </p>
-                </div>
-                <Switch 
-                  id="enable-reviews"
-                  checked={theme.enableReviews}
-                  onCheckedChange={(checked) => handleToggleChange(checked, 'enableReviews')}
-                />
-              </div>
-
-              {theme.enableReviews && (
-                <div className="ml-6 pl-2 border-l-2 border-primary/20">
-                  <p className="text-sm text-muted-foreground mb-2">
-                    When enabled, a review form will be displayed on the success page allowing customers to:
-                  </p>
-                  <ul className="text-sm text-muted-foreground list-disc list-inside space-y-1">
-                    <li>Rate their purchase with stars</li>
-                    <li>Upload product photos</li>
-                    <li>Leave text comments</li>
-                  </ul>
-                </div>
-              )}
-            </div>
-
-            <Separator />
-
-            {/* Feedback Feature Toggle */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label htmlFor="enable-feedback">Enable Feedback Form</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Allow customers to submit improvement suggestions
-                  </p>
-                </div>
-                <Switch 
-                  id="enable-feedback"
-                  checked={theme.enableFeedback}
-                  onCheckedChange={(checked) => handleToggleChange(checked, 'enableFeedback')}
-                />
-              </div>
-
-              {theme.enableFeedback && (
-                <div className="ml-6 pl-2 border-l-2 border-primary/20">
-                  <p className="text-sm text-muted-foreground mb-2">
-                    When enabled, a feedback form will be shown on the success page for customers to suggest improvements.
-                  </p>
-                </div>
-              )}
-            </div>
-          </TabsContent>
         </CardContent>
       </Tabs>
+      
+      {/* Preview Section */}
+      <div className="px-6 pb-6 pt-2">
+        <h3 className="text-lg font-medium mb-4">Page Previews</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="border rounded-lg p-4">
+            <h4 className="text-center text-sm font-medium mb-2">Valid Product Preview</h4>
+            <div className="mt-2 rounded-lg p-4" style={{ backgroundColor: theme.successBackground }}>
+              <div className="flex justify-center">
+                {logoPreview && (
+                  <img 
+                    src={logoPreview} 
+                    alt="Brand logo" 
+                    className="max-h-10 mb-2 object-contain" 
+                  />
+                )}
+              </div>
+              <div className="flex justify-center">
+                <div className="w-12 h-12 rounded-full" style={{ backgroundColor: theme.successIcon, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="white">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+              </div>
+              <h3 className="mt-2 text-base font-bold text-center" style={{ color: theme.successText }}>
+                {theme.successTitle}
+              </h3>
+              <p className="mt-1 text-xs text-center" style={{ color: theme.successText }}>
+                {theme.successDescription}
+              </p>
+            </div>
+          </div>
+          
+          <div className="border rounded-lg p-4">
+            <h4 className="text-center text-sm font-medium mb-2">Invalid Product Preview</h4>
+            <div className="mt-2 rounded-lg p-4" style={{ backgroundColor: theme.failureBackground }}>
+              <div className="flex justify-center">
+                {logoPreview && (
+                  <img 
+                    src={logoPreview} 
+                    alt="Brand logo" 
+                    className="max-h-10 mb-2 object-contain" 
+                  />
+                )}
+              </div>
+              <div className="flex justify-center">
+                <div className="w-12 h-12 rounded-full" style={{ backgroundColor: theme.failureIcon, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="white">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </div>
+              </div>
+              <h3 className="mt-2 text-base font-bold text-center" style={{ color: theme.failureText }}>
+                {theme.failureTitle}
+              </h3>
+              <p className="mt-1 text-xs text-center" style={{ color: theme.failureText }}>
+                {theme.failureDescription}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
       
       <CardFooter className="flex justify-between">
         <Button variant="outline" onClick={handleReset} disabled={isSaving}>

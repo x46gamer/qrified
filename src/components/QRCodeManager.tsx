@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +10,7 @@ import { toast } from "sonner";
 import { supabase } from '@/integrations/supabase/client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Eye, Settings } from "lucide-react";
+import { Eye, Settings, FileText } from "lucide-react";
 import { generateQRCode } from '@/utils/qrCodeUtils';
 import { Link } from 'react-router-dom';
 
@@ -117,6 +118,12 @@ const QRCodeManager = ({ qrCodes, onUpdateQRCode, onRefresh }: QRCodeManagerProp
             <Button variant="outline" size="sm" className="flex items-center gap-2">
               <Settings className="h-4 w-4" />
               Customize App
+            </Button>
+          </Link>
+          <Link to="/admin/feedback">
+            <Button variant="outline" size="sm" className="flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              View Feedback
             </Button>
           </Link>
           <div className="w-full sm:w-64">

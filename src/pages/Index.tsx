@@ -8,6 +8,9 @@ import QRCodeAnalytics from '@/components/QRCodeAnalytics';
 import { QRCode } from '@/types/qrCode';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from "sonner";
+import { Link } from 'react-router-dom';
+import { FileText } from "lucide-react";
+import { Button } from '@/components/ui/button';
 
 const Index = () => {
   const [qrCodes, setQRCodes] = useState<QRCode[]>([]);
@@ -128,8 +131,8 @@ const Index = () => {
       <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-8">
         <TabsList className="grid w-full max-w-md mx-auto grid-cols-4">
           <TabsTrigger value="generate">Generate</TabsTrigger>
-          <TabsTrigger value="preview">Preview</TabsTrigger>
           <TabsTrigger value="manage">Manage</TabsTrigger>
+          <TabsTrigger value="customize">Customize</TabsTrigger>
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
         </TabsList>
         
@@ -144,44 +147,38 @@ const Index = () => {
           )}
         </TabsContent>
         
-        <TabsContent value="preview">
-          <div className="flex flex-col space-y-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="border rounded-lg p-6 bg-green-50">
-                <h2 className="text-xl font-semibold mb-4 text-center">Valid Product Page</h2>
-                <div className="border-2 border-green-500 rounded-lg p-6 flex flex-col items-center space-y-4">
-                  <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                  </div>
-                  <h3 className="text-2xl font-bold text-green-700">Product Verified</h3>
-                  <p className="text-center">This product is legitimate and original</p>
-                </div>
-              </div>
-              
-              <div className="border rounded-lg p-6 bg-red-50">
-                <h2 className="text-xl font-semibold mb-4 text-center">Invalid Product Page</h2>
-                <div className="border-2 border-red-500 rounded-lg p-6 flex flex-col items-center space-y-4">
-                  <div className="w-16 h-16 bg-red-500 rounded-full flex items-center justify-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </div>
-                  <h3 className="text-2xl font-bold text-red-700">Not Authentic</h3>
-                  <p className="text-center">This product is not original or has been previously verified</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </TabsContent>
-        
         <TabsContent value="manage">
           <QRCodeManager 
             qrCodes={qrCodes}
             onUpdateQRCode={handleUpdateQRCode}
             onRefresh={fetchQRCodes}
           />
+        </TabsContent>
+        
+        <TabsContent value="customize">
+          <div className="flex flex-col items-center justify-center py-8 space-y-6">
+            <div className="text-center space-y-4">
+              <h2 className="text-2xl font-bold">Customize the App Experience</h2>
+              <p className="text-muted-foreground max-w-lg">
+                Configure the appearance of verification pages, enable reviews and feedback, and more.
+              </p>
+            </div>
+            
+            <div className="flex flex-col gap-6 w-full max-w-lg">
+              <Link to="/customize" className="w-full">
+                <Button className="w-full h-16 text-lg" size="lg">
+                  App Appearance Settings
+                </Button>
+              </Link>
+              
+              <Link to="/admin/feedback" className="w-full">
+                <Button className="w-full h-16 text-lg flex items-center justify-center" variant="outline" size="lg">
+                  <FileText className="mr-2 h-5 w-5" />
+                  View Reviews & Feedback
+                </Button>
+              </Link>
+            </div>
+          </div>
         </TabsContent>
         
         <TabsContent value="analytics">
