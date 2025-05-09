@@ -1,3 +1,4 @@
+
 export interface QRCodeData {
   text: string;
   template: TemplateType;
@@ -16,4 +17,18 @@ export interface QRCode {
   url: string;
   createdAt: Date;
   updatedAt: Date;
+  
+  // Additional properties that are used in the application
+  sequentialNumber?: string | number;
+  encryptedData?: string;
+  isScanned?: boolean;
+  isEnabled?: boolean;
+  scannedAt?: Date | string;
+  dataUrl?: string;
+  template?: TemplateType;
+  headerText?: string;
+  instructionText?: string;
+  websiteUrl?: string;
+  footerText?: string;
+  directionRTL?: boolean;
 }
