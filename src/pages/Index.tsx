@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import QRCodeGenerator from '@/components/QRCodeGenerator';
@@ -9,6 +8,7 @@ import { AppearanceSettings } from '@/components/AppearanceSettings';
 import { QRCode } from '@/types/qrCode';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from "sonner";
+import { TemplateType } from '@/components/QRCodeTemplates';
 
 const Index = () => {
   const [qrCodes, setQRCodes] = useState<QRCode[]>([]);
@@ -40,7 +40,7 @@ const Index = () => {
       
       if (data) {
         // Map database fields to our app's QRCode type
-        const mappedQrCodes = data.map(qr => ({
+        const mappedQrCodes: QRCode[] = data.map(qr => ({
           id: qr.id,
           sequentialNumber: qr.sequential_number,
           encryptedData: qr.encrypted_data,
@@ -50,7 +50,7 @@ const Index = () => {
           createdAt: qr.created_at,
           scannedAt: qr.scanned_at,
           dataUrl: qr.data_url,
-          template: qr.template,
+          template: qr.template as TemplateType,
           headerText: qr.header_text,
           instructionText: qr.instruction_text,
           websiteUrl: qr.website_url,

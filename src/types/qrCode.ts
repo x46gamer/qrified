@@ -11,7 +11,7 @@ export interface QRCode {
   dataUrl?: string;
   
   // Template settings
-  template?: 'classic' | 'modern-blue' | 'modern-beige' | 'arabic';
+  template?: 'classic' | 'modern-blue' | 'modern-beige' | 'arabic' | string;
   headerText?: string;
   instructionText?: string;
   websiteUrl?: string;

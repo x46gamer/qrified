@@ -1,9 +1,8 @@
-
 import React from 'react';
 import { TemplateType } from './QRCodeTemplates';
 
 interface QRCodeTemplatePreviewProps {
-  template: TemplateType;
+  template: TemplateType | string;
   qrCodeDataUrl: string;
   headerText: string;
   instructionText: string;
