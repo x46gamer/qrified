@@ -22,6 +22,8 @@ import { AuthProvider } from './contexts/AuthContext';
 import AppLayout from './components/AppLayout';
 import DashboardLayout from './components/DashboardLayout';
 import { SidebarProvider } from './components/ui/sidebar';
+import DomainSettings from './pages/DomainSettings';
+import Settings from './pages/Settings';
 
 function App() {
   return (
@@ -60,6 +62,30 @@ function App() {
                   <SidebarProvider>
                     <DashboardLayout>
                       <CustomizeApp />
+                    </DashboardLayout>
+                  </SidebarProvider>
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="/settings"
+              element={
+                <AuthGuard>
+                  <SidebarProvider>
+                    <DashboardLayout>
+                      <Settings />
+                    </DashboardLayout>
+                  </SidebarProvider>
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="/domains"
+              element={
+                <AuthGuard>
+                  <SidebarProvider>
+                    <DashboardLayout>
+                      <DomainSettings />
                     </DashboardLayout>
                   </SidebarProvider>
                 </AuthGuard>
