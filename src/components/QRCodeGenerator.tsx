@@ -370,6 +370,7 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ onQRCodesGenerated, l
                 qrCodeDataUrl=""
                 headerText={template === 'arabic' ? arabicHeaderText : headerText}
                 instructionText={template === 'arabic' ? arabicInstructionText : instructionText}
+                websiteUrl={websiteUrl}
                 footerText={template === 'arabic' ? arabicFooterText : footerText}
                 directionRTL={template === 'arabic' ? true : directionRTL}
                 size={180}

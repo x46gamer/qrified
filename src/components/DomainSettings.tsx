@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,15 +9,7 @@ import { toast } from "sonner";
 import { v4 as uuidv4 } from 'uuid';
 import { Loader2, Check, X, ExternalLink, Repeat } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-
-interface Domain {
-  id: string;
-  domain: string;
-  status: 'pending' | 'verified' | 'failed';
-  verification_token: string;
-  created_at: string;
-  verified_at: string | null;
-}
+import { Domain, domainService } from "@/services/domainService";
 
 const DomainSettings = () => {
   const { user } = useAuth();
@@ -39,16 +30,9 @@ const DomainSettings = () => {
     try {
       setIsLoading(true);
       
-      const { data, error } = await supabase
-        .from('custom_domains')
-        .select('*')
-        .order('created_at', { ascending: false });
-      
-      if (error) {
-        throw error;
-      }
-      
-      setDomains(data || []);
+      // Using the domainService to load domains
+      const domainsData = await domainService.getUserDomains();
+      setDomains(domainsData);
     } catch (error) {
       console.error('Error loading domains:', error);
       toast.error('Failed to load domains');
@@ -68,32 +52,21 @@ const DomainSettings = () => {
     try {
       setIsAdding(true);
       
-      // Generate verification token
-      const verificationToken = uuidv4();
-      
-      const { error } = await supabase
-        .from('custom_domains')
-        .insert({
-          user_id: user!.id,
-          domain: newDomain.trim(),
-          verification_token: verificationToken
-        });
-      
-      if (error) {
-        if (error.code === '23505') {
-          toast.error('This domain is already in use');
-        } else {
-          throw error;
-        }
-        return;
-      }
+      // Using the domainService to add a domain
+      await domainService.addDomain(newDomain.trim());
       
       setNewDomain('');
       await loadDomains();
       toast.success('Domain added. Please verify ownership.');
     } catch (error) {
       console.error('Error adding domain:', error);
-      toast.error('Failed to add domain');
+      
+      // Check for duplicate domain error
+      if (error instanceof Error && error.message.includes('23505')) {
+        toast.error('This domain is already in use');
+      } else {
+        toast.error('Failed to add domain');
+      }
     } finally {
       setIsAdding(false);
     }
@@ -103,36 +76,24 @@ const DomainSettings = () => {
     try {
       setIsVerifying(prev => ({ ...prev, [domainId]: true }));
       
-      const domain = domains.find(d => d.id === domainId);
-      if (!domain) return;
+      const verified = await domainService.verifyDomain(domainId);
       
-      // Simulate verification process
-      // In a real application, this would call an edge function to verify DNS records
-      const { error } = await supabase
-        .from('custom_domains')
-        .update({
-          status: 'verified',
-          verified_at: new Date().toISOString()
-        })
-        .eq('id', domainId);
-      
-      if (error) {
-        throw error;
+      if (verified) {
+        await loadDomains();
+        toast.success('Domain verified successfully');
+      } else {
+        // Mark as failed
+        await supabase
+          .from('custom_domains')
+          .update({ status: 'failed' })
+          .eq('id', domainId);
+        
+        await loadDomains();
+        toast.error('Domain verification failed');
       }
-      
-      await loadDomains();
-      toast.success('Domain verified successfully');
     } catch (error) {
       console.error('Error verifying domain:', error);
       toast.error('Domain verification failed');
-      
-      // Mark as failed
-      await supabase
-        .from('custom_domains')
-        .update({ status: 'failed' })
-        .eq('id', domainId);
-      
-      await loadDomains();
     } finally {
       setIsVerifying(prev => ({ ...prev, [domainId]: false }));
     }
@@ -140,15 +101,7 @@ const DomainSettings = () => {
 
   const deleteDomain = async (domainId: string) => {
     try {
-      const { error } = await supabase
-        .from('custom_domains')
-        .delete()
-        .eq('id', domainId);
-      
-      if (error) {
-        throw error;
-      }
-      
+      await domainService.deleteDomain(domainId);
       await loadDomains();
       toast.success('Domain removed');
     } catch (error) {
@@ -157,7 +110,7 @@ const DomainSettings = () => {
     }
   };
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: 'pending' | 'verified' | 'failed') => {
     switch (status) {
       case 'verified':
         return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Verified</Badge>;
