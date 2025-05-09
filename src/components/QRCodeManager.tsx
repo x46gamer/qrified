@@ -9,8 +9,9 @@ import { toast } from "sonner";
 import { supabase } from '@/integrations/supabase/client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Eye } from "lucide-react";
+import { Eye, Settings } from "lucide-react";
 import { generateQRCode } from '@/utils/qrCodeUtils';
+import { Link } from 'react-router-dom';
 
 interface QRCodeManagerProps {
   qrCodes: QRCode[];
@@ -111,12 +112,20 @@ const QRCodeManager = ({ qrCodes, onUpdateQRCode, onRefresh }: QRCodeManagerProp
     <div className="w-full">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <h2 className="text-2xl font-semibold">QR Code Management</h2>
-        <div className="w-full sm:w-64">
-          <Input
-            placeholder="Search by number..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+        <div className="flex items-center gap-2 sm:gap-4">
+          <Link to="/customize">
+            <Button variant="outline" size="sm" className="flex items-center gap-2">
+              <Settings className="h-4 w-4" />
+              Customize App
+            </Button>
+          </Link>
+          <div className="w-full sm:w-64">
+            <Input
+              placeholder="Search by number..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
         </div>
       </div>
       

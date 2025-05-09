@@ -6,6 +6,16 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
+// Default theme colors
+const defaultTheme = {
+  successBackground: "#f0fdf4", // green-50
+  successText: "#16a34a", // green-600
+  successIcon: "#22c55e", // green-500
+  failureBackground: "#fef2f2", // red-50
+  failureText: "#dc2626", // red-600
+  failureIcon: "#ef4444", // red-500
+};
+
 const ProductCheck = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -14,6 +24,33 @@ const ProductCheck = () => {
   const [debugInfo, setDebugInfo] = useState<string | null>(null);
   const [rawEncryptedData, setRawEncryptedData] = useState<string | null>(null);
   const [detailedDebugInfo, setDetailedDebugInfo] = useState<any>(null);
+  const [theme, setTheme] = useState(defaultTheme);
+
+  useEffect(() => {
+    // Fetch theme settings from the database
+    const fetchThemeSettings = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('app_settings')
+          .select('settings')
+          .eq('id', 'theme')
+          .maybeSingle();
+        
+        if (error) {
+          console.error('Error fetching theme settings:', error);
+          return;
+        }
+        
+        if (data && data.settings) {
+          setTheme(data.settings);
+        }
+      } catch (error) {
+        console.error('Failed to load theme settings:', error);
+      }
+    };
+
+    fetchThemeSettings();
+  }, []);
 
   useEffect(() => {
     const validateQRCode = async () => {
@@ -154,25 +191,25 @@ const ProductCheck = () => {
 
   if (isValid === true) {
     return (
-      <div className="min-h-screen bg-green-50 flex flex-col items-center justify-center p-4">
+      <div className="min-h-screen flex flex-col items-center justify-center p-4" style={{ backgroundColor: theme.successBackground }}>
         <div className="max-w-md w-full mx-auto bg-white rounded-xl shadow-lg overflow-hidden">
           <div className="p-8">
             <div className="flex justify-center">
-              <div className="w-24 h-24 bg-green-500 rounded-full flex items-center justify-center">
+              <div className="w-24 h-24 rounded-full flex items-center justify-center" style={{ backgroundColor: theme.successIcon }}>
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
             </div>
             
-            <h1 className="mt-6 text-3xl font-bold text-center text-green-600">Product Verified</h1>
+            <h1 className="mt-6 text-3xl font-bold text-center" style={{ color: theme.successText }}>Product Verified</h1>
             
             <p className="mt-4 text-lg text-center">
               This product is legitimate and original. Thank you for checking its authenticity.
             </p>
             
-            <div className="mt-8 bg-green-50 p-4 rounded-lg">
-              <p className="text-sm text-center text-green-800">
+            <div className="mt-8 p-4 rounded-lg" style={{ backgroundColor: `${theme.successBackground}` }}>
+              <p className="text-sm text-center" style={{ color: theme.successText }}>
                 This QR code has been marked as used and cannot be verified again.
               </p>
             </div>
@@ -192,44 +229,44 @@ const ProductCheck = () => {
   }
   
   return (
-    <div className="min-h-screen bg-red-50 flex flex-col items-center justify-center p-4">
+    <div className="min-h-screen flex flex-col items-center justify-center p-4" style={{ backgroundColor: theme.failureBackground }}>
       <div className="max-w-md w-full mx-auto bg-white rounded-xl shadow-lg overflow-hidden">
         <div className="p-8">
           <div className="flex justify-center">
-            <div className="w-24 h-24 bg-red-500 rounded-full flex items-center justify-center">
+            <div className="w-24 h-24 rounded-full flex items-center justify-center" style={{ backgroundColor: theme.failureIcon }}>
               <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </div>
           </div>
           
-          <h1 className="mt-6 text-3xl font-bold text-center text-red-600">Not Authentic</h1>
+          <h1 className="mt-6 text-3xl font-bold text-center" style={{ color: theme.failureText }}>Not Authentic</h1>
           
           <p className="mt-4 text-lg text-center">
             This product could not be verified as authentic. It may be counterfeit or has been previously verified.
           </p>
           
           <div className="mt-8 p-4 rounded-lg">
-            <p className="text-sm text-center text-red-800">
+            <p className="text-sm text-center" style={{ color: theme.failureText }}>
               If you believe this is an error, please contact the product manufacturer.
             </p>
             {debugInfo && (
-              <Alert className="mt-3 bg-red-50 border-red-200">
-                <AlertDescription className="text-xs text-red-700">
+              <Alert className="mt-3 border-red-200" style={{ backgroundColor: `${theme.failureBackground}40` }}>
+                <AlertDescription className="text-xs" style={{ color: theme.failureText }}>
                   Debug info: {debugInfo}
                 </AlertDescription>
               </Alert>
             )}
             {rawEncryptedData && (
-              <Alert className="mt-3 bg-red-50 border-red-200">
-                <AlertDescription className="text-xs text-red-700 break-all">
+              <Alert className="mt-3 border-red-200" style={{ backgroundColor: `${theme.failureBackground}40` }}>
+                <AlertDescription className="text-xs break-all" style={{ color: theme.failureText }}>
                   Raw QR code: {rawEncryptedData}
                 </AlertDescription>
               </Alert>
             )}
             {detailedDebugInfo && (
-              <Alert className="mt-3 bg-red-50 border-red-200">
-                <AlertDescription className="text-xs text-red-700">
+              <Alert className="mt-3 border-red-200" style={{ backgroundColor: `${theme.failureBackground}40` }}>
+                <AlertDescription className="text-xs" style={{ color: theme.failureText }}>
                   <details>
                     <summary>Detailed debug info (click to expand)</summary>
                     <pre className="text-xs mt-2 overflow-x-auto">
