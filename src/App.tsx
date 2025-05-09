@@ -18,6 +18,8 @@ import AuthGuard from './components/AuthGuard';
 import { Toaster } from 'sonner';
 import { AppearanceSettingsProvider } from './contexts/AppearanceContext';
 import { AuthProvider } from './contexts/AuthContext';
+import AppLayout from './components/AppLayout';
+import DashboardLayout from './components/DashboardLayout';
 
 function App() {
   return (
@@ -25,22 +27,24 @@ function App() {
       <AppearanceSettingsProvider>
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/about" element={<AboutPage />} />
-            <Route path="/faq" element={<FAQPage />} />
-            <Route path="/privacy" element={<PrivacyPolicyPage />} />
-            <Route path="/terms" element={<TermsOfServicePage />} />
-            <Route path="/refund" element={<RefundPolicyPage />} />
-            <Route path="/contact" element={<ContactPage />} />
-            <Route path="/blog" element={<BlogPage />} />
+            <Route path="/" element={<AppLayout><LandingPage /></AppLayout>} />
+            <Route path="/about" element={<AppLayout><AboutPage /></AppLayout>} />
+            <Route path="/faq" element={<AppLayout><FAQPage /></AppLayout>} />
+            <Route path="/privacy" element={<AppLayout><PrivacyPolicyPage /></AppLayout>} />
+            <Route path="/terms" element={<AppLayout><TermsOfServicePage /></AppLayout>} />
+            <Route path="/refund" element={<AppLayout><RefundPolicyPage /></AppLayout>} />
+            <Route path="/contact" element={<AppLayout><ContactPage /></AppLayout>} />
+            <Route path="/blog" element={<AppLayout><BlogPage /></AppLayout>} />
             <Route path="/check" element={<ProductCheck />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
+            <Route path="/login" element={<AppLayout><Login /></AppLayout>} />
+            <Route path="/signup" element={<AppLayout><Signup /></AppLayout>} />
             <Route
               path="/dashboard"
               element={
                 <AuthGuard>
-                  <Index />
+                  <DashboardLayout>
+                    <Index />
+                  </DashboardLayout>
                 </AuthGuard>
               }
             />
@@ -48,7 +52,9 @@ function App() {
               path="/customize"
               element={
                 <AuthGuard>
-                  <CustomizeApp />
+                  <DashboardLayout>
+                    <CustomizeApp />
+                  </DashboardLayout>
                 </AuthGuard>
               }
             />

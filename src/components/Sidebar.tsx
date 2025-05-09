@@ -11,7 +11,8 @@ import {
   Palette, 
   ChevronRight, 
   ChevronDown,
-  Users
+  Users,
+  Home
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from './ui/button';
@@ -94,6 +95,10 @@ const Sidebar: React.FC = () => {
     return location.pathname === path;
   };
 
+  const isDashboardTabActive = (tab: string) => {
+    return location.pathname === '/dashboard' && location.search.includes(`tab=${tab}`);
+  };
+
   return (
     <div className="w-64 bg-white/80 backdrop-blur-sm border-r border-gray-100 shadow-md h-full overflow-y-auto py-6 px-2">
       <div className="mb-8 text-center">
@@ -111,24 +116,28 @@ const Sidebar: React.FC = () => {
       
       <div className="space-y-1">
         <SidebarItem 
+          icon={Home} 
+          label="Home" 
+          href="/" 
+          active={isActive('/')}
+        />
+        
+        <SidebarItem 
           icon={LayoutDashboard} 
           label="Dashboard" 
           href="/dashboard" 
-          active={isActive('/dashboard')}
+          active={isActive('/dashboard') && !location.search.includes('tab=')}
         />
         
         <SidebarItem 
           icon={QrCode} 
           label="QR Codes" 
-          href="#" 
+          href="/dashboard?tab=generate" 
           subItems={[
             { label: 'Generate', href: '/dashboard?tab=generate' },
             { label: 'Manage', href: '/dashboard?tab=manage' },
           ]}
-          active={location.pathname === '/dashboard' && (
-            location.search.includes('tab=generate') || 
-            location.search.includes('tab=manage')
-          )}
+          active={isDashboardTabActive('generate') || isDashboardTabActive('manage')}
         />
         
         {isAdmin && (
@@ -137,28 +146,21 @@ const Sidebar: React.FC = () => {
               icon={Palette} 
               label="Appearance" 
               href="/dashboard?tab=customize" 
-              active={location.pathname === '/dashboard' && location.search.includes('tab=customize')}
+              active={isDashboardTabActive('customize')}
             />
           
             <SidebarItem 
               icon={BarChart3} 
               label="Analytics" 
               href="/dashboard?tab=analytics" 
-              active={location.pathname === '/dashboard' && location.search.includes('tab=analytics')}
+              active={isDashboardTabActive('analytics')}
             />
 
             <SidebarItem 
               icon={Users} 
               label="Team" 
               href="/dashboard?tab=team" 
-              active={location.pathname === '/dashboard' && location.search.includes('tab=team')}
-            />
-            
-            <SidebarItem 
-              icon={FileText} 
-              label="Feedback" 
-              href="/admin/feedback" 
-              active={isActive('/admin/feedback')}
+              active={isDashboardTabActive('team')}
             />
           </>
         )}
@@ -167,7 +169,28 @@ const Sidebar: React.FC = () => {
           icon={Settings} 
           label="Settings" 
           href="/dashboard?tab=settings" 
-          active={location.pathname === '/dashboard' && location.search.includes('tab=settings')}
+          active={isDashboardTabActive('settings')}
+        />
+        
+        <SidebarItem 
+          icon={FileText} 
+          label="About" 
+          href="/about" 
+          active={isActive('/about')}
+        />
+        
+        <SidebarItem 
+          icon={FileText} 
+          label="FAQ" 
+          href="/faq" 
+          active={isActive('/faq')}
+        />
+        
+        <SidebarItem 
+          icon={FileText} 
+          label="Contact" 
+          href="/contact" 
+          active={isActive('/contact')}
         />
       </div>
     </div>

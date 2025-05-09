@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -10,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import ReviewForm from '@/components/ReviewForm';
 import { useAppearanceSettings } from '@/contexts/AppearanceContext';
 import type { ThemeSettings } from '@/contexts/AppearanceContext';
+import { TemplateType } from '@/types/qrCode';
 
 const ProductCheck = () => {
   const [searchParams] = useSearchParams();
@@ -43,6 +43,8 @@ const ProductCheck = () => {
         
         // Map database fields to our app's QRCode type
         if (data) {
+          const templateValue = data.template as TemplateType || 'classic';
+          
           const mappedQr: QRCode = {
             id: data.id,
             sequentialNumber: data.sequential_number,
@@ -53,7 +55,7 @@ const ProductCheck = () => {
             createdAt: data.created_at,
             scannedAt: data.scanned_at,
             dataUrl: data.data_url,
-            template: data.template,
+            template: templateValue,
             headerText: data.header_text,
             instructionText: data.instruction_text,
             websiteUrl: data.website_url,
@@ -99,34 +101,6 @@ const ProductCheck = () => {
     
     fetchQRCode();
   }, [qrId]);
-  
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-500 mx-auto"></div>
-          <p className="mt-4 text-lg text-gray-600">Verifying product authenticity...</p>
-        </div>
-      </div>
-    );
-  }
-  
-  if (!qrId) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle className="text-center text-red-500">Missing QR Code</CardTitle>
-          </CardHeader>
-          <CardContent className="text-center">
-            <XIcon className="h-16 w-16 text-red-500 mx-auto mb-4" />
-            <p>No QR code ID provided. Please scan a valid QR code.</p>
-            <Button className="mt-4" onClick={() => window.history.back()}>Go Back</Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
   
   const getBgColor = () => {
     if (isVerified === true) {
@@ -177,6 +151,34 @@ const ProductCheck = () => {
     return theme.failureFooterText || "If you believe this is an error, please contact the product manufacturer.";
   };
   
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-500 mx-auto"></div>
+          <p className="mt-4 text-lg text-gray-600">Verifying product authenticity...</p>
+        </div>
+      </div>
+    );
+  }
+  
+  if (!qrId) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle className="text-center text-red-500">Missing QR Code</CardTitle>
+          </CardHeader>
+          <CardContent className="text-center">
+            <XIcon className="h-16 w-16 text-red-500 mx-auto mb-4" />
+            <p>No QR code ID provided. Please scan a valid QR code.</p>
+            <Button className="mt-4" onClick={() => window.history.back()}>Go Back</Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+  
   return (
     <div 
       className={`min-h-screen flex flex-col items-center justify-center p-4`}
@@ -217,7 +219,11 @@ const ProductCheck = () => {
           {isVerified && theme.enableReviews && (
             <div className="pt-4">
               {showReviews ? (
-                <ReviewForm qrId={qrId} />
+                <ReviewForm 
+                  qrId={qrId} 
+                  successBackground={theme.successBackground || "#f0fdf4"} 
+                  successText={theme.successText || "#16a34a"} 
+                />
               ) : (
                 <Button onClick={() => setShowReviews(true)}>Leave a Review</Button>
               )}
