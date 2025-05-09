@@ -35,6 +35,9 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ onQRCodesGenerated, l
   const [websiteUrl, setWebsiteUrl] = useState<string>("");
   const [footerText, setFooterText] = useState<string>("© 2023 seQRity Authentication - All rights reserved");
   const [directionRTL, setDirectionRTL] = useState<boolean>(false);
+  const [arabicHeaderText, setArabicHeaderText] = useState<string>("تحقق من المنتج");
+  const [arabicInstructionText, setArabicInstructionText] = useState<string>("امسح رمز QR للتحقق من صحة المنتج");
+  const [arabicFooterText, setArabicFooterText] = useState<string>("شكراً لاختيارك منتجاتنا");
   
   // Loading state
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
@@ -62,6 +65,13 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ onQRCodesGenerated, l
     };
     reader.readAsText(file);
   };
+
+  // Update text based on selected template
+  React.useEffect(() => {
+    if (template === 'arabic') {
+      setDirectionRTL(true);
+    }
+  }, [template]);
   
   // Generate QR codes
   const handleGenerate = async () => {
@@ -72,11 +82,8 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ onQRCodesGenerated, l
       let productsToGenerate: string[];
       
       if (activeTab === "single") {
-        if (!singleProduct.trim()) {
-          toast.error("Please enter a product identifier");
-          return;
-        }
-        productsToGenerate = [singleProduct.trim()];
+        // For single mode, product ID is optional now
+        productsToGenerate = [singleProduct.trim() || `product-${Date.now()}`];
       } else {
         // Bulk generation
         if (bulkProducts.length === 0) {
@@ -101,7 +108,7 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ onQRCodesGenerated, l
       
       // Repeat single product if quantity > 1
       if (activeTab === "single" && quantityNum > 1) {
-        productsToGenerate = Array(quantityNum).fill(singleProduct.trim());
+        productsToGenerate = Array(quantityNum).fill(singleProduct.trim() || `product-${Date.now()}`);
       }
       
       // Start generating QR codes
@@ -123,28 +130,34 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ onQRCodesGenerated, l
         const url = `${window.location.origin}/check?id=${id}`;
         
         // Generate QR code as data URL
-        const dataUrl = await generateQRCode(url, {
-          primaryColor: theme.primaryColor,
-          secondaryColor: theme.secondaryColor
-        });
+        const qrOptions = {
+          color: {
+            dark: theme.primaryColor || '#000000',
+            light: theme.secondaryColor || '#ffffff'
+          }
+        };
+        const dataUrl = await generateQRCode(url, qrOptions);
+        
+        // Set texts based on template
+        const useArabic = template === 'arabic';
         
         // Create QR code object
         const qrCode: QRCode = {
           id,
-          sequentialNumber: currentSequentialNumber,
+          sequentialNumber: currentSequentialNumber.toString(),
           encryptedData,
           url,
           isScanned: false,
           isEnabled: true,
           createdAt: new Date().toISOString(),
-          scannedAt: null,
+          scannedAt: undefined,
           dataUrl,
           template,
-          headerText,
-          instructionText,
+          headerText: useArabic ? arabicHeaderText : headerText,
+          instructionText: useArabic ? arabicInstructionText : instructionText,
           websiteUrl,
-          footerText,
-          directionRTL
+          footerText: useArabic ? arabicFooterText : footerText,
+          directionRTL: useArabic ? true : directionRTL
         };
         
         newQRCodes.push(qrCode);
@@ -152,23 +165,27 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ onQRCodesGenerated, l
       
       // Insert QR codes into database
       if (newQRCodes.length > 0) {
-        const { error } = await supabase.from('qr_codes').insert(
-          newQRCodes.map(qr => ({
-            id: qr.id,
-            sequential_number: qr.sequentialNumber,
-            encrypted_data: qr.encryptedData,
-            url: qr.url,
-            is_scanned: qr.isScanned,
-            is_enabled: qr.isEnabled,
-            data_url: qr.dataUrl,
-            template: qr.template,
-            header_text: qr.headerText,
-            instruction_text: qr.instructionText,
-            website_url: qr.websiteUrl,
-            footer_text: qr.footerText,
-            direction_rtl: qr.directionRTL
-          }))
-        );
+        // Map QR codes to match database schema
+        const dbQRCodes = newQRCodes.map(qr => ({
+          id: qr.id,
+          sequential_number: qr.sequentialNumber.toString(),
+          encrypted_data: qr.encryptedData,
+          url: qr.url,
+          is_scanned: qr.isScanned,
+          is_enabled: qr.isEnabled,
+          data_url: qr.dataUrl,
+          template: qr.template,
+          header_text: qr.headerText,
+          instruction_text: qr.instructionText,
+          website_url: qr.websiteUrl,
+          footer_text: qr.footerText,
+          direction_rtl: qr.directionRTL,
+          arabic_header_text: template === 'arabic' ? arabicHeaderText : null,
+          arabic_instruction_text: template === 'arabic' ? arabicInstructionText : null,
+          arabic_footer_text: template === 'arabic' ? arabicFooterText : null
+        }));
+        
+        const { error } = await supabase.from('qr_codes').insert(dbQRCodes);
         
         if (error) {
           throw error;
@@ -238,13 +255,14 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ onQRCodesGenerated, l
                 </TabsList>
                 <TabsContent value="single" className="space-y-4 pt-4">
                   <div className="space-y-2">
-                    <Label htmlFor="single-product">Product Identifier</Label>
+                    <Label htmlFor="single-product">Product Identifier (Optional)</Label>
                     <Input 
                       id="single-product"
                       placeholder="Enter product ID, serial number, or other identifier"
                       value={singleProduct}
                       onChange={(e) => setSingleProduct(e.target.value)}
                     />
+                    <p className="text-xs text-muted-foreground">If left blank, a unique ID will be generated</p>
                   </div>
                   
                   <div className="space-y-2">
@@ -309,56 +327,105 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ onQRCodesGenerated, l
                     Customize QR code appearance and content
                   </summary>
                   <div className="pt-4 space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="header-text">Header Text</Label>
-                      <Input 
-                        id="header-text"
-                        value={headerText}
-                        onChange={(e) => setHeaderText(e.target.value)}
-                        placeholder="Header text for the verification page"
-                      />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="instruction-text">Instruction Text</Label>
-                      <Input 
-                        id="instruction-text"
-                        value={instructionText}
-                        onChange={(e) => setInstructionText(e.target.value)}
-                        placeholder="Instructions for the user"
-                      />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="website-url">Website URL (optional)</Label>
-                      <Input 
-                        id="website-url"
-                        value={websiteUrl}
-                        onChange={(e) => setWebsiteUrl(e.target.value)}
-                        placeholder="Link to your website"
-                      />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="footer-text">Footer Text</Label>
-                      <Input 
-                        id="footer-text"
-                        value={footerText}
-                        onChange={(e) => setFooterText(e.target.value)}
-                        placeholder="Copyright or additional information"
-                      />
-                    </div>
-                    
-                    <div className="flex items-center space-x-2">
-                      <input 
-                        type="checkbox" 
-                        id="rtl" 
-                        checked={directionRTL} 
-                        onChange={(e) => setDirectionRTL(e.target.checked)}
-                        className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                      />
-                      <Label htmlFor="rtl">Right-to-left text direction (for Arabic, Hebrew, etc.)</Label>
-                    </div>
+                    {template === 'arabic' ? (
+                      <>
+                        <div className="space-y-2">
+                          <Label htmlFor="arabic-header-text">Header Text (Arabic)</Label>
+                          <Input 
+                            id="arabic-header-text"
+                            value={arabicHeaderText}
+                            onChange={(e) => setArabicHeaderText(e.target.value)}
+                            placeholder="Header text for the verification page"
+                            dir="rtl"
+                          />
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <Label htmlFor="arabic-instruction-text">Instruction Text (Arabic)</Label>
+                          <Input 
+                            id="arabic-instruction-text"
+                            value={arabicInstructionText}
+                            onChange={(e) => setArabicInstructionText(e.target.value)}
+                            placeholder="Instructions for the user"
+                            dir="rtl"
+                          />
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <Label htmlFor="website-url">Website URL (optional)</Label>
+                          <Input 
+                            id="website-url"
+                            value={websiteUrl}
+                            onChange={(e) => setWebsiteUrl(e.target.value)}
+                            placeholder="Link to your website"
+                          />
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <Label htmlFor="arabic-footer-text">Footer Text (Arabic)</Label>
+                          <Input 
+                            id="arabic-footer-text"
+                            value={arabicFooterText}
+                            onChange={(e) => setArabicFooterText(e.target.value)}
+                            placeholder="Copyright or additional information"
+                            dir="rtl"
+                          />
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="space-y-2">
+                          <Label htmlFor="header-text">Header Text</Label>
+                          <Input 
+                            id="header-text"
+                            value={headerText}
+                            onChange={(e) => setHeaderText(e.target.value)}
+                            placeholder="Header text for the verification page"
+                          />
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <Label htmlFor="instruction-text">Instruction Text</Label>
+                          <Input 
+                            id="instruction-text"
+                            value={instructionText}
+                            onChange={(e) => setInstructionText(e.target.value)}
+                            placeholder="Instructions for the user"
+                          />
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <Label htmlFor="website-url">Website URL (optional)</Label>
+                          <Input 
+                            id="website-url"
+                            value={websiteUrl}
+                            onChange={(e) => setWebsiteUrl(e.target.value)}
+                            placeholder="Link to your website"
+                          />
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <Label htmlFor="footer-text">Footer Text</Label>
+                          <Input 
+                            id="footer-text"
+                            value={footerText}
+                            onChange={(e) => setFooterText(e.target.value)}
+                            placeholder="Copyright or additional information"
+                          />
+                        </div>
+                        
+                        <div className="flex items-center space-x-2">
+                          <input 
+                            type="checkbox" 
+                            id="rtl" 
+                            checked={directionRTL} 
+                            onChange={(e) => setDirectionRTL(e.target.checked)}
+                            className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          />
+                          <Label htmlFor="rtl">Right-to-left text direction (for Arabic, Hebrew, etc.)</Label>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </details>
               </div>
@@ -394,9 +461,18 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ onQRCodesGenerated, l
             <CardContent className="flex justify-center pt-4">
               <QRCodeTemplatePreview 
                 template={template}
-                value={previewQrValue}
-                primaryColor={theme.primaryColor}
-                secondaryColor={theme.secondaryColor}
+                qrCodeDataUrl={theme.primaryColor ? 
+                  generateQRCode(previewQrValue, {
+                    color: {
+                      dark: theme.primaryColor,
+                      light: theme.secondaryColor || "#ffffff"
+                    }
+                  }) : undefined
+                }
+                headerText={template === 'arabic' ? arabicHeaderText : headerText}
+                instructionText={template === 'arabic' ? arabicInstructionText : instructionText}
+                footerText={template === 'arabic' ? arabicFooterText : footerText}
+                directionRTL={template === 'arabic' ? true : directionRTL}
                 size={180}
               />
             </CardContent>

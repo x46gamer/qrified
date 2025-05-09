@@ -30,6 +30,36 @@ export type Database = {
         }
         Relationships: []
       }
+      custom_domains: {
+        Row: {
+          created_at: string
+          domain: string
+          id: string
+          status: string
+          user_id: string
+          verification_token: string
+          verified_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          domain: string
+          id?: string
+          status?: string
+          user_id: string
+          verification_token: string
+          verified_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          domain?: string
+          id?: string
+          status?: string
+          user_id?: string
+          verification_token?: string
+          verified_at?: string | null
+        }
+        Relationships: []
+      }
       customer_feedback: {
         Row: {
           created_at: string
@@ -96,6 +126,9 @@ export type Database = {
       }
       qr_codes: {
         Row: {
+          arabic_footer_text: string | null
+          arabic_header_text: string | null
+          arabic_instruction_text: string | null
           created_at: string
           data_url: string | null
           direction_rtl: boolean | null
@@ -113,6 +146,9 @@ export type Database = {
           website_url: string | null
         }
         Insert: {
+          arabic_footer_text?: string | null
+          arabic_header_text?: string | null
+          arabic_instruction_text?: string | null
           created_at?: string
           data_url?: string | null
           direction_rtl?: boolean | null
@@ -130,6 +166,9 @@ export type Database = {
           website_url?: string | null
         }
         Update: {
+          arabic_footer_text?: string | null
+          arabic_header_text?: string | null
+          arabic_instruction_text?: string | null
           created_at?: string
           data_url?: string | null
           direction_rtl?: boolean | null
@@ -160,6 +199,66 @@ export type Database = {
         Update: {
           current_value?: number
           id?: string
+        }
+        Relationships: []
+      }
+      user_invites: {
+        Row: {
+          accepted: boolean
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          invited_by: string
+          permissions: Json
+          role: string
+          token: string
+        }
+        Insert: {
+          accepted?: boolean
+          created_at?: string
+          email: string
+          expires_at?: string
+          id?: string
+          invited_by: string
+          permissions?: Json
+          role?: string
+          token: string
+        }
+        Update: {
+          accepted?: boolean
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          invited_by?: string
+          permissions?: Json
+          role?: string
+          token?: string
+        }
+        Relationships: []
+      }
+      user_profiles: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          id: string
+          role: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          id: string
+          role?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          role?: string
+          updated_at?: string
         }
         Relationships: []
       }

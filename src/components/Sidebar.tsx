@@ -1,23 +1,23 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from "@/lib/utils";
 import { 
   LayoutDashboard, 
   Settings, 
   QrCode, 
-  FileText, 
   BarChart3, 
   Palette, 
   ChevronRight, 
   ChevronDown,
   Users,
   LogOut,
-  Menu
+  Menu,
+  Globe
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from './ui/button';
-import { Sidebar as SidebarComponent, SidebarContent, SidebarTrigger, useSidebar } from './ui/sidebar';
+import { Sidebar as SidebarComponent, SidebarContent, useSidebar } from './ui/sidebar';
 
 interface SidebarItemProps {
   icon: React.ElementType;
@@ -36,7 +36,7 @@ const SidebarItem: React.FC<SidebarItemProps> = ({
   onClick,
   subItems
 }) => {
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = React.useState(false);
   const { state } = useSidebar();
   
   const hasSubItems = subItems && subItems.length > 0;
@@ -93,8 +93,8 @@ const SidebarItem: React.FC<SidebarItemProps> = ({
 
 const Sidebar: React.FC = () => {
   const location = useLocation();
-  const { user, logout } = useAuth();
-  const isAdmin = user?.role === 'admin';
+  const { profile, logout } = useAuth();
+  const isAdmin = profile?.role === 'admin';
   const { state, toggleSidebar } = useSidebar();
   
   const isActive = (path: string) => {
@@ -156,8 +156,15 @@ const Sidebar: React.FC = () => {
               <SidebarItem 
                 icon={Users} 
                 label="Team" 
-                href="/dashboard?tab=team" 
-                active={isDashboardTabActive('team')}
+                href="/settings?section=team" 
+                active={location.pathname === '/settings' && location.search.includes('section=team')}
+              />
+              
+              <SidebarItem 
+                icon={Globe} 
+                label="Domains" 
+                href="/settings?section=domains" 
+                active={location.pathname === '/settings' && location.search.includes('section=domains')}
               />
             </>
           )}
@@ -165,14 +172,12 @@ const Sidebar: React.FC = () => {
           <SidebarItem 
             icon={Settings} 
             label="Settings" 
-            href="/dashboard?tab=settings" 
+            href="/settings" 
             subItems={[
-              { label: 'Profile', href: '/dashboard?tab=settings&section=profile' },
-              { label: 'About', href: '/about' },
-              { label: 'FAQ', href: '/faq' },
-              { label: 'Contact', href: '/contact' },
+              { label: 'General', href: '/settings?section=general' },
+              { label: 'Help', href: '/settings?section=help' },
             ]}
-            active={isDashboardTabActive('settings')}
+            active={location.pathname === '/settings' && !location.search.includes('section=team') && !location.search.includes('section=domains')}
           />
           
           <div className="mt-auto pt-4">
