@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -39,12 +40,14 @@ export const AppearanceSettings = () => {
         if (error) throw error;
         
         if (data && data.settings) {
-          // Merge with default theme to ensure we have all required properties
-          setTheme({...DEFAULT_SETTINGS, ...data.settings as AppearanceSettingsType});
+          // Properly handle the type conversion with type assertions
+          const storedSettings = data.settings as unknown;
+          setTheme({...DEFAULT_SETTINGS, ...(storedSettings as AppearanceSettingsType)});
           
           // Set logo preview if exists
-          if ((data.settings as AppearanceSettingsType).logoUrl) {
-            setLogoPreview((data.settings as AppearanceSettingsType).logoUrl);
+          const typedSettings = storedSettings as AppearanceSettingsType;
+          if (typedSettings.logoUrl) {
+            setLogoPreview(typedSettings.logoUrl);
           }
         }
       } catch (error) {

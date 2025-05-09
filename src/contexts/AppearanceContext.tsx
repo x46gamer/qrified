@@ -82,9 +82,11 @@ export const AppearanceSettingsProvider: React.FC<{
         }
 
         if (data?.settings) {
+          // Add proper type assertion to handle the conversion safely
+          const storedSettings = data.settings as unknown;
           setSettings({
             ...DEFAULT_SETTINGS,
-            ...(data.settings as AppearanceSettings)
+            ...(storedSettings as AppearanceSettings)
           });
         }
       } catch (err) {
@@ -100,6 +102,7 @@ export const AppearanceSettingsProvider: React.FC<{
   const updateSettings = async (newSettings: Partial<AppearanceSettings>) => {
     try {
       setIsSaving(true);
+      
       const updatedSettings = {
         ...settings,
         ...newSettings
