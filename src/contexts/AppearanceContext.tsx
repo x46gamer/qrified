@@ -68,19 +68,12 @@ export const defaultTheme: ThemeSettings = {
   secondaryColor: "#8b5cf6", // violet-500
 };
 
-interface AppearanceContextType extends ThemeSettings {
-  setTheme: (newTheme: ThemeSettings) => void;
-}
-
 // Create the context
-export const AppearanceSettingsContext = createContext<AppearanceContextType>({
-  ...defaultTheme,
-  setTheme: () => {}
-});
+export const AppearanceSettingsContext = createContext<ThemeSettings>(defaultTheme);
 
 // Create a provider component
 export const AppearanceSettingsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [theme, setThemeState] = useState<ThemeSettings>(defaultTheme);
+  const [theme, setTheme] = useState<ThemeSettings>(defaultTheme);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -98,7 +91,7 @@ export const AppearanceSettingsProvider: React.FC<{ children: React.ReactNode }>
         
         if (data && data.settings) {
           // Merge with default theme to ensure we have all required properties
-          setThemeState({...defaultTheme, ...data.settings as ThemeSettings});
+          setTheme({...defaultTheme, ...data.settings as ThemeSettings});
         }
       } catch (error) {
         console.error('Error fetching theme settings:', error);
@@ -111,31 +104,8 @@ export const AppearanceSettingsProvider: React.FC<{ children: React.ReactNode }>
     fetchSettings();
   }, []);
 
-  const setTheme = async (newTheme: ThemeSettings) => {
-    try {
-      setThemeState(newTheme);
-      
-      const { error } = await supabase
-        .from('app_settings')
-        .upsert({
-          id: 'theme',
-          settings: newTheme,
-          updated_at: new Date().toISOString()
-        });
-      
-      if (error) throw error;
-      toast.success('Appearance settings updated successfully');
-    } catch (error) {
-      console.error('Error updating theme settings:', error);
-      toast.error('Failed to update appearance settings');
-    }
-  };
-
   return (
-    <AppearanceSettingsContext.Provider value={{
-      ...theme,
-      setTheme
-    }}>
+    <AppearanceSettingsContext.Provider value={theme}>
       {children}
     </AppearanceSettingsContext.Provider>
   );
