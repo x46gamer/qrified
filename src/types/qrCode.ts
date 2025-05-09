@@ -1,17 +1,17 @@
 
+import { TemplateType } from '@/components/QRCodeTemplates';
+
 export interface QRCode {
   id: string;
-  sequentialNumber: string;
+  sequentialNumber: number | string;
   encryptedData: string;
   url: string;
   isScanned: boolean;
   isEnabled: boolean;
   createdAt: string;
-  scannedAt?: string;
+  scannedAt: string | null;
   dataUrl?: string;
-  
-  // Template settings
-  template?: 'classic' | 'modern-blue' | 'modern-beige' | 'arabic' | string;
+  template?: TemplateType;
   headerText?: string;
   instructionText?: string;
   websiteUrl?: string;

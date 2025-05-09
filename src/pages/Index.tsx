@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import QRCodeGenerator from '@/components/QRCodeGenerator';
@@ -9,6 +10,8 @@ import { QRCode } from '@/types/qrCode';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from "sonner";
 import { TemplateType } from '@/components/QRCodeTemplates';
+import { useAuth } from '@/contexts/AuthContext';
+import { Link } from 'react-router-dom';
 
 const Index = () => {
   const [qrCodes, setQRCodes] = useState<QRCode[]>([]);
@@ -16,6 +19,9 @@ const Index = () => {
   const [lastSequentialNumber, setLastSequentialNumber] = useState<number>(0);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [activeTab, setActiveTab] = useState<string>('generate');
+  
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
   
   // Load QR codes from Supabase on mount
   useEffect(() => {
@@ -129,6 +135,29 @@ const Index = () => {
     }
   };
 
+  // Determine which tabs to show based on user role
+  const renderTabs = () => {
+    if (isAdmin) {
+      return (
+        <TabsList className="grid w-full max-w-md mx-auto grid-cols-5">
+          <TabsTrigger value="generate">Generate</TabsTrigger>
+          <TabsTrigger value="manage">Manage</TabsTrigger>
+          <TabsTrigger value="customize">Customize</TabsTrigger>
+          <TabsTrigger value="analytics">Analytics</TabsTrigger>
+          <Link to="/settings" className="flex items-center justify-center text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 rounded-md">
+            Settings
+          </Link>
+        </TabsList>
+      );
+    } else {
+      return (
+        <TabsList className="grid w-full max-w-md mx-auto grid-cols-1">
+          <TabsTrigger value="generate">Generate</TabsTrigger>
+        </TabsList>
+      );
+    }
+  };
+
   return (
     <div className="container mx-auto py-8">
       <header className="mb-8 text-center">
@@ -137,12 +166,7 @@ const Index = () => {
       </header>
       
       <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-8">
-        <TabsList className="grid w-full max-w-md mx-auto grid-cols-4">
-          <TabsTrigger value="generate">Generate</TabsTrigger>
-          <TabsTrigger value="manage">Manage</TabsTrigger>
-          <TabsTrigger value="customize">Customize</TabsTrigger>
-          <TabsTrigger value="analytics">Analytics</TabsTrigger>
-        </TabsList>
+        {renderTabs()}
         
         <TabsContent value="generate" className="space-y-8">
           <QRCodeGenerator 
@@ -155,22 +179,26 @@ const Index = () => {
           )}
         </TabsContent>
         
-        <TabsContent value="manage">
-          <QRCodeManager 
-            qrCodes={qrCodes}
-            onUpdateQRCode={handleUpdateQRCode}
-            onRefresh={fetchQRCodes}
-            onDeleteQRCode={handleDeleteQRCode}
-          />
-        </TabsContent>
-        
-        <TabsContent value="customize">
-          <AppearanceSettings />
-        </TabsContent>
-        
-        <TabsContent value="analytics">
-          <QRCodeAnalytics qrCodes={qrCodes} />
-        </TabsContent>
+        {isAdmin && (
+          <>
+            <TabsContent value="manage">
+              <QRCodeManager 
+                qrCodes={qrCodes}
+                onUpdateQRCode={handleUpdateQRCode}
+                onRefresh={fetchQRCodes}
+                onDeleteQRCode={handleDeleteQRCode}
+              />
+            </TabsContent>
+            
+            <TabsContent value="customize">
+              <AppearanceSettings />
+            </TabsContent>
+            
+            <TabsContent value="analytics">
+              <QRCodeAnalytics qrCodes={qrCodes} />
+            </TabsContent>
+          </>
+        )}
       </Tabs>
     </div>
   );
