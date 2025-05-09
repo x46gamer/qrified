@@ -1,3 +1,4 @@
+
 import QRCode from 'qrcode';
 import CryptoJS from 'crypto-js';
 import { v4 as uuidv4 } from 'uuid'; // Using browser-compatible uuid package
@@ -52,6 +53,30 @@ export const generateQRCode = async (data: string): Promise<string> => {
   } catch (error) {
     console.error('Error generating QR code:', error);
     throw new Error('Failed to generate QR code');
+  }
+};
+
+// Generate QR code with template options - This is the missing function that was being imported
+export const generateQRCodeImage = async (data: string, options?: {
+  template?: string;
+  primaryColor?: string;
+  secondaryColor?: string;
+  size?: number;
+}): Promise<string> => {
+  try {
+    // For now, just use the basic QR code generator
+    // Template styling will be applied on the frontend
+    return await QRCode.toDataURL(data, {
+      margin: 1,
+      width: options?.size || 300,
+      color: {
+        dark: options?.primaryColor || '#000000',
+        light: '#ffffff',
+      },
+    });
+  } catch (error) {
+    console.error('Error generating QR code with template:', error);
+    throw new Error('Failed to generate QR code with template');
   }
 };
 
@@ -203,52 +228,6 @@ export const fetchQRCodeById = async (id: string) => {
     } : null;
   } catch (error) {
     console.error('Exception fetching QR code by ID:', error);
-    throw error;
-  }
-};
-
-// New utility to fetch the last sequential number
-export const getLastSequentialNumber = async (): Promise<number> => {
-  try {
-    const { supabase } = await import('@/integrations/supabase/client');
-    const { data, error } = await supabase
-      .from('sequence_counters')
-      .select('current_value')
-      .eq('id', 'qr_code_sequential')
-      .maybeSingle();
-    
-    if (error) {
-      console.error('Error fetching last sequential number:', error);
-      throw new Error(`Failed to fetch sequence counter: ${error.message}`);
-    }
-    
-    return data ? data.current_value : 0;
-  } catch (error) {
-    console.error('Exception fetching sequence counter:', error);
-    return 0;
-  }
-};
-
-// Update sequence counter
-export const incrementSequenceCounter = async (incrementBy: number = 1): Promise<number> => {
-  try {
-    const { supabase } = await import('@/integrations/supabase/client');
-    const currentValue = await getLastSequentialNumber();
-    const newValue = currentValue + incrementBy;
-    
-    const { error } = await supabase
-      .from('sequence_counters')
-      .update({ current_value: newValue })
-      .eq('id', 'qr_code_sequential');
-    
-    if (error) {
-      console.error('Error incrementing sequence counter:', error);
-      throw new Error(`Failed to increment sequence counter: ${error.message}`);
-    }
-    
-    return newValue;
-  } catch (error) {
-    console.error('Exception incrementing sequence counter:', error);
     throw error;
   }
 };

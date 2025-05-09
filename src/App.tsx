@@ -21,6 +21,10 @@ import { AppearanceSettingsProvider } from './contexts/AppearanceContext';
 import { AuthProvider } from './contexts/AuthContext';
 import AppLayout from './components/AppLayout';
 import DashboardLayout from './components/DashboardLayout';
+import { SidebarProvider } from './components/ui/sidebar';
+import DomainSettings from './pages/DomainSettings';
+import Settings from './pages/Settings';
+import AdminFeedback from './pages/AdminFeedback';
 
 function App() {
   return (
@@ -44,9 +48,11 @@ function App() {
               path="/dashboard"
               element={
                 <AuthGuard>
-                  <DashboardLayout>
-                    <Index />
-                  </DashboardLayout>
+                  <SidebarProvider>
+                    <DashboardLayout>
+                      <Index />
+                    </DashboardLayout>
+                  </SidebarProvider>
                 </AuthGuard>
               }
             />
@@ -54,9 +60,47 @@ function App() {
               path="/customize"
               element={
                 <AuthGuard>
-                  <DashboardLayout>
-                    <CustomizeApp />
-                  </DashboardLayout>
+                  <SidebarProvider>
+                    <DashboardLayout>
+                      <CustomizeApp />
+                    </DashboardLayout>
+                  </SidebarProvider>
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="/settings"
+              element={
+                <AuthGuard>
+                  <SidebarProvider>
+                    <DashboardLayout>
+                      <Settings />
+                    </DashboardLayout>
+                  </SidebarProvider>
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="/domains"
+              element={
+                <AuthGuard>
+                  <SidebarProvider>
+                    <DashboardLayout>
+                      <DomainSettings />
+                    </DashboardLayout>
+                  </SidebarProvider>
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="/feedback"
+              element={
+                <AuthGuard>
+                  <SidebarProvider>
+                    <DashboardLayout>
+                      <AdminFeedback />
+                    </DashboardLayout>
+                  </SidebarProvider>
                 </AuthGuard>
               }
             />

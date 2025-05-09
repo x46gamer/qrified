@@ -1,117 +1,226 @@
 
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import {
-  LayoutGrid,
-  Settings,
-  Users,
-  Palette,
-  BarChart3,
-  Menu,
-  Package,
-  LogOut
-} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useSidebar } from '@/components/ui/sidebar';
+import { NavLink, useLocation } from 'react-router-dom';
+import {
+  LayoutDashboard,
+  QrCode,
+  Brush,
+  Settings,
+  Users,
+  ChevronRight,
+  ChevronLeft,
+  Globe,
+  LineChart,
+  MessageSquare
+} from 'lucide-react';
+import { Button } from './ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 
-const Sidebar = () => {
+interface SidebarProps {
+  className?: string;
+}
+
+const Sidebar: React.FC<SidebarProps> = ({ className }) => {
+  const { isCollapsed: isOpen, toggleSidebar: toggle } = useSidebar();
   const location = useLocation();
-  const { isCollapsed, toggleCollapse } = useSidebar();
-  const { user, logout } = useAuth();
-  
+  const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
-  
-  const navigation = [
-    {
-      name: 'Dashboard',
-      href: '/dashboard',
-      icon: LayoutGrid,
-      current: location.pathname === '/dashboard'
-    },
-    {
-      name: 'Generate QR',
-      href: '/dashboard?tab=generate',
-      icon: Package,
-      current: location.pathname === '/dashboard' && (!location.search || location.search.includes('tab=generate'))
-    },
-    ...(isAdmin ? [
-      {
-        name: 'Manage QR',
-        href: '/dashboard?tab=manage',
-        icon: Settings,
-        current: location.pathname === '/dashboard' && location.search.includes('tab=manage')
-      },
-      {
-        name: 'Analytics',
-        href: '/dashboard?tab=analytics',
-        icon: BarChart3,
-        current: location.pathname === '/dashboard' && location.search.includes('tab=analytics')
-      },
-      {
-        name: 'Team',
-        href: '/dashboard?tab=team',
-        icon: Users,
-        current: location.pathname === '/dashboard' && location.search.includes('tab=team')
-      },
-      {
-        name: 'Customize',
-        href: '/customize',
-        icon: Palette,
-        current: location.pathname === '/customize'
-      }
-    ] : [])
-  ];
 
   return (
     <div className={cn(
-      "flex flex-col border-r bg-background transition-all duration-300 ease-in-out",
-      isCollapsed ? "w-16" : "w-64"
+      'flex flex-col h-full bg-white border-r transition-all duration-300',
+      isOpen ? 'w-64' : 'w-[70px]',
+      className
     )}>
-      <div className="flex items-center justify-between p-4 h-16">
-        {!isCollapsed && (
-          <span className="text-xl font-semibold bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent">
-            seQRity
-          </span>
-        )}
-        <Button variant="ghost" size="icon" onClick={toggleCollapse} className="ml-auto">
-          <Menu className="h-5 w-5" />
-        </Button>
-      </div>
-      
-      <ScrollArea className="flex-1">
-        <nav className="flex flex-col gap-1 p-2">
-          {navigation.map((item) => (
-            <Link
-              key={item.name}
-              to={item.href}
-              className={cn(
-                "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-all hover:bg-accent",
-                item.current ? "bg-accent text-accent-foreground" : "text-muted-foreground",
-                isCollapsed ? "justify-center" : ""
+      <div className="flex-1 overflow-y-auto py-6">
+        <div className="flex items-center justify-between px-3 mb-8">
+          <div className="flex items-center">
+            <div className={cn(
+              "w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center text-white font-bold text-xl",
+            )}>
+              S
+            </div>
+            <span className={cn(
+              "ml-3 text-xl font-semibold tracking-tight transition-opacity duration-300",
+              isOpen ? "opacity-100" : "opacity-0"
+            )}>
+              SeQRity
+            </span>
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggle}
+            className="rounded-full h-8 w-8"
+          >
+            {isOpen ? <ChevronLeft size={18} /> : <ChevronRight size={18} />}
+          </Button>
+        </div>
+
+        <nav className="px-3 space-y-1">
+          <NavLink
+            to="/dashboard"
+            className={({ isActive }) => cn(
+              "flex items-center py-2 px-3 rounded-lg text-sm",
+              isActive ? "bg-blue-50 text-blue-600" : "text-gray-700 hover:bg-gray-100",
+            )}
+          >
+            <LayoutDashboard size={20} className="shrink-0" />
+            <span className={cn(
+              "ml-3 transition-opacity duration-300",
+              isOpen ? "opacity-100" : "opacity-0"
+            )}>
+              Dashboard
+            </span>
+          </NavLink>
+
+          <NavLink
+            to="/dashboard?tab=generate"
+            className={({ isActive }) => cn(
+              "flex items-center py-2 px-3 rounded-lg text-sm",
+              location.pathname === "/dashboard" && !location.search.includes("tab=") ? "bg-blue-50 text-blue-600" : "",
+              location.search.includes("tab=generate") ? "bg-blue-50 text-blue-600" : "",
+              !isActive ? "text-gray-700 hover:bg-gray-100" : "",
+            )}
+          >
+            <QrCode size={20} className="shrink-0" />
+            <span className={cn(
+              "ml-3 transition-opacity duration-300",
+              isOpen ? "opacity-100" : "opacity-0"
+            )}>
+              Generate QR
+            </span>
+          </NavLink>
+
+          {isAdmin && (
+            <NavLink
+              to="/dashboard?tab=manage"
+              className={({ isActive }) => cn(
+                "flex items-center py-2 px-3 rounded-lg text-sm",
+                location.search.includes("tab=manage") ? "bg-blue-50 text-blue-600" : "",
+                !isActive || !location.search.includes("tab=manage") ? "text-gray-700 hover:bg-gray-100" : "",
               )}
             >
-              <item.icon className={cn("h-5 w-5", item.current && "text-blue-600")} />
-              {!isCollapsed && <span>{item.name}</span>}
-            </Link>
-          ))}
-        </nav>
-      </ScrollArea>
-      
-      <div className="border-t p-4">
-        <Button 
-          variant="ghost" 
-          onClick={logout}
-          className={cn(
-            "flex items-center gap-2 w-full", 
-            isCollapsed ? "justify-center" : "justify-start"
+              <Users size={20} className="shrink-0" />
+              <span className={cn(
+                "ml-3 transition-opacity duration-300",
+                isOpen ? "opacity-100" : "opacity-0"
+              )}>
+                Manage QR
+              </span>
+            </NavLink>
           )}
-        >
-          <LogOut className="h-4 w-4" />
-          {!isCollapsed && <span>Logout</span>}
-        </Button>
+
+          {isAdmin && (
+            <NavLink
+              to="/dashboard?tab=analytics"
+              className={({ isActive }) => cn(
+                "flex items-center py-2 px-3 rounded-lg text-sm",
+                location.search.includes("tab=analytics") ? "bg-blue-50 text-blue-600" : "",
+                !isActive || !location.search.includes("tab=analytics") ? "text-gray-700 hover:bg-gray-100" : "",
+              )}
+            >
+              <LineChart size={20} className="shrink-0" />
+              <span className={cn(
+                "ml-3 transition-opacity duration-300",
+                isOpen ? "opacity-100" : "opacity-0"
+              )}>
+                Analytics
+              </span>
+            </NavLink>
+          )}
+
+          {isAdmin && (
+            <NavLink
+              to="/dashboard?tab=customize"
+              className={({ isActive }) => cn(
+                "flex items-center py-2 px-3 rounded-lg text-sm",
+                location.search.includes("tab=customize") ? "bg-blue-50 text-blue-600" : "",
+                !isActive || !location.search.includes("tab=customize") ? "text-gray-700 hover:bg-gray-100" : "",
+              )}
+            >
+              <Brush size={20} className="shrink-0" />
+              <span className={cn(
+                "ml-3 transition-opacity duration-300",
+                isOpen ? "opacity-100" : "opacity-0"
+              )}>
+                Customize
+              </span>
+            </NavLink>
+          )}
+
+          {isAdmin && (
+            <NavLink
+              to="/domains"
+              className={({ isActive }) => cn(
+                "flex items-center py-2 px-3 rounded-lg text-sm",
+                isActive ? "bg-blue-50 text-blue-600" : "text-gray-700 hover:bg-gray-100",
+              )}
+            >
+              <Globe size={20} className="shrink-0" />
+              <span className={cn(
+                "ml-3 transition-opacity duration-300",
+                isOpen ? "opacity-100" : "opacity-0"
+              )}>
+                Domains
+              </span>
+            </NavLink>
+          )}
+
+          {isAdmin && (
+            <NavLink
+              to="/feedback"
+              className={({ isActive }) => cn(
+                "flex items-center py-2 px-3 rounded-lg text-sm",
+                isActive ? "bg-blue-50 text-blue-600" : "text-gray-700 hover:bg-gray-100",
+              )}
+            >
+              <MessageSquare size={20} className="shrink-0" />
+              <span className={cn(
+                "ml-3 transition-opacity duration-300",
+                isOpen ? "opacity-100" : "opacity-0"
+              )}>
+                Feedback
+              </span>
+            </NavLink>
+          )}
+
+          <NavLink
+            to="/settings"
+            className={({ isActive }) => cn(
+              "flex items-center py-2 px-3 rounded-lg text-sm",
+              isActive ? "bg-blue-50 text-blue-600" : "text-gray-700 hover:bg-gray-100",
+            )}
+          >
+            <Settings size={20} className="shrink-0" />
+            <span className={cn(
+              "ml-3 transition-opacity duration-300",
+              isOpen ? "opacity-100" : "opacity-0"
+            )}>
+              Settings
+            </span>
+          </NavLink>
+        </nav>
+      </div>
+
+      <div className={cn(
+        "border-t p-3",
+        isOpen ? "text-left" : "text-center"
+      )}>
+        <div className="flex items-center">
+          <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center uppercase text-gray-600 font-medium">
+            {user?.email?.charAt(0)}
+          </div>
+          <div className={cn(
+            "ml-3 transition-opacity duration-300",
+            isOpen ? "opacity-100" : "opacity-0"
+          )}>
+            <p className="text-sm font-medium">{isAdmin ? 'Admin' : 'User'}</p>
+            <p className="text-xs text-gray-500 truncate">{user?.email}</p>
+          </div>
+        </div>
       </div>
     </div>
   );

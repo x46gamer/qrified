@@ -12,7 +12,7 @@ export type TemplateType = 'classic' | 'modern-blue' | 'modern-beige' | 'arabic'
 
 export interface QRCode {
   id: string;
-  sequentialNumber: string;
+  sequentialNumber: string | number;
   encryptedData: string;
   url: string;
   isScanned: boolean;
@@ -20,19 +20,10 @@ export interface QRCode {
   createdAt: string;
   scannedAt?: string;
   dataUrl: string;
-  template?: TemplateType;
+  template: TemplateType;
   headerText?: string;
   instructionText?: string;
   websiteUrl?: string;
   footerText?: string;
   directionRTL?: boolean;
-}
-
-// Add QRCodeTemplatePreviewProps interface to match component prop types
-export interface QRCodeTemplatePreviewProps {
-  template: TemplateType;
-  primaryColor?: string;
-  secondaryColor?: string;
-  size?: number;
-  text?: string; // Added text prop instead of value
 }

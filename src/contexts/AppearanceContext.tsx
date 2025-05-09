@@ -1,115 +1,147 @@
 
-import React, { createContext, useState, useEffect, useContext } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from "sonner";
+import { toast } from 'sonner';
 
-// Define the theme settings type
-export type ThemeSettings = {
-  // Color settings
+export interface AppearanceSettings {
   successBackground: string;
   successText: string;
   successIcon: string;
   failureBackground: string;
   failureText: string;
   failureIcon: string;
-  
-  // Text content
   successTitle: string;
   successDescription: string;
   successFooterText: string;
   failureTitle: string;
   failureDescription: string;
   failureFooterText: string;
-  
-  // Direction settings
   isRtl: boolean;
-  
-  // Feature toggles
   enableReviews: boolean;
   enableFeedback: boolean;
-  
-  // Logo
   logoUrl: string | null;
-  
-  // Brand colors for QR code templates
   primaryColor: string;
   secondaryColor: string;
-};
+}
 
-export const defaultTheme: ThemeSettings = {
-  // Default colors
-  successBackground: "#f0fdf4", // green-50
-  successText: "#16a34a", // green-600
-  successIcon: "#22c55e", // green-500
-  failureBackground: "#fef2f2", // red-50
-  failureText: "#dc2626", // red-600
-  failureIcon: "#ef4444", // red-500
-  
-  // Default text content
-  successTitle: "Product Verified",
-  successDescription: "This product is legitimate and original. Thank you for checking its authenticity.",
-  successFooterText: "This QR code has been marked as used and cannot be verified again.",
-  failureTitle: "Not Authentic",
-  failureDescription: "This product could not be verified as authentic. It may be counterfeit or has been previously verified.",
-  failureFooterText: "If you believe this is an error, please contact the product manufacturer.",
-  
-  // Default direction
+export const DEFAULT_SETTINGS: AppearanceSettings = {
+  successBackground: '#f0fdf4',
+  successText: '#16a34a',
+  successIcon: '#22c55e',
+  failureBackground: '#fef2f2',
+  failureText: '#dc2626',
+  failureIcon: '#ef4444',
+  successTitle: 'Product Verified',
+  successDescription: 'This product is legitimate and original. Thank you for checking its authenticity.',
+  successFooterText: 'This QR code has been marked as used and cannot be verified again.',
+  failureTitle: 'Not Authentic',
+  failureDescription: 'This product could not be verified as authentic. It may be counterfeit or has been previously verified.',
+  failureFooterText: 'If you believe this is an error, please contact the product manufacturer.',
   isRtl: false,
-  
-  // Default feature toggles
-  enableReviews: false,
-  enableFeedback: false,
-  
-  // Default logo
+  enableReviews: true,
+  enableFeedback: true,
   logoUrl: null,
-  
-  // Default brand colors
-  primaryColor: "#3b82f6", // blue-500
-  secondaryColor: "#8b5cf6", // violet-500
+  primaryColor: '#3b82f6',
+  secondaryColor: '#8b5cf6'
 };
 
-// Create the context
-export const AppearanceSettingsContext = createContext<ThemeSettings>(defaultTheme);
+interface AppearanceContextType extends AppearanceSettings {
+  updateSettings: (settings: Partial<AppearanceSettings>) => Promise<void>;
+  isLoading: boolean;
+  isSaving: boolean;
+}
 
-// Create a provider component
-export const AppearanceSettingsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [theme, setTheme] = useState<ThemeSettings>(defaultTheme);
+const AppearanceSettingsContext = createContext<AppearanceContextType>({
+  ...DEFAULT_SETTINGS,
+  updateSettings: async () => {},
+  isLoading: false,
+  isSaving: false
+});
+
+export const AppearanceSettingsProvider: React.FC<{
+  children: React.ReactNode;
+}> = ({ children }) => {
+  const [settings, setSettings] = useState<AppearanceSettings>(DEFAULT_SETTINGS);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    const fetchSettings = async () => {
+    async function loadSettings() {
       try {
         setIsLoading(true);
-        // Explicitly type the query to app_settings table
         const { data, error } = await supabase
           .from('app_settings')
           .select('*')
           .eq('id', 'theme')
-          .maybeSingle();
+          .single();
 
-        if (error) throw error;
-        
-        if (data && data.settings) {
-          // Merge with default theme to ensure we have all required properties
-          setTheme({...defaultTheme, ...data.settings as ThemeSettings});
+        if (error && error.code !== 'PGRST116') { // PGRST116 is the "no rows" error
+          console.error('Error fetching appearance settings:', error);
+          toast.error('Failed to load appearance settings');
+          return;
         }
-      } catch (error) {
-        console.error('Error fetching theme settings:', error);
-        toast.error('Failed to load appearance settings');
+
+        if (data?.settings) {
+          setSettings({
+            ...DEFAULT_SETTINGS,
+            ...(data.settings as AppearanceSettings)
+          });
+        }
+      } catch (err) {
+        console.error('Error in loading settings:', err);
       } finally {
         setIsLoading(false);
       }
-    };
+    }
 
-    fetchSettings();
+    loadSettings();
   }, []);
 
+  const updateSettings = async (newSettings: Partial<AppearanceSettings>) => {
+    try {
+      setIsSaving(true);
+      const updatedSettings = {
+        ...settings,
+        ...newSettings
+      };
+
+      const { error } = await supabase
+        .from('app_settings')
+        .upsert({
+          id: 'theme',
+          settings: updatedSettings
+        }, {
+          onConflict: 'id'
+        });
+
+      if (error) {
+        console.error('Error updating settings:', error);
+        toast.error('Failed to save appearance settings');
+        return;
+      }
+
+      setSettings(updatedSettings);
+      toast.success('Appearance settings saved successfully');
+    } catch (err) {
+      console.error('Error in updating settings:', err);
+      toast.error('Failed to save settings');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   return (
-    <AppearanceSettingsContext.Provider value={theme}>
+    <AppearanceSettingsContext.Provider
+      value={{
+        ...settings,
+        updateSettings,
+        isLoading,
+        isSaving
+      }}
+    >
       {children}
     </AppearanceSettingsContext.Provider>
   );
 };
 
-// Create a custom hook to use the appearance settings
 export const useAppearanceSettings = () => useContext(AppearanceSettingsContext);

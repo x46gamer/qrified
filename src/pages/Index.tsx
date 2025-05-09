@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"; // Import missing components
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 import QRCodeGenerator from '@/components/QRCodeGenerator';
 import QRCodeDisplay from '@/components/QRCodeDisplay';
 import QRCodeManager from '@/components/QRCodeManager';
@@ -9,7 +9,7 @@ import { AppearanceSettings } from '@/components/AppearanceSettings';
 import { QRCode } from '@/types/qrCode';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from "sonner";
-import { TemplateType } from '@/types/qrCode';
+import { TemplateType } from '@/components/QRCodeTemplates';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -88,7 +88,7 @@ const Index = () => {
         .from('sequence_counters')
         .select('current_value')
         .eq('id', 'qr_code_sequential')
-        .maybeSingle();  // Using maybeSingle instead of single to avoid errors
+        .single();
       
       if (error) {
         console.error('Error fetching counter:', error);
@@ -97,12 +97,6 @@ const Index = () => {
       
       if (data) {
         setLastSequentialNumber(data.current_value);
-      } else {
-        // If no counter exists, create one
-        await supabase
-          .from('sequence_counters')
-          .insert({ id: 'qr_code_sequential', current_value: 0 });
-        setLastSequentialNumber(0);
       }
     } catch (error) {
       console.error('Error loading sequence counter:', error);
@@ -155,18 +149,6 @@ const Index = () => {
       </header>
       
       <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-8">
-        <TabsList className="grid grid-cols-5 max-w-2xl">
-          <TabsTrigger value="generate">Generate</TabsTrigger>
-          {isAdmin && (
-            <>
-              <TabsTrigger value="manage">Manage</TabsTrigger>
-              <TabsTrigger value="analytics">Analytics</TabsTrigger>
-              <TabsTrigger value="team">Team</TabsTrigger>
-              <TabsTrigger value="settings">Settings</TabsTrigger>
-            </>
-          )}
-        </TabsList>
-        
         <TabsContent value="generate" className="space-y-8 animate-fade-in">
           <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-gray-100">
             <QRCodeGenerator 
