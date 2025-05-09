@@ -1,4 +1,3 @@
-
 import QRCode from 'qrcode';
 import CryptoJS from 'crypto-js';
 import { v4 as uuidv4 } from 'uuid'; // Using browser-compatible uuid package
@@ -229,5 +228,58 @@ export const fetchQRCodeById = async (id: string) => {
   } catch (error) {
     console.error('Exception fetching QR code by ID:', error);
     throw error;
+  }
+};
+
+// Function to get next sequential number for QR codes
+export const getNextSequentialNumber = async (): Promise<string> => {
+  try {
+    const { supabase } = await import('@/integrations/supabase/client');
+    
+    // First, check if the counter exists
+    const { data: counter, error: fetchError } = await supabase
+      .from('sequence_counters')
+      .select('current_value')
+      .eq('id', 'qr_code_sequential')
+      .single();
+    
+    if (fetchError && fetchError.code === 'PGRST116') {
+      // Counter does not exist, create it first with value 1
+      console.log('Creating new counter');
+      const { error: insertError } = await supabase
+        .from('sequence_counters')
+        .insert({
+          id: 'qr_code_sequential',
+          current_value: 1
+        });
+      
+      if (insertError) {
+        console.error('Error creating counter:', insertError);
+        return '000001'; // Fallback to 000001 if counter creation fails
+      }
+      
+      return '000001';
+    } else if (fetchError) {
+      console.error('Error fetching counter:', fetchError);
+      return '000001'; // Fallback to 000001 if fetch fails
+    }
+    
+    // Counter exists, increment it
+    const nextValue = (counter?.current_value || 0) + 1;
+    
+    const { error: updateError } = await supabase
+      .from('sequence_counters')
+      .update({ current_value: nextValue })
+      .eq('id', 'qr_code_sequential');
+    
+    if (updateError) {
+      console.error('Error updating counter:', updateError);
+    }
+    
+    // Format as 6-digit number with leading zeros
+    return nextValue.toString().padStart(6, '0');
+  } catch (error) {
+    console.error('Error in getNextSequentialNumber:', error);
+    return '000001'; // Fallback
   }
 };

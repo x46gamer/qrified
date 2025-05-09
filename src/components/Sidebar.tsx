@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { useSidebar } from '@/components/ui/sidebar';
@@ -23,7 +22,7 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ className }) => {
-  const { isCollapsed: isOpen, toggleSidebar: toggle } = useSidebar();
+  const { isCollapsed, toggleSidebar } = useSidebar();
   const location = useLocation();
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
@@ -31,7 +30,7 @@ const Sidebar: React.FC<SidebarProps> = ({ className }) => {
   return (
     <div className={cn(
       'flex flex-col h-full bg-white border-r transition-all duration-300',
-      isOpen ? 'w-64' : 'w-[70px]',
+      isCollapsed ? 'w-64' : 'w-[70px]',
       className
     )}>
       <div className="flex-1 overflow-y-auto py-6">
@@ -44,7 +43,7 @@ const Sidebar: React.FC<SidebarProps> = ({ className }) => {
             </div>
             <span className={cn(
               "ml-3 text-xl font-semibold tracking-tight transition-opacity duration-300",
-              isOpen ? "opacity-100" : "opacity-0"
+              isCollapsed ? "opacity-100" : "opacity-0"
             )}>
               SeQRity
             </span>
@@ -52,10 +51,10 @@ const Sidebar: React.FC<SidebarProps> = ({ className }) => {
           <Button
             variant="ghost"
             size="icon"
-            onClick={toggle}
+            onClick={toggleSidebar}
             className="rounded-full h-8 w-8"
           >
-            {isOpen ? <ChevronLeft size={18} /> : <ChevronRight size={18} />}
+            {isCollapsed ? <ChevronLeft size={18} /> : <ChevronRight size={18} />}
           </Button>
         </div>
 
@@ -70,7 +69,7 @@ const Sidebar: React.FC<SidebarProps> = ({ className }) => {
             <LayoutDashboard size={20} className="shrink-0" />
             <span className={cn(
               "ml-3 transition-opacity duration-300",
-              isOpen ? "opacity-100" : "opacity-0"
+              isCollapsed ? "opacity-100" : "opacity-0"
             )}>
               Dashboard
             </span>
@@ -88,7 +87,7 @@ const Sidebar: React.FC<SidebarProps> = ({ className }) => {
             <QrCode size={20} className="shrink-0" />
             <span className={cn(
               "ml-3 transition-opacity duration-300",
-              isOpen ? "opacity-100" : "opacity-0"
+              isCollapsed ? "opacity-100" : "opacity-0"
             )}>
               Generate QR
             </span>
@@ -106,7 +105,7 @@ const Sidebar: React.FC<SidebarProps> = ({ className }) => {
               <Users size={20} className="shrink-0" />
               <span className={cn(
                 "ml-3 transition-opacity duration-300",
-                isOpen ? "opacity-100" : "opacity-0"
+                isCollapsed ? "opacity-100" : "opacity-0"
               )}>
                 Manage QR
               </span>
@@ -125,7 +124,7 @@ const Sidebar: React.FC<SidebarProps> = ({ className }) => {
               <LineChart size={20} className="shrink-0" />
               <span className={cn(
                 "ml-3 transition-opacity duration-300",
-                isOpen ? "opacity-100" : "opacity-0"
+                isCollapsed ? "opacity-100" : "opacity-0"
               )}>
                 Analytics
               </span>
@@ -144,7 +143,7 @@ const Sidebar: React.FC<SidebarProps> = ({ className }) => {
               <Brush size={20} className="shrink-0" />
               <span className={cn(
                 "ml-3 transition-opacity duration-300",
-                isOpen ? "opacity-100" : "opacity-0"
+                isCollapsed ? "opacity-100" : "opacity-0"
               )}>
                 Customize
               </span>
@@ -162,7 +161,7 @@ const Sidebar: React.FC<SidebarProps> = ({ className }) => {
               <Globe size={20} className="shrink-0" />
               <span className={cn(
                 "ml-3 transition-opacity duration-300",
-                isOpen ? "opacity-100" : "opacity-0"
+                isCollapsed ? "opacity-100" : "opacity-0"
               )}>
                 Domains
               </span>
@@ -180,7 +179,7 @@ const Sidebar: React.FC<SidebarProps> = ({ className }) => {
               <MessageSquare size={20} className="shrink-0" />
               <span className={cn(
                 "ml-3 transition-opacity duration-300",
-                isOpen ? "opacity-100" : "opacity-0"
+                isCollapsed ? "opacity-100" : "opacity-0"
               )}>
                 Feedback
               </span>
@@ -197,7 +196,7 @@ const Sidebar: React.FC<SidebarProps> = ({ className }) => {
             <Settings size={20} className="shrink-0" />
             <span className={cn(
               "ml-3 transition-opacity duration-300",
-              isOpen ? "opacity-100" : "opacity-0"
+              isCollapsed ? "opacity-100" : "opacity-0"
             )}>
               Settings
             </span>
@@ -207,7 +206,7 @@ const Sidebar: React.FC<SidebarProps> = ({ className }) => {
 
       <div className={cn(
         "border-t p-3",
-        isOpen ? "text-left" : "text-center"
+        isCollapsed ? "text-left" : "text-center"
       )}>
         <div className="flex items-center">
           <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center uppercase text-gray-600 font-medium">
@@ -215,7 +214,7 @@ const Sidebar: React.FC<SidebarProps> = ({ className }) => {
           </div>
           <div className={cn(
             "ml-3 transition-opacity duration-300",
-            isOpen ? "opacity-100" : "opacity-0"
+            isCollapsed ? "opacity-100" : "opacity-0"
           )}>
             <p className="text-sm font-medium">{isAdmin ? 'Admin' : 'User'}</p>
             <p className="text-xs text-gray-500 truncate">{user?.email}</p>

@@ -82,9 +82,11 @@ export const AppearanceSettingsProvider: React.FC<{
         }
 
         if (data?.settings) {
+          // Cast the settings to AppearanceSettings to ensure type safety
+          const safeSettings = data.settings as unknown as AppearanceSettings;
           setSettings({
             ...DEFAULT_SETTINGS,
-            ...(data.settings as AppearanceSettings)
+            ...safeSettings
           });
         }
       } catch (err) {
