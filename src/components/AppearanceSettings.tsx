@@ -37,6 +37,7 @@ export const AppearanceSettings = () => {
     const fetchSettings = async () => {
       try {
         setIsLoading(true);
+        // Explicitly type the query to app_settings table
         const { data, error } = await supabase
           .from('app_settings')
           .select('*')
