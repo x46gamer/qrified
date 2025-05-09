@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { QRCode, TemplateType } from '@/types/qrCode';
+import { QRCode } from '@/types/qrCode';
 import { CheckIcon, XIcon } from 'lucide-react';
 import { decryptData } from '@/utils/qrCodeUtils';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import ReviewForm from '@/components/ReviewForm';
 import { useAppearanceSettings } from '@/contexts/AppearanceContext';
 import type { ThemeSettings } from '@/contexts/AppearanceContext';
+import { TemplateType } from '@/types/qrCode';
 
 const ProductCheck = () => {
   const [searchParams] = useSearchParams();
@@ -234,56 +235,6 @@ const ProductCheck = () => {
       </Card>
     </div>
   );
-  
-  // Helper functions
-  function getBgColor() {
-    if (isVerified === true) {
-      return theme.successBackground || "#f0fdf4"; // green-50
-    } else if (isVerified === false) {
-      return theme.failureBackground || "#fef2f2"; // red-50
-    }
-    return "bg-white";
-  }
-  
-  function getTextColor() {
-    if (isVerified === true) {
-      return theme.successText || "#16a34a"; // green-600
-    } else if (isVerified === false) {
-      return theme.failureText || "#dc2626"; // red-600
-    }
-    return "text-gray-700";
-  }
-  
-  function getIconColor() {
-    if (isVerified === true) {
-      return theme.successIcon || "#22c55e"; // green-500
-    } else if (isVerified === false) {
-      return theme.failureIcon || "#ef4444"; // red-500
-    }
-    return "#6b7280"; // gray-500
-  }
-  
-  // Get the appropriate content based on verification status
-  function getTitle() {
-    if (isVerified === true) {
-      return theme.successTitle || "Product Verified";
-    }
-    return theme.failureTitle || "Not Authentic";
-  }
-  
-  function getDescription() {
-    if (isVerified === true) {
-      return theme.successDescription || "This product is legitimate and original. Thank you for checking its authenticity.";
-    }
-    return theme.failureDescription || "This product could not be verified as authentic. It may be counterfeit or has been previously verified.";
-  }
-  
-  function getFooterText() {
-    if (isVerified === true) {
-      return theme.successFooterText || "This QR code has been marked as used and cannot be verified again.";
-    }
-    return theme.failureFooterText || "If you believe this is an error, please contact the product manufacturer.";
-  }
 };
 
 export default ProductCheck;
