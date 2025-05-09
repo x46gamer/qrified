@@ -14,62 +14,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import { Link } from 'react-router-dom';
 import { FileText } from "lucide-react";
-
-export type ThemeSettings = {
-  // Color settings
-  successBackground: string;
-  successText: string;
-  successIcon: string;
-  failureBackground: string;
-  failureText: string;
-  failureIcon: string;
-  
-  // Text content
-  successTitle: string;
-  successDescription: string;
-  successFooterText: string;
-  failureTitle: string;
-  failureDescription: string;
-  failureFooterText: string;
-  
-  // Direction settings
-  isRtl: boolean;
-  
-  // Feature toggles
-  enableReviews: boolean;
-  enableFeedback: boolean;
-  
-  // Logo
-  logoUrl: string | null;
-};
-
-const defaultTheme: ThemeSettings = {
-  // Default colors
-  successBackground: "#f0fdf4", // green-50
-  successText: "#16a34a", // green-600
-  successIcon: "#22c55e", // green-500
-  failureBackground: "#fef2f2", // red-50
-  failureText: "#dc2626", // red-600
-  failureIcon: "#ef4444", // red-500
-  
-  // Default text content
-  successTitle: "Product Verified",
-  successDescription: "This product is legitimate and original. Thank you for checking its authenticity.",
-  successFooterText: "This QR code has been marked as used and cannot be verified again.",
-  failureTitle: "Not Authentic",
-  failureDescription: "This product could not be verified as authentic. It may be counterfeit or has been previously verified.",
-  failureFooterText: "If you believe this is an error, please contact the product manufacturer.",
-  
-  // Default direction
-  isRtl: false,
-  
-  // Default feature toggles
-  enableReviews: false,
-  enableFeedback: false,
-  
-  // Default logo
-  logoUrl: null,
-};
+import { ThemeSettings, defaultTheme } from '@/contexts/AppearanceContext';
 
 export const AppearanceSettings = () => {
   const [activeTab, setActiveTab] = useState<"success" | "failure" | "features" | "general">("general");
@@ -386,6 +331,18 @@ export const AppearanceSettings = () => {
                   <AlertDescription>{uploadError}</AlertDescription>
                 </Alert>
               )}
+            </div>
+
+            {/* Brand Colors */}
+            <div className="space-y-4">
+              <h3 className="font-medium text-lg">Brand Colors</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {renderColorPicker("primaryColor", "Primary Color")}
+                {renderColorPicker("secondaryColor", "Secondary Color")}
+              </div>
+              <p className="text-sm text-muted-foreground">
+                These colors will be used in various places throughout the application, including QR code templates.
+              </p>
             </div>
           </TabsContent>
           

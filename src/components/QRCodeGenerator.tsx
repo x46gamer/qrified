@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,8 +11,8 @@ import { QRCodeSVG } from 'qrcode.react';
 import { QRCode } from '@/types/qrCode';
 import { v4 as uuidv4 } from 'uuid';
 import { supabase } from '@/integrations/supabase/client';
-import { AppearanceSettingsContext } from './AppearanceSettings';
-import { TemplateType, QRCodeTemplates } from './QRCodeTemplates';
+import { useAppearanceSettings } from '@/contexts/AppearanceContext';
+import { TemplateType } from '@/components/QRCodeTemplates';
 // Import the type guard function we created
 import { isTemplateType } from '@/utils/typeGuards';
 
@@ -31,7 +32,8 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ onQRCodesGenerated, l
   const [qrCodesPreview, setQrCodesPreview] = useState<string[]>([]);
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
   
-  const { primaryColor, secondaryColor } = React.useContext(AppearanceSettingsContext);
+  const themeSettings = useAppearanceSettings();
+  const { primaryColor, secondaryColor } = themeSettings;
   
   const generateQRCodes = async () => {
     setIsGenerating(true);
@@ -59,7 +61,7 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ onQRCodesGenerated, l
         
         newQRCodes.push({
           id: uuidv4(),
-          sequentialNumber: sequentialNumber,
+          sequentialNumber,
           encryptedData: encryptedData,
           url: qrCodeData,
           isScanned: false,
@@ -148,6 +150,8 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ onQRCodesGenerated, l
   const renderTemplatePreview = () => {
     const qrCodeData = `${websiteUrl}?id=preview-code`;
     
+    // Import the template components dynamically
+    const QRCodeTemplates = require('@/components/QRCodeTemplates').default;
     let TemplateComponent = QRCodeTemplates[template];
     
     if (!TemplateComponent) {
