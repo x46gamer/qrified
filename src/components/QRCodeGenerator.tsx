@@ -1,20 +1,20 @@
 
-import React, { useState } from 'react';
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Textarea } from "@/components/ui/textarea";
+import React, { useState, useRef } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { toast } from "sonner";
-import { QRCodeSVG } from 'qrcode.react';
+import { ChevronRight, Printer, Download, RefreshCw, Plus } from 'lucide-react';
+import { generateQRCode, encryptData } from '@/utils/qrCodeUtils';
 import { QRCode } from '@/types/qrCode';
-import { v4 as uuidv4 } from 'uuid';
+import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAppearanceSettings } from '@/contexts/AppearanceContext';
-import { TemplateType } from '@/components/QRCodeTemplates';
-// Import the type guard function we created
-import { isTemplateType } from '@/utils/typeGuards';
+import { TemplateType } from './QRCodeTemplates';
+import QRCodeTemplatePreview from './QRCodeTemplatePreview';
+import { v4 as uuidv4 } from 'uuid';
 
 interface QRCodeGeneratorProps {
   onQRCodesGenerated: (qrCodes: QRCode[]) => void;
@@ -22,260 +22,401 @@ interface QRCodeGeneratorProps {
 }
 
 const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ onQRCodesGenerated, lastSequentialNumber }) => {
-  const [quantity, setQuantity] = useState<number>(1);
-  const [template, setTemplate] = useState<TemplateType>('classic');
-  const [headerText, setHeaderText] = useState<string>('');
-  const [instructionText, setInstructionText] = useState<string>('');
-  const [websiteUrl, setWebsiteUrl] = useState<string>('');
-  const [footerText, setFooterText] = useState<string>('');
+  // Get appearance settings
+  const theme = useAppearanceSettings();
+
+  // Form state
+  const [quantity, setQuantity] = useState<string>("1");
+  const [singleProduct, setSingleProduct] = useState<string>("");
+  const [bulkProducts, setBulkProducts] = useState<string[]>([]);
+  const [template, setTemplate] = useState<TemplateType>("classic");
+  const [headerText, setHeaderText] = useState<string>("Scan to Verify Authenticity");
+  const [instructionText, setInstructionText] = useState<string>("Scan this QR code to verify that this product is authentic");
+  const [websiteUrl, setWebsiteUrl] = useState<string>("");
+  const [footerText, setFooterText] = useState<string>("© 2023 seQRity Authentication - All rights reserved");
   const [directionRTL, setDirectionRTL] = useState<boolean>(false);
-  const [qrCodesPreview, setQrCodesPreview] = useState<string[]>([]);
+  
+  // Loading state
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
   
-  const themeSettings = useAppearanceSettings();
-  const { primaryColor, secondaryColor } = themeSettings;
+  // Refs for form elements
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
-  const generateQRCodes = async () => {
-    setIsGenerating(true);
+  // Handle tab switching
+  const [activeTab, setActiveTab] = useState<string>("single");
+  
+  // Handle template preview
+  const [previewQrValue] = useState<string>("https://example.com/verify/preview-code");
+  
+  // Handle file upload for bulk products
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const text = event.target?.result as string;
+      const lines = text.split(/\r?\n/).filter(line => line.trim() !== '');
+      setBulkProducts(lines);
+      toast.success(`Loaded ${lines.length} product codes`);
+    };
+    reader.readAsText(file);
+  };
+  
+  // Generate QR codes
+  const handleGenerate = async () => {
     try {
-      const newQRCodes: QRCode[] = [];
-      const qrCodeDataUrls: string[] = [];
+      setIsGenerating(true);
       
-      for (let i = 0; i < quantity; i++) {
-        const sequentialNumber = lastSequentialNumber + i + 1;
-        const encryptedData = `product-${sequentialNumber}`;
-        const qrCodeData = `${websiteUrl}?id=${encryptedData}`;
+      // Determine products to generate QR codes for
+      let productsToGenerate: string[];
+      
+      if (activeTab === "single") {
+        if (!singleProduct.trim()) {
+          toast.error("Please enter a product identifier");
+          return;
+        }
+        productsToGenerate = [singleProduct.trim()];
+      } else {
+        // Bulk generation
+        if (bulkProducts.length === 0) {
+          toast.error("Please upload a file with product identifiers");
+          return;
+        }
+        productsToGenerate = bulkProducts;
+      }
+      
+      // Limit the number of codes that can be generated at once
+      const quantityNum = parseInt(quantity);
+      if (isNaN(quantityNum) || quantityNum < 1 || quantityNum > 1000) {
+        toast.error("Quantity must be between 1 and 1000");
+        return;
+      }
+      
+      // If using bulk mode, ensure the number of codes is limited
+      if (activeTab === "bulk" && productsToGenerate.length > 1000) {
+        toast.error("Maximum 1000 codes can be generated at once");
+        return;
+      }
+      
+      // Repeat single product if quantity > 1
+      if (activeTab === "single" && quantityNum > 1) {
+        productsToGenerate = Array(quantityNum).fill(singleProduct.trim());
+      }
+      
+      // Start generating QR codes
+      const newQRCodes: QRCode[] = [];
+      let currentSequentialNumber = lastSequentialNumber;
+      
+      // Process each product
+      for (const product of productsToGenerate) {
+        // Increment sequential number
+        currentSequentialNumber++;
         
-        // Generate QR code as SVG
-        const svg = (
-          <QRCodeSVG 
-            value={qrCodeData}
-            size={256}
-            level="H"
-            bgColor="#ffffff"
-            fgColor="#000000"
-          />
-        ).props.value;
+        // Create unique ID for this QR code
+        const id = uuidv4();
         
-        qrCodeDataUrls.push(svg);
+        // Encrypt the product data
+        const encryptedData = await encryptData(product);
         
-        newQRCodes.push({
-          id: uuidv4(),
-          sequentialNumber,
-          encryptedData: encryptedData,
-          url: qrCodeData,
+        // Create verification URL
+        const url = `${window.location.origin}/check?id=${id}`;
+        
+        // Generate QR code as data URL
+        const dataUrl = await generateQRCode(url, {
+          primaryColor: theme.primaryColor,
+          secondaryColor: theme.secondaryColor
+        });
+        
+        // Create QR code object
+        const qrCode: QRCode = {
+          id,
+          sequentialNumber: currentSequentialNumber,
+          encryptedData,
+          url,
           isScanned: false,
           isEnabled: true,
           createdAt: new Date().toISOString(),
           scannedAt: null,
-          dataUrl: svg,
-          template: template,
-          headerText: headerText,
-          instructionText: instructionText,
-          websiteUrl: websiteUrl,
-          footerText: footerText,
-          directionRTL: directionRTL,
-        });
+          dataUrl,
+          template,
+          headerText,
+          instructionText,
+          websiteUrl,
+          footerText,
+          directionRTL
+        };
+        
+        newQRCodes.push(qrCode);
       }
       
-      setQrCodesPreview(qrCodeDataUrls);
-      
-      // Save QR codes to Supabase
-      await saveQRCodesToSupabase(newQRCodes);
-      
-      toast.success(`${quantity} QR codes generated successfully!`);
-      onQRCodesGenerated(newQRCodes);
+      // Insert QR codes into database
+      if (newQRCodes.length > 0) {
+        const { error } = await supabase.from('qr_codes').insert(
+          newQRCodes.map(qr => ({
+            id: qr.id,
+            sequential_number: qr.sequentialNumber,
+            encrypted_data: qr.encryptedData,
+            url: qr.url,
+            is_scanned: qr.isScanned,
+            is_enabled: qr.isEnabled,
+            data_url: qr.dataUrl,
+            template: qr.template,
+            header_text: qr.headerText,
+            instruction_text: qr.instructionText,
+            website_url: qr.websiteUrl,
+            footer_text: qr.footerText,
+            direction_rtl: qr.directionRTL
+          }))
+        );
+        
+        if (error) {
+          throw error;
+        }
+        
+        // Update sequence counter
+        await supabase.from('sequence_counters')
+          .update({ current_value: currentSequentialNumber })
+          .eq('id', 'qr_code_sequential');
+        
+        // Notify parent component about new QR codes
+        onQRCodesGenerated(newQRCodes);
+        
+        toast.success(`Successfully generated ${newQRCodes.length} QR codes`);
+        
+        // Clear form for single product
+        if (activeTab === "single") {
+          setSingleProduct("");
+        }
+      }
     } catch (error) {
-      console.error('Error generating QR codes:', error);
-      toast.error('Failed to generate QR codes');
+      console.error("Error generating QR codes:", error);
+      toast.error("Failed to generate QR codes. Please try again.");
     } finally {
       setIsGenerating(false);
     }
   };
   
-  const saveQRCodesToSupabase = async (qrCodes: QRCode[]) => {
-    try {
-      // Prepare data for Supabase insert
-      const qrCodesToInsert = qrCodes.map(qrCode => ({
-        id: qrCode.id,
-        sequential_number: qrCode.sequentialNumber,
-        encrypted_data: qrCode.encryptedData,
-        url: qrCode.url,
-        is_scanned: qrCode.isScanned,
-        is_enabled: qrCode.isEnabled,
-        created_at: qrCode.createdAt,
-        scanned_at: qrCode.scannedAt,
-        data_url: qrCode.dataUrl,
-        template: qrCode.template,
-        header_text: qrCode.headerText,
-        instruction_text: qrCode.instructionText,
-        website_url: qrCode.websiteUrl,
-        footer_text: qrCode.footerText,
-        direction_rtl: qrCode.directionRTL,
-      }));
-      
-      // Insert QR codes into Supabase
-      const { error } = await supabase
-        .from('qr_codes')
-        .insert(qrCodesToInsert);
-      
-      if (error) {
-        console.error('Error saving QR codes to Supabase:', error);
-        toast.error('Failed to save QR codes to database');
-        return;
-      }
-      
-      // Update the sequence counter
-      await updateSequenceCounter(quantity);
-    } catch (error) {
-      console.error('Error saving QR codes:', error);
-      toast.error('An error occurred while saving QR codes');
-    }
-  };
-  
-  const updateSequenceCounter = async (increment: number) => {
-    try {
-      // Increment the counter value
-      const { error } = await supabase.rpc('increment_qr_code_counter', { increment_value: increment });
-      
-      if (error) {
-        console.error('Error incrementing counter:', error);
-        toast.error('Failed to update sequence counter');
-      }
-    } catch (error) {
-      console.error('Error updating sequence counter:', error);
-    }
-  };
-  
-  const renderTemplatePreview = () => {
-    const qrCodeData = `${websiteUrl}?id=preview-code`;
-    
-    // Import the template components dynamically
-    const QRCodeTemplates = require('@/components/QRCodeTemplates').default;
-    let TemplateComponent = QRCodeTemplates[template];
-    
-    if (!TemplateComponent) {
-      TemplateComponent = QRCodeTemplates['classic'];
-    }
-    
-    return (
-      <div className="border rounded-lg p-4 bg-white/50 shadow-sm">
-        <h4 className="font-medium mb-4">Template Preview</h4>
-        <div className="relative">
-          <TemplateComponent
-            qrCodeValue={qrCodeData}
-            headerText={headerText}
-            instructionText={instructionText}
-            websiteUrl={websiteUrl}
-            footerText={footerText}
-            directionRTL={directionRTL}
-            primaryColor={primaryColor}
-            secondaryColor={secondaryColor}
-          />
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+        <div>
+          <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent">Generate QR Codes</h2>
+          <p className="text-muted-foreground">Create secure QR codes for product authentication</p>
+        </div>
+        
+        <div className="flex flex-col sm:flex-row gap-2">
+          <Select 
+            value={template} 
+            onValueChange={(value) => setTemplate(value as TemplateType)}
+          >
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Select template" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="classic">Classic</SelectItem>
+              <SelectItem value="modern-blue">Modern Blue</SelectItem>
+              <SelectItem value="modern-beige">Modern Beige</SelectItem>
+              <SelectItem value="arabic">Arabic (RTL)</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
-    );
-  };
-  
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Generate QR Codes</CardTitle>
-        <CardDescription>Customize and generate QR codes for your products</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="quantity">Quantity</Label>
-            <Input 
-              type="number" 
-              id="quantity" 
-              min="1" 
-              max="100" 
-              defaultValue="1"
-              onChange={(e) => setQuantity(parseInt(e.target.value))} 
-            />
-          </div>
-          
-          <div>
-            <Label htmlFor="template">Template</Label>
-            <Select onValueChange={(value) => {
-              if (isTemplateType(value)) {
-                setTemplate(value);
-              } else {
-                console.error(`Invalid template type: ${value}`);
-              }
-            }}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select a template" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="classic">Classic</SelectItem>
-                <SelectItem value="modern-blue">Modern Blue</SelectItem>
-                <SelectItem value="modern-beige">Modern Beige</SelectItem>
-                <SelectItem value="arabic">Arabic</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+      
+      <div className="grid md:grid-cols-5 gap-6">
+        <div className="md:col-span-3 space-y-6">
+          <Card>
+            <CardHeader className="pb-4">
+              <CardTitle>QR Code Generator</CardTitle>
+              <CardDescription>Generate single or multiple QR codes for product verification</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Tabs defaultValue="single" value={activeTab} onValueChange={setActiveTab}>
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="single">Single</TabsTrigger>
+                  <TabsTrigger value="bulk">Bulk</TabsTrigger>
+                </TabsList>
+                <TabsContent value="single" className="space-y-4 pt-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="single-product">Product Identifier</Label>
+                    <Input 
+                      id="single-product"
+                      placeholder="Enter product ID, serial number, or other identifier"
+                      value={singleProduct}
+                      onChange={(e) => setSingleProduct(e.target.value)}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="quantity">Quantity</Label>
+                    <Input 
+                      id="quantity" 
+                      type="number" 
+                      min="1" 
+                      max="1000" 
+                      value={quantity}
+                      onChange={(e) => setQuantity(e.target.value)}
+                    />
+                  </div>
+                </TabsContent>
+                
+                <TabsContent value="bulk" className="space-y-4 pt-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="bulk-upload">Upload Product List</Label>
+                    <div className="flex flex-col gap-2">
+                      <Input 
+                        id="bulk-file"
+                        type="file" 
+                        accept=".txt,.csv" 
+                        ref={fileInputRef}
+                        onChange={handleFileUpload}
+                        className="hidden"
+                      />
+                      <div className="grid grid-cols-2 gap-2">
+                        <Button 
+                          variant="outline" 
+                          className="w-full"
+                          onClick={() => fileInputRef.current?.click()}
+                        >
+                          <Plus className="mr-2 h-4 w-4" /> Select File
+                        </Button>
+                        
+                        <Button 
+                          variant="outline" 
+                          className="w-full"
+                          disabled={bulkProducts.length === 0}
+                          onClick={() => {
+                            setBulkProducts([]);
+                            if (fileInputRef.current) fileInputRef.current.value = '';
+                          }}
+                        >
+                          <RefreshCw className="mr-2 h-4 w-4" /> Reset
+                        </Button>
+                      </div>
+                    </div>
+                    {bulkProducts.length > 0 && (
+                      <p className="text-sm text-muted-foreground">
+                        {bulkProducts.length} product identifiers loaded
+                      </p>
+                    )}
+                  </div>
+                </TabsContent>
+              </Tabs>
+              
+              <div className="pt-2">
+                <details className="text-sm">
+                  <summary className="font-medium cursor-pointer text-blue-600 hover:text-blue-800">
+                    Customize QR code appearance and content
+                  </summary>
+                  <div className="pt-4 space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="header-text">Header Text</Label>
+                      <Input 
+                        id="header-text"
+                        value={headerText}
+                        onChange={(e) => setHeaderText(e.target.value)}
+                        placeholder="Header text for the verification page"
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="instruction-text">Instruction Text</Label>
+                      <Input 
+                        id="instruction-text"
+                        value={instructionText}
+                        onChange={(e) => setInstructionText(e.target.value)}
+                        placeholder="Instructions for the user"
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="website-url">Website URL (optional)</Label>
+                      <Input 
+                        id="website-url"
+                        value={websiteUrl}
+                        onChange={(e) => setWebsiteUrl(e.target.value)}
+                        placeholder="Link to your website"
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="footer-text">Footer Text</Label>
+                      <Input 
+                        id="footer-text"
+                        value={footerText}
+                        onChange={(e) => setFooterText(e.target.value)}
+                        placeholder="Copyright or additional information"
+                      />
+                    </div>
+                    
+                    <div className="flex items-center space-x-2">
+                      <input 
+                        type="checkbox" 
+                        id="rtl" 
+                        checked={directionRTL} 
+                        onChange={(e) => setDirectionRTL(e.target.checked)}
+                        className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <Label htmlFor="rtl">Right-to-left text direction (for Arabic, Hebrew, etc.)</Label>
+                    </div>
+                  </div>
+                </details>
+              </div>
+            </CardContent>
+            <CardFooter>
+              <Button 
+                onClick={handleGenerate} 
+                disabled={isGenerating}
+                className="w-full bg-gradient-to-r from-blue-500 to-violet-500 hover:from-blue-600 hover:to-violet-600"
+              >
+                {isGenerating ? (
+                  <>
+                    <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <ChevronRight className="mr-2 h-4 w-4" />
+                    Generate QR {activeTab === "bulk" ? "Codes" : "Code"}
+                  </>
+                )}
+              </Button>
+            </CardFooter>
+          </Card>
         </div>
         
-        <div className="space-y-2">
-          <Label htmlFor="headerText">Header Text</Label>
-          <Input
-            id="headerText"
-            placeholder="Enter header text"
-            value={headerText}
-            onChange={(e) => setHeaderText(e.target.value)}
-          />
+        <div className="md:col-span-2">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle>Preview</CardTitle>
+              <CardDescription>QR code template preview</CardDescription>
+            </CardHeader>
+            <CardContent className="flex justify-center pt-4">
+              <QRCodeTemplatePreview 
+                template={template}
+                value={previewQrValue}
+                primaryColor={theme.primaryColor}
+                secondaryColor={theme.secondaryColor}
+                size={180}
+              />
+            </CardContent>
+            <CardFooter className="flex flex-col gap-2">
+              <p className="text-xs text-center text-muted-foreground">
+                Preview of the {template} template
+              </p>
+              <div className="flex justify-center gap-2 pt-2">
+                <Button variant="outline" size="sm" className="text-xs">
+                  <Printer className="mr-1 h-3 w-3" /> Print
+                </Button>
+                <Button variant="outline" size="sm" className="text-xs">
+                  <Download className="mr-1 h-3 w-3" /> Download
+                </Button>
+              </div>
+            </CardFooter>
+          </Card>
         </div>
-        
-        <div className="space-y-2">
-          <Label htmlFor="instructionText">Instruction Text</Label>
-          <Textarea
-            id="instructionText"
-            placeholder="Enter instruction text"
-            value={instructionText}
-            onChange={(e) => setInstructionText(e.target.value)}
-          />
-        </div>
-        
-        <div className="space-y-2">
-          <Label htmlFor="websiteUrl">Website URL</Label>
-          <Input
-            id="websiteUrl"
-            placeholder="Enter website URL"
-            value={websiteUrl}
-            onChange={(e) => setWebsiteUrl(e.target.value)}
-          />
-        </div>
-        
-        <div className="space-y-2">
-          <Label htmlFor="footerText">Footer Text</Label>
-          <Input
-            id="footerText"
-            placeholder="Enter footer text"
-            value={footerText}
-            onChange={(e) => setFooterText(e.target.value)}
-          />
-        </div>
-        
-        <div className="flex items-center space-x-2">
-          <Input
-            type="checkbox"
-            id="directionRTL"
-            checked={directionRTL}
-            onChange={(e) => setDirectionRTL(e.target.checked)}
-          />
-          <Label htmlFor="directionRTL">Right-to-Left Direction (Arabic)</Label>
-        </div>
-        
-        {renderTemplatePreview()}
-        
-        <Button onClick={generateQRCodes} disabled={isGenerating} className="w-full bg-gradient-to-r from-blue-500 to-violet-500 hover:from-blue-600 hover:to-violet-600">
-          {isGenerating ? "Generating..." : "Generate QR Codes"}
-        </Button>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };
 

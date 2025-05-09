@@ -1,383 +1,232 @@
 
-import React, { useEffect, useState } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
-import { decryptData, validateEncryptedData, debugVerifyQRCodeInDatabase } from '@/utils/qrCodeUtils';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from "sonner";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { QRCode } from '@/types/qrCode';
+import { CheckIcon, XIcon } from 'lucide-react';
+import { decryptData } from '@/utils/qrCodeUtils';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import ReviewForm from '@/components/ReviewForm';
-import FeedbackForm from '@/components/FeedbackForm';
-import { ThemeSettings } from '@/components/AppearanceSettings';
-
-// Default theme settings
-const defaultTheme: ThemeSettings = {
-  successBackground: "#f0fdf4", // green-50
-  successText: "#16a34a", // green-600
-  successIcon: "#22c55e", // green-500
-  failureBackground: "#fef2f2", // red-50
-  failureText: "#dc2626", // red-600
-  failureIcon: "#ef4444", // red-500,
-  successTitle: "Product Verified",
-  successDescription: "This product is legitimate and original. Thank you for checking its authenticity.",
-  successFooterText: "This QR code has been marked as used and cannot be verified again.",
-  failureTitle: "Not Authentic",
-  failureDescription: "This product could not be verified as authentic. It may be counterfeit or has been previously verified.",
-  failureFooterText: "If you believe this is an error, please contact the product manufacturer.",
-  isRtl: false,
-  enableReviews: false,
-  enableFeedback: false,
-  logoUrl: null,
-};
+import { useAppearanceSettings } from '@/contexts/AppearanceContext';
+import type { ThemeSettings } from '@/contexts/AppearanceContext';
 
 const ProductCheck = () => {
   const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
-  const [isValid, setIsValid] = useState<boolean | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [debugInfo, setDebugInfo] = useState<string | null>(null);
-  const [rawEncryptedData, setRawEncryptedData] = useState<string | null>(null);
-  const [detailedDebugInfo, setDetailedDebugInfo] = useState<any>(null);
-  const [theme, setTheme] = useState<ThemeSettings>(defaultTheme);
-  const [qrId, setQrId] = useState<string | null>(null);
-
+  const qrId = searchParams.get('id');
+  const [qrCode, setQrCode] = useState<QRCode | null>(null);
+  const [productData, setProductData] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isVerified, setIsVerified] = useState<boolean | null>(null);
+  const [showReviews, setShowReviews] = useState(false);
+  
+  // Get appearance settings
+  const theme = useAppearanceSettings();
+  
   useEffect(() => {
-    // Fetch theme settings from the database
-    const fetchThemeSettings = async () => {
+    const fetchQRCode = async () => {
+      if (!qrId) {
+        setIsLoading(false);
+        return;
+      }
+      
       try {
         const { data, error } = await supabase
-          .from('app_settings')
-          .select('settings')
-          .eq('id', 'theme')
-          .maybeSingle();
-        
-        if (error) {
-          console.error('Error fetching theme settings:', error);
-          return;
-        }
-        
-        if (data && data.settings) {
-          // Type check and cast the settings to ensure it matches our ThemeSettings structure
-          const settings = data.settings as Record<string, any>;
-          
-          // Merge with default theme to ensure we have all properties
-          const themeData: ThemeSettings = {
-            successBackground: settings.successBackground as string || defaultTheme.successBackground,
-            successText: settings.successText as string || defaultTheme.successText,
-            successIcon: settings.successIcon as string || defaultTheme.successIcon,
-            failureBackground: settings.failureBackground as string || defaultTheme.failureBackground,
-            failureText: settings.failureText as string || defaultTheme.failureText,
-            failureIcon: settings.failureIcon as string || defaultTheme.failureIcon,
-            successTitle: settings.successTitle as string || defaultTheme.successTitle,
-            successDescription: settings.successDescription as string || defaultTheme.successDescription,
-            successFooterText: settings.successFooterText as string || defaultTheme.successFooterText,
-            failureTitle: settings.failureTitle as string || defaultTheme.failureTitle,
-            failureDescription: settings.failureDescription as string || defaultTheme.failureDescription,
-            failureFooterText: settings.failureFooterText as string || defaultTheme.failureFooterText,
-            isRtl: settings.isRtl as boolean || defaultTheme.isRtl,
-            enableReviews: settings.enableReviews as boolean || defaultTheme.enableReviews,
-            enableFeedback: settings.enableFeedback as boolean || defaultTheme.enableFeedback,
-            logoUrl: settings.logoUrl as string || null,
-          };
-          
-          setTheme(themeData);
-        }
-      } catch (error) {
-        console.error('Failed to load theme settings:', error);
-      }
-    };
-
-    fetchThemeSettings();
-  }, []);
-
-  useEffect(() => {
-    const validateQRCode = async () => {
-      try {
-        // Get the encrypted data from URL
-        let encryptedData = searchParams.get('qr');
-        
-        // First, save the raw encrypted data for debugging
-        setRawEncryptedData(encryptedData);
-        console.log('Raw encrypted data from URL:', encryptedData);
-        
-        if (!encryptedData) {
-          console.error('No encrypted data found in URL');
-          setDebugInfo('Missing QR data in URL');
-          setIsValid(false);
-          setIsLoading(false);
-          return;
-        }
-        
-        // We need to decode the URL parameter
-        try {
-          encryptedData = decodeURIComponent(encryptedData);
-          console.log('Decoded encrypted data:', encryptedData);
-        } catch (e) {
-          console.error('Error decoding URL parameter:', e);
-          setDebugInfo('Invalid QR format: Could not decode URL parameter');
-          setIsValid(false);
-          setIsLoading(false);
-          return;
-        }
-        
-        // Validate the encrypted data format
-        if (!validateEncryptedData(encryptedData)) {
-          console.error('Invalid encrypted data format');
-          setDebugInfo('Invalid QR code format');
-          setIsValid(false);
-          setIsLoading(false);
-          return;
-        }
-
-        // Perform a debug check to see if the QR code exists in the database
-        const debugVerifyResult = await debugVerifyQRCodeInDatabase(encryptedData);
-        setDetailedDebugInfo(debugVerifyResult);
-        console.log('Debug verification result:', debugVerifyResult);
-        
-        if (!debugVerifyResult.exists) {
-          setDebugInfo(`QR code not found in database: ${debugVerifyResult.message || 'No matching record'}`);
-          setIsValid(false);
-          setIsLoading(false);
-          return;
-        }
-
-        // Query the database for the QR code
-        console.log('Querying database for QR code:', encryptedData);
-        const { data: qrCode, error } = await supabase
           .from('qr_codes')
           .select('*')
-          .eq('encrypted_data', encryptedData)
-          .maybeSingle();
-        
-        console.log('Database response:', { qrCode, error });
+          .eq('id', qrId)
+          .single();
         
         if (error) {
-          console.error('Error fetching QR code:', error);
-          setDebugInfo(`Database error: ${error.message}`);
-          setIsValid(false);
-          setIsLoading(false);
-          return;
+          throw error;
         }
         
-        if (!qrCode) {
-          console.error('QR code not found in database');
-          setDebugInfo('QR code not found in database');
-          setIsValid(false);
-          setIsLoading(false);
-          return;
-        }
-
-        console.log('QR code found:', qrCode);
-        setQrId(qrCode.id);
-        
-        // Check if the QR code is enabled and not scanned
-        if (qrCode.is_enabled && !qrCode.is_scanned) {
-          console.log('QR code is valid and not scanned');
+        // Map database fields to our app's QRCode type
+        if (data) {
+          const mappedQr: QRCode = {
+            id: data.id,
+            sequentialNumber: data.sequential_number,
+            encryptedData: data.encrypted_data,
+            url: data.url,
+            isScanned: data.is_scanned,
+            isEnabled: data.is_enabled,
+            createdAt: data.created_at,
+            scannedAt: data.scanned_at,
+            dataUrl: data.data_url,
+            template: data.template,
+            headerText: data.header_text,
+            instructionText: data.instruction_text,
+            websiteUrl: data.website_url,
+            footerText: data.footer_text,
+            directionRTL: data.direction_rtl,
+          };
           
-          // Mark as scanned
-          const { error: updateError } = await supabase
-            .from('qr_codes')
-            .update({
-              is_scanned: true,
-              scanned_at: new Date().toISOString()
-            })
-            .eq('id', qrCode.id);
+          setQrCode(mappedQr);
           
-          if (updateError) {
-            console.error('Error updating QR code:', updateError);
-            setDebugInfo(`Error marking as scanned: ${updateError.message}`);
-            // Still consider valid even if update fails
+          // Check if already scanned and still enabled
+          if (mappedQr.isEnabled && !mappedQr.isScanned) {
+            // Decrypt data
+            try {
+              const decryptedData = await decryptData(mappedQr.encryptedData);
+              setProductData(decryptedData);
+              setIsVerified(true);
+              
+              // Mark as scanned
+              await supabase
+                .from('qr_codes')
+                .update({
+                  is_scanned: true,
+                  scanned_at: new Date().toISOString()
+                })
+                .eq('id', qrId);
+                
+            } catch (err) {
+              console.error("Decryption error:", err);
+              setIsVerified(false);
+            }
+          } else {
+            // Already scanned or disabled
+            setIsVerified(false);
           }
-          
-          toast.success('Product authenticated successfully');
-          setIsValid(true);
-        } else {
-          console.log('QR code is either disabled or already scanned', {
-            is_enabled: qrCode.is_enabled,
-            is_scanned: qrCode.is_scanned
-          });
-          
-          if (!qrCode.is_enabled) {
-            setDebugInfo('QR code is disabled');
-          } else if (qrCode.is_scanned) {
-            setDebugInfo('QR code has already been scanned');
-          }
-          
-          setIsValid(false);
         }
-      } catch (error) {
-        console.error('Error validating QR code:', error);
-        setDebugInfo(`Validation error: ${error instanceof Error ? error.message : 'Unknown error'}`);
-        setIsValid(false);
+      } catch (err) {
+        console.error("Error fetching QR code:", err);
+        setIsVerified(false);
       } finally {
         setIsLoading(false);
       }
     };
     
-    validateQRCode();
-  }, [searchParams, navigate]);
-
+    fetchQRCode();
+  }, [qrId]);
+  
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="flex flex-col items-center">
-          <div className="h-12 w-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-          <p className="mt-4 text-lg">Verifying product authenticity...</p>
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-500 mx-auto"></div>
+          <p className="mt-4 text-lg text-gray-600">Verifying product authenticity...</p>
         </div>
-      </div>
-    );
-  }
-
-  if (isValid === true) {
-    return (
-      <div 
-        className="min-h-screen flex flex-col items-center justify-center p-4" 
-        style={{ backgroundColor: theme.successBackground, direction: theme.isRtl ? 'rtl' : 'ltr' }}
-      >
-        <div className="max-w-md w-full mx-auto bg-white rounded-xl shadow-lg overflow-hidden">
-          <div className="p-8">
-            {theme.logoUrl && (
-              <div className="flex justify-center mb-6">
-                <img 
-                  src={theme.logoUrl} 
-                  alt="Brand logo" 
-                  className="max-h-16 max-w-full object-contain" 
-                />
-              </div>
-            )}
-            
-            <div className="flex justify-center">
-              <div className="w-24 h-24 rounded-full flex items-center justify-center" style={{ backgroundColor: theme.successIcon }}>
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-            </div>
-            
-            <h1 className="mt-6 text-3xl font-bold text-center" style={{ color: theme.successText }}>
-              {theme.successTitle}
-            </h1>
-            
-            <p className="mt-4 text-lg text-center">
-              {theme.successDescription}
-            </p>
-            
-            <div className="mt-8 p-4 rounded-lg" style={{ backgroundColor: `${theme.successBackground}` }}>
-              <p className="text-sm text-center" style={{ color: theme.successText }}>
-                {theme.successFooterText}
-              </p>
-            </div>
-            
-            <div className="mt-8 flex justify-center">
-              <button
-                onClick={() => navigate('/')}
-                className="px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
-              >
-                Return to Home
-              </button>
-            </div>
-          </div>
-        </div>
-        
-        {/* Reviews Form - conditionally rendered */}
-        {theme.enableReviews && qrId && (
-          <div className="max-w-md w-full mx-auto">
-            <ReviewForm 
-              qrId={qrId} 
-              successBackground={theme.successBackground}
-              successText={theme.successText}
-            />
-          </div>
-        )}
-        
-        {/* Feedback Form - conditionally rendered */}
-        {theme.enableFeedback && qrId && (
-          <div className="max-w-md w-full mx-auto">
-            <FeedbackForm 
-              qrId={qrId}
-              successBackground={theme.successBackground}
-              successText={theme.successText}
-            />
-          </div>
-        )}
       </div>
     );
   }
   
+  if (!qrId) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle className="text-center text-red-500">Missing QR Code</CardTitle>
+          </CardHeader>
+          <CardContent className="text-center">
+            <XIcon className="h-16 w-16 text-red-500 mx-auto mb-4" />
+            <p>No QR code ID provided. Please scan a valid QR code.</p>
+            <Button className="mt-4" onClick={() => window.history.back()}>Go Back</Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+  
+  const getBgColor = () => {
+    if (isVerified === true) {
+      return theme.successBackground || "#f0fdf4"; // green-50
+    } else if (isVerified === false) {
+      return theme.failureBackground || "#fef2f2"; // red-50
+    }
+    return "bg-white";
+  };
+  
+  const getTextColor = () => {
+    if (isVerified === true) {
+      return theme.successText || "#16a34a"; // green-600
+    } else if (isVerified === false) {
+      return theme.failureText || "#dc2626"; // red-600
+    }
+    return "text-gray-700";
+  };
+  
+  const getIconColor = () => {
+    if (isVerified === true) {
+      return theme.successIcon || "#22c55e"; // green-500
+    } else if (isVerified === false) {
+      return theme.failureIcon || "#ef4444"; // red-500
+    }
+    return "#6b7280"; // gray-500
+  };
+  
+  // Get the appropriate content based on verification status
+  const getTitle = () => {
+    if (isVerified === true) {
+      return theme.successTitle || "Product Verified";
+    }
+    return theme.failureTitle || "Not Authentic";
+  };
+  
+  const getDescription = () => {
+    if (isVerified === true) {
+      return theme.successDescription || "This product is legitimate and original. Thank you for checking its authenticity.";
+    }
+    return theme.failureDescription || "This product could not be verified as authentic. It may be counterfeit or has been previously verified.";
+  };
+  
+  const getFooterText = () => {
+    if (isVerified === true) {
+      return theme.successFooterText || "This QR code has been marked as used and cannot be verified again.";
+    }
+    return theme.failureFooterText || "If you believe this is an error, please contact the product manufacturer.";
+  };
+  
   return (
     <div 
-      className="min-h-screen flex flex-col items-center justify-center p-4" 
-      style={{ backgroundColor: theme.failureBackground, direction: theme.isRtl ? 'rtl' : 'ltr' }}
+      className={`min-h-screen flex flex-col items-center justify-center p-4`}
+      style={{ backgroundColor: getBgColor(), color: getTextColor(), direction: qrCode?.directionRTL ? 'rtl' : 'ltr' }}
     >
-      <div className="max-w-md w-full mx-auto bg-white rounded-xl shadow-lg overflow-hidden">
-        <div className="p-8">
-          {theme.logoUrl && (
-            <div className="flex justify-center mb-6">
-              <img 
-                src={theme.logoUrl} 
-                alt="Brand logo" 
-                className="max-h-16 max-w-full object-contain" 
-              />
+      <Card className="w-full max-w-md bg-white/80 backdrop-blur-sm border shadow-lg">
+        <CardHeader className="text-center">
+          <CardTitle className="text-2xl" style={{ color: getTextColor() }}>
+            {getTitle()}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="text-center space-y-6">
+          {isVerified ? (
+            <CheckIcon className="h-16 w-16 mx-auto" style={{ color: getIconColor() }} />
+          ) : (
+            <XIcon className="h-16 w-16 mx-auto" style={{ color: getIconColor() }} />
+          )}
+          
+          <p className="text-lg">{getDescription()}</p>
+          
+          {isVerified && productData && (
+            <div className="border rounded-lg p-4 bg-gray-50 text-left">
+              <h3 className="font-medium mb-2">Product Details:</h3>
+              <p className="break-all">{productData}</p>
             </div>
           )}
           
-          <div className="flex justify-center">
-            <div className="w-24 h-24 rounded-full flex items-center justify-center" style={{ backgroundColor: theme.failureIcon }}>
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </div>
-          </div>
-          
-          <h1 className="mt-6 text-3xl font-bold text-center" style={{ color: theme.failureText }}>
-            {theme.failureTitle}
-          </h1>
-          
-          <p className="mt-4 text-lg text-center">
-            {theme.failureDescription}
-          </p>
-          
-          <div className="mt-8 p-4 rounded-lg">
-            <p className="text-sm text-center" style={{ color: theme.failureText }}>
-              {theme.failureFooterText}
-            </p>
-            {debugInfo && (
-              <Alert className="mt-3 border-red-200" style={{ backgroundColor: `${theme.failureBackground}40` }}>
-                <AlertDescription className="text-xs" style={{ color: theme.failureText }}>
-                  Debug info: {debugInfo}
-                </AlertDescription>
-              </Alert>
-            )}
-            {rawEncryptedData && (
-              <Alert className="mt-3 border-red-200" style={{ backgroundColor: `${theme.failureBackground}40` }}>
-                <AlertDescription className="text-xs break-all" style={{ color: theme.failureText }}>
-                  Raw QR code: {rawEncryptedData}
-                </AlertDescription>
-              </Alert>
-            )}
-            {detailedDebugInfo && (
-              <Alert className="mt-3 border-red-200" style={{ backgroundColor: `${theme.failureBackground}40` }}>
-                <AlertDescription className="text-xs" style={{ color: theme.failureText }}>
-                  <details>
-                    <summary>Detailed debug info (click to expand)</summary>
-                    <pre className="text-xs mt-2 overflow-x-auto">
-                      {JSON.stringify(detailedDebugInfo, null, 2)}
-                    </pre>
-                  </details>
-                </AlertDescription>
-              </Alert>
-            )}
-          </div>
-          
-          <div className="mt-8 flex justify-center">
-            <button
-              onClick={() => navigate('/')}
-              className="px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+          {qrCode?.websiteUrl && (
+            <Button 
+              variant="outline" 
+              className="mt-4 w-full" 
+              onClick={() => window.open(qrCode.websiteUrl, '_blank')}
             >
-              Return to Home
-            </button>
-          </div>
-        </div>
-      </div>
+              Visit Website
+            </Button>
+          )}
+          
+          {isVerified && theme.enableReviews && (
+            <div className="pt-4">
+              {showReviews ? (
+                <ReviewForm qrId={qrId} />
+              ) : (
+                <Button onClick={() => setShowReviews(true)}>Leave a Review</Button>
+              )}
+            </div>
+          )}
+          
+          <p className="text-sm text-gray-500 mt-4">{getFooterText()}</p>
+        </CardContent>
+      </Card>
     </div>
   );
 };
