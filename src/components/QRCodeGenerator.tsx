@@ -13,8 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { generateQRCodeImage, encryptData } from '@/utils/qrCodeUtils';
 import { supabase } from '@/integrations/supabase/client';
 import { v4 as uuidv4 } from 'uuid';
-import { TemplateType, templateLanguages } from '@/types/qrCode';
-import QRCodeTemplates from './QRCodeTemplates';
+import { TemplateType } from '@/types/qrCode';
 
 interface QRCodeGeneratorProps {
   onQRCodesGenerated: (qrCodes: any[]) => void;
@@ -36,11 +35,11 @@ interface FormValues {
 const DEFAULT_VALUES: FormValues = {
   quantity: 1,
   productData: "Original Authentic Product",
-  template: "english",
+  template: "classic",
   baseUrl: window.location.origin,
-  headerText: templateLanguages.english.headerText,
-  instructionText: templateLanguages.english.instructionText,
-  footerText: templateLanguages.english.footerText,
+  headerText: "Product Authentication",
+  instructionText: "Scan this QR code to verify the authenticity of your product",
+  footerText: "Thank you for choosing our product",
   websiteUrl: "",
   isRTL: false
 };
@@ -54,17 +53,13 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
   });
   
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
-  const [primaryColor, setPrimaryColor] = useState<string>('#000000'); // Changed to black
+  const [primaryColor, setPrimaryColor] = useState<string>('#3b82f6'); // blue-500
   const [secondaryColor, setSecondaryColor] = useState<string>('#8b5cf6'); // purple-500
   const [previewQRCode, setPreviewQRCode] = useState<string | null>(null);
   
   const template = watch('template');
   const quantity = watch('quantity');
   const baseUrl = watch('baseUrl');
-  const headerText = watch('headerText');
-  const instructionText = watch('instructionText');
-  const footerText = watch('footerText');
-  const isRTL = watch('isRTL');
 
   // Set the base URL on component mount
   useEffect(() => {
@@ -91,18 +86,6 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
     generatePreview();
   }, [template, primaryColor, secondaryColor]);
   
-  const handleTemplateContentChange = (
-    newHeaderText: string,
-    newInstructionText: string,
-    newFooterText: string,
-    newIsRTL: boolean
-  ) => {
-    setValue('headerText', newHeaderText);
-    setValue('instructionText', newInstructionText);
-    setValue('footerText', newFooterText);
-    setValue('isRTL', newIsRTL);
-  };
-
   const onSubmit = async (data: FormValues) => {
     if (isGenerating) return;
     
@@ -159,10 +142,10 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
           is_enabled: true,
           data_url: dataUrl,
           template: data.template,
-          header_text: data.headerText,
-          instruction_text: data.instructionText,
+          header_text: data.headerText || 'Product Authentication',
+          instruction_text: data.instructionText || 'Scan this QR code to verify the authenticity of your product',
           website_url: data.websiteUrl || null,
-          footer_text: data.footerText,
+          footer_text: data.footerText || 'Thank you for choosing our product',
           direction_rtl: data.isRTL
         });
       }
@@ -384,7 +367,6 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
                     id="isRTL"
                     {...register('isRTL')}
                     className="rounded"
-                    checked={isRTL}
                   />
                   <Label htmlFor="isRTL">Right to Left Text Direction</Label>
                 </div>
@@ -397,33 +379,41 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
               <CardHeader>
                 <CardTitle>QR Code Template</CardTitle>
               </CardHeader>
-              <CardContent className="flex-1 space-y-6">
-                <QRCodeTemplates 
-                  selectedTemplate={template as TemplateType} 
-                  onSelectTemplate={(value) => setValue('template', value)}
-                  onTemplateContentChange={handleTemplateContentChange}
-                />
-                
-                <div className="mt-8 flex justify-center">
-                  <div className="w-64 h-64">
-                    <QRCodeTemplatePreview
-                      template={template}
-                      primaryColor={primaryColor}
-                      secondaryColor={secondaryColor}
-                      size={256}
-                      qrCodeDataUrl={previewQRCode || undefined}
-                      headerText={headerText}
-                      instructionText={instructionText}
-                      footerText={footerText}
-                      directionRTL={isRTL}
-                    />
+              <CardContent className="flex-1">
+                <Tabs defaultValue="classic" className="w-full" onValueChange={(value) => setValue('template', value as TemplateType)}>
+                  <TabsList className="grid grid-cols-4 mb-4">
+                    <TabsTrigger value="classic">Classic</TabsTrigger>
+                    <TabsTrigger value="modern-blue">Modern Blue</TabsTrigger>
+                    <TabsTrigger value="modern-beige">Modern Beige</TabsTrigger>
+                    <TabsTrigger value="arabic">Arabic</TabsTrigger>
+                  </TabsList>
+                  
+                  <div className="mt-4 flex justify-center">
+                    <div className="w-64 h-64">
+                      <QRCodeTemplatePreview
+                        template={template}
+                        primaryColor={primaryColor}
+                        secondaryColor={secondaryColor}
+                        size={256}
+                        qrCodeDataUrl={previewQRCode || undefined}
+                      />
+                    </div>
                   </div>
-                </div>
+                  
+                  <div className="mt-4 text-center">
+                    <p className="text-muted-foreground">
+                      {template === 'classic' && "Simple and clean design with solid colors"}
+                      {template === 'modern-blue' && "Modern design with blue gradient"}
+                      {template === 'modern-beige' && "Elegant design with beige gradient"}
+                      {template === 'arabic' && "Optimized for right-to-left languages"}
+                    </p>
+                  </div>
+                </Tabs>
               </CardContent>
               <CardFooter className="flex flex-col">
                 <Button 
                   type="submit"
-                  className="w-full bg-gradient-to-r from-black to-gray-800 hover:from-black hover:to-gray-700"
+                  className="w-full bg-gradient-to-r from-blue-500 to-violet-500 hover:from-blue-600 hover:to-violet-600"
                   disabled={isGenerating}
                 >
                   {isGenerating ? (

@@ -2,10 +2,10 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { useAuth } from '../contexts/AuthContext';
-import { MenuIcon, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { MenuIcon, X, PanelLeft, PanelRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { useSidebar } from './ui/sidebar';
+import { SidebarTrigger, useSidebar } from './ui/sidebar';
 
 const Header: React.FC = () => {
   const { user } = useAuth();
@@ -45,7 +45,7 @@ const Header: React.FC = () => {
             onClick={toggleSidebar} 
             className="mr-2"
           >
-            {isExpanded ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
+            {isExpanded ? <PanelLeft size={20} /> : <PanelRight size={20} />}
             <span className="sr-only">Toggle Sidebar</span>
           </Button>
         )}
