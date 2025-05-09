@@ -7,12 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { ExternalLink } from "lucide-react";
-import { useAuth } from '@/contexts/AuthContext';
 
 const Settings = () => {
-  const { user } = useAuth();
-  const isAdmin = user?.role === 'admin';
-
   return (
     <div className="container mx-auto py-8">
       <header className="mb-8">
@@ -21,10 +17,9 @@ const Settings = () => {
       </header>
       
       <Tabs defaultValue="team" className="space-y-8">
-        <TabsList className="grid w-full max-w-md grid-cols-4">
+        <TabsList className="grid w-full max-w-md grid-cols-3">
           <TabsTrigger value="team">Team Management</TabsTrigger>
           <TabsTrigger value="system">System Settings</TabsTrigger>
-          <TabsTrigger value="domains">Domains</TabsTrigger>
           <TabsTrigger value="help">Help & Resources</TabsTrigger>
         </TabsList>
         
@@ -85,32 +80,6 @@ const Settings = () => {
                 </div>
                 
                 <Button>Save Settings</Button>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="domains">
-          <Card>
-            <CardHeader>
-              <CardTitle>Domain Settings</CardTitle>
-              <CardDescription>Connect your own domain to SeQRity</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-4">
-                <div className="border rounded-lg p-4 bg-gradient-to-r from-blue-50 to-violet-50">
-                  <h3 className="font-medium mb-2">White-Label Domain</h3>
-                  <p className="text-sm text-gray-600 mb-4">
-                    Connect your own domain to SeQRity for a fully branded experience.
-                    Your customers will see your domain instead of SeQRity.app when scanning QR codes.
-                  </p>
-                  
-                  <Link to="/domains">
-                    <Button className="bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-700 hover:to-violet-700">
-                      Manage Domains
-                    </Button>
-                  </Link>
-                </div>
               </div>
             </CardContent>
           </Card>
