@@ -22,7 +22,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   } = useAuth();
   const isAdmin = user?.role === 'admin';
   return <div className={cn('flex flex-col h-full bg-white border-r transition-all duration-300', isOpen ? 'w-64' : 'w-[70px]', className)}>
-      <div className="flex-1 overflow-y-auto py-6">
+      <div className={cn("border-t p-3", isOpen ? "text-left" : "text-center")}><div className="flex-1 overflow-y-auto py-6">
         <div className="flex items-center justify-between px-3 mb-8">
           <div className="flex items-center">
             <div className={cn("w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center text-white font-bold text-xl")}>
