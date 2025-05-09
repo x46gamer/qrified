@@ -11,7 +11,17 @@ const Header: React.FC = () => {
   const { user } = useAuth();
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { state, toggleSidebar } = useSidebar();
+  
+  // Conditionally use useSidebar hook only when it's wrapped in SidebarProvider
+  // This prevents errors when Header is used outside of a SidebarProvider context
+  const sidebarContext = React.useContext(
+    // @ts-ignore - This is just to check if the context exists
+    React.createContext(null, () => {
+      throw new Error("useSidebar must be used within a SidebarProvider.");
+    })
+  );
+  const sidebar = sidebarContext ? useSidebar() : { state: null, toggleSidebar: () => {} };
+  const { state, toggleSidebar } = sidebar;
   const isExpanded = state === 'expanded';
   
   // Handle scroll events for header
@@ -38,7 +48,7 @@ const Header: React.FC = () => {
         : "bg-white/80 backdrop-blur-sm border-b border-gray-100 py-4"
     )}>
       <div className="container mx-auto flex items-center px-4">
-        {user && (
+        {user && state !== null && (
           <Button 
             variant="ghost" 
             size="icon" 
@@ -53,10 +63,10 @@ const Header: React.FC = () => {
         <div className="flex-1 flex justify-center">
           <Link to="/" className="flex items-center gap-2">
             <img
-      src="https://files08.oaiusercontent.com/file-CeRPb526gbX59JCdmrAJuf?se=2025-05-09T19%3A19%3A47Z&sp=r&sv=2024-08-04&sr=b&rscc=max-age%3D299%2C%20immutable%2C%20private&rscd=attachment%3B%20filename%3D1fbd5402-f9f9-49b4-90f0-38d70c7dd216.png"
-      alt="SeQRity Logo"
-      className="h-8 w-auto"
-    />            
+              src="https://xowxgbovrbnpsreqgrlt.supabase.co/storage/v1/object/public/content//1fbd5402-f9f9-49b4-90f0-38d70c7dd216.png"
+              alt="SeQRity Logo"
+              className="h-8 w-auto"
+            />
           </Link>
         </div>
         

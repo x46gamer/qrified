@@ -1,24 +1,16 @@
 
 import React from 'react';
-import { cn } from "@/lib/utils";
 import Header from './Header';
-import { useAuth } from '@/contexts/AuthContext';
+import Footer from './Footer';
 
-interface AppLayoutProps {
-  children: React.ReactNode;
-  showHeader?: boolean;
-  className?: string;
-}
-
-const AppLayout = ({ children, showHeader = true, className }: AppLayoutProps) => {
-  const { user } = useAuth();
-  
+const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
-      {showHeader && <Header />}
-      <div className={cn("container mx-auto py-6 px-4", className)}>
+    <div className="flex flex-col min-h-screen">
+      <Header />
+      <main className="flex-grow">
         {children}
-      </div>
+      </main>
+      <Footer />
     </div>
   );
 };
