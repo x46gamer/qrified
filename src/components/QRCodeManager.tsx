@@ -22,6 +22,15 @@ interface QRCodeManagerProps {
   onRefresh: () => void;
 }
 
+const languageLabels: Record<string, string> = {
+  'english': 'English',
+  'french': 'French',
+  'arabic': 'Arabic',
+  'classic': 'English (Legacy)',
+  'modern-blue': 'French (Legacy)',
+  'modern-beige': 'English (Legacy)',
+};
+
 const QRCodeManager: React.FC<QRCodeManagerProps> = ({ qrCodes, onUpdateQRCode, onDeleteQRCode, onRefresh }) => {
   const [loading, setLoading] = useState<boolean>(false);
   const [previewQRCode, setPreviewQRCode] = useState<QRCode | null>(null);
@@ -107,6 +116,11 @@ const QRCodeManager: React.FC<QRCodeManagerProps> = ({ qrCodes, onUpdateQRCode, 
     );
   });
   
+  // Function to get language label from template
+  const getTemplateLanguage = (template: string) => {
+    return languageLabels[template] || template;
+  };
+  
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -145,6 +159,7 @@ const QRCodeManager: React.FC<QRCodeManagerProps> = ({ qrCodes, onUpdateQRCode, 
                 <TableRow>
                   <TableHead>ID</TableHead>
                   <TableHead>Sequence</TableHead>
+                  <TableHead>Language</TableHead>
                   <TableHead>Created</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Actions</TableHead>
@@ -153,7 +168,7 @@ const QRCodeManager: React.FC<QRCodeManagerProps> = ({ qrCodes, onUpdateQRCode, 
               <TableBody>
                 {filteredQRCodes.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center">
+                    <TableCell colSpan={6} className="text-center">
                       {searchTerm ? 'No QR codes match your search' : 'No QR codes available'}
                     </TableCell>
                   </TableRow>
@@ -164,6 +179,7 @@ const QRCodeManager: React.FC<QRCodeManagerProps> = ({ qrCodes, onUpdateQRCode, 
                       {qrCode.id}
                     </TableCell>
                     <TableCell>{formatSequentialNumber(Number(qrCode.sequentialNumber))}</TableCell>
+                    <TableCell>{getTemplateLanguage(qrCode.template)}</TableCell>
                     <TableCell>
                       {new Date(qrCode.createdAt).toLocaleDateString()}
                     </TableCell>
@@ -215,7 +231,7 @@ const QRCodeManager: React.FC<QRCodeManagerProps> = ({ qrCodes, onUpdateQRCode, 
             <div className="flex flex-col items-center space-y-4">
               <div className="w-full max-w-[280px] overflow-hidden rounded-lg shadow-md">
                 <QRCodeTemplatePreview
-                  template={previewQRCode.template || 'classic'}
+                  template={previewQRCode.template || 'english'}
                   qrCodeDataUrl={previewQRCode.dataUrl}
                   headerText={previewQRCode.headerText}
                   instructionText={previewQRCode.instructionText}
@@ -228,6 +244,7 @@ const QRCodeManager: React.FC<QRCodeManagerProps> = ({ qrCodes, onUpdateQRCode, 
               <div className="w-full space-y-2 text-sm">
                 <p><strong>ID:</strong> {previewQRCode.id}</p>
                 <p><strong>Sequence Number:</strong> {formatSequentialNumber(Number(previewQRCode.sequentialNumber))}</p>
+                <p><strong>Language:</strong> {getTemplateLanguage(previewQRCode.template)}</p>
                 <p><strong>Created:</strong> {new Date(previewQRCode.createdAt).toLocaleString()}</p>
                 <p><strong>Status:</strong> {previewQRCode.isEnabled ? 'Enabled' : 'Disabled'}</p>
                 <p><strong>Scanned:</strong> {previewQRCode.isScanned ? 'Yes' : 'No'}</p>

@@ -30,19 +30,10 @@ export const QRCodeTemplatePreview: React.FC<QRCodeTemplatePreviewProps> = ({
   // Define template-specific styles
   const getTemplateStyles = () => {
     switch (template) {
-      case 'modern-blue':
+      case 'french':
         return {
           bgColor: 'bg-blue-100',
-          headerClass: 'text-3xl font-bold uppercase mb-3', 
-          instructionClass: 'text-xl mb-2', 
-          websiteClass: 'font-medium mb-3', 
-          footerClass: 'bg-black text-white font-medium py-2 px-4 rounded-md mt-3', 
-          containerClass: 'p-6 rounded-lg'
-        };
-      case 'modern-beige':
-        return {
-          bgColor: 'bg-amber-50',
-          headerClass: 'text-3xl font-bold uppercase mb-3', 
+          headerClass: 'text-3xl font-bold mb-3', 
           instructionClass: 'text-xl mb-2', 
           websiteClass: 'font-medium mb-3', 
           footerClass: 'bg-black text-white font-medium py-2 px-4 rounded-md mt-3', 
@@ -54,17 +45,17 @@ export const QRCodeTemplatePreview: React.FC<QRCodeTemplatePreviewProps> = ({
           headerClass: 'text-3xl font-bold mb-3', 
           instructionClass: 'text-xl mb-2', 
           websiteClass: 'font-medium mb-3', 
-          footerClass: 'bg-green-800 text-white font-medium py-2 px-4 rounded-md mt-3', 
+          footerClass: 'bg-black text-white font-medium py-2 px-4 rounded-md mt-3', 
           containerClass: 'p-6 rounded-lg border-4 border-brown-600 rounded-xl'
         };
-      case 'classic':
+      case 'english':
       default:
         return {
           bgColor: 'bg-white',
           headerClass: 'text-2xl font-bold mb-3', 
           instructionClass: 'text-lg mb-2', 
           websiteClass: 'font-normal mb-3', 
-          footerClass: 'bg-gray-800 text-white py-2 px-4 mt-3', 
+          footerClass: 'bg-black text-white py-2 px-4 mt-3', 
           containerClass: 'p-4'
         };
     }
@@ -117,5 +108,4 @@ export const QRCodeTemplatePreview: React.FC<QRCodeTemplatePreviewProps> = ({
   );
 };
 
-// Default export for backward compatibility
 export default QRCodeTemplatePreview;
