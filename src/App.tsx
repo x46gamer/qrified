@@ -24,6 +24,7 @@ import DashboardLayout from './components/DashboardLayout';
 import { SidebarProvider } from './components/ui/sidebar';
 import DomainSettings from './pages/DomainSettings';
 import Settings from './pages/Settings';
+import AdminFeedback from './pages/AdminFeedback';
 
 function App() {
   return (
@@ -86,6 +87,18 @@ function App() {
                   <SidebarProvider>
                     <DashboardLayout>
                       <DomainSettings />
+                    </DashboardLayout>
+                  </SidebarProvider>
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="/feedback"
+              element={
+                <AuthGuard>
+                  <SidebarProvider>
+                    <DashboardLayout>
+                      <AdminFeedback />
                     </DashboardLayout>
                   </SidebarProvider>
                 </AuthGuard>
