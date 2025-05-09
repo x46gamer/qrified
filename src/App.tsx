@@ -15,6 +15,14 @@ import { AuthProvider } from "./contexts/AuthContext";
 import AuthGuard from "./components/AuthGuard";
 import Header from "./components/Header";
 import LandingPage from "./pages/LandingPage";
+import AboutPage from "./pages/AboutPage";
+import FAQPage from "./pages/FAQPage";
+import ContactPage from "./pages/ContactPage";
+import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
+import TermsOfServicePage from "./pages/TermsOfServicePage";
+import RefundPolicyPage from "./pages/RefundPolicyPage";
+import BlogPage from "./pages/BlogPage";
+import SupportPage from "./pages/SupportPage";
 
 const queryClient = new QueryClient();
 
@@ -29,8 +37,19 @@ const App = () => (
             {/* Landing page as the default route */}
             <Route path="/" element={<LandingPage />} />
             
+            {/* Login and signup routes */}
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
+            
+            {/* Footer pages */}
+            <Route path="/about" element={<AboutPage />} />
+            <Route path="/faq" element={<FAQPage />} />
+            <Route path="/contact" element={<ContactPage />} />
+            <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+            <Route path="/terms-of-service" element={<TermsOfServicePage />} />
+            <Route path="/refund-policy" element={<RefundPolicyPage />} />
+            <Route path="/blog" element={<BlogPage />} />
+            <Route path="/support" element={<SupportPage />} />
             
             {/* Allow product-check without login */}
             <Route path="/product-check" element={
