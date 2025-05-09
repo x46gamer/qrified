@@ -111,7 +111,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       <div className={cn("border-t p-3", isOpen ? "text-left" : "text-center")}>
-        <div className="flex items-center">
+        <div className="flex items-center display-webkit-box">
           <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center uppercase text-gray-600 font-medium">
             {user?.email?.charAt(0)}
           </div>
