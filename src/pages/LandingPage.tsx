@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
@@ -431,4 +432,203 @@ const LandingPage: React.FC = () => {
 
       {/* Pricing - Updated with new price */}
       <section className="py-20 bg-gradient-to-br from-gray-50 to-blue-50 px-4 relative">
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0wIDBoNDB2NDBIMHoiLz48cGF0aCBkPSJNMTAgMjBhMiAyIDAgMSAwIDAtNCAxIDEgMCAwIDEgMC
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0wIDBoNDB2NDBIMHoiLz48cGF0aCBkPSJNMTAgMjBhMiAyIDAgMSAwIDAtNCAxIDEgMCAwIDEgMC0yIDQgNCAwIDEgMSAwIDggNCA0IDAgMCAxIDAtOCIgZmlsbD0iI2YwZjRmYSIvPjwvZz48L3N2Zz4=')] opacity-20"></div>
+        <div className="container mx-auto max-w-6xl relative z-10">
+          <h2 className="text-3xl md:text-4xl font-bold mb-12 text-center animate-on-scroll opacity-0 bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent inline-block">
+            {isArabic ? arabicTranslations.pricingTitle : "Simple, Transparent Pricing for Every Stage"}
+          </h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="bg-white p-8 rounded-xl shadow-lg border border-gray-100 relative animate-on-scroll opacity-0 transition-all hover:-translate-y-1 hover:shadow-xl">
+              <div className="absolute top-0 right-0 bg-blue-100 px-3 py-1 text-blue-600 text-xs font-semibold rounded-bl-lg rounded-tr-lg">
+                Starter
+              </div>
+              <h3 className="text-2xl font-bold mb-2">{isArabic ? arabicTranslations.starterPlan : "Starter"}</h3>
+              <div className="flex items-end gap-1 mb-6">
+                <span className="text-3xl font-bold">1,200</span>
+                <span className="text-gray-500 mb-1">DZD/mo</span>
+              </div>
+              <ul className="space-y-3 mb-8">
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="text-green-500 shrink-0 mt-0.5" size={18} />
+                  <span>100 QR codes/month</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="text-green-500 shrink-0 mt-0.5" size={18} />
+                  <span>Basic templates</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="text-green-500 shrink-0 mt-0.5" size={18} />
+                  <span>Employee panel</span>
+                </li>
+                <li className="flex items-start gap-2 text-gray-400">
+                  <Lock className="shrink-0 mt-0.5" size={18} />
+                  <span>Full analytics</span>
+                </li>
+                <li className="flex items-start gap-2 text-gray-400">
+                  <Lock className="shrink-0 mt-0.5" size={18} />
+                  <span>Customer reviews</span>
+                </li>
+              </ul>
+              <Button asChild variant="outline" className="w-full">
+                <Link to="/login">Start Free Trial</Link>
+              </Button>
+            </div>
+            
+            <div className="bg-gradient-to-br from-white to-blue-50 p-8 rounded-xl shadow-xl border-2 border-blue-200 relative animate-on-scroll opacity-0 transform scale-105 transition-all hover:-translate-y-1 hover:shadow-2xl z-10">
+              <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-blue-500 to-violet-500 text-white px-4 py-1 rounded-full text-sm font-bold shadow-lg">
+                Most Popular
+              </div>
+              <div className="absolute top-0 right-0 bg-blue-500 px-3 py-1 text-white text-xs font-semibold rounded-bl-lg rounded-tr-lg">
+                Pro
+              </div>
+              <h3 className="text-2xl font-bold mb-2">{isArabic ? arabicTranslations.proPlan : "Pro"}</h3>
+              <div className="flex items-end gap-1 mb-6">
+                <span className="text-3xl font-bold">2,500</span>
+                <span className="text-gray-500 mb-1">DZD/mo</span>
+              </div>
+              <ul className="space-y-3 mb-8">
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="text-green-500 shrink-0 mt-0.5" size={18} />
+                  <span>500 QR codes/month</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="text-green-500 shrink-0 mt-0.5" size={18} />
+                  <span>All templates & custom branding</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="text-green-500 shrink-0 mt-0.5" size={18} />
+                  <span>Full analytics dashboard</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="text-green-500 shrink-0 mt-0.5" size={18} />
+                  <span>Customer reviews & ratings</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="text-green-500 shrink-0 mt-0.5" size={18} />
+                  <span>Priority support</span>
+                </li>
+              </ul>
+              <Button asChild className="w-full bg-gradient-to-r from-blue-500 to-violet-500 shadow-lg hover:shadow-blue-500/25">
+                <Link to="/login">Choose Pro</Link>
+              </Button>
+            </div>
+            
+            <div className="bg-gradient-to-br from-white to-violet-50 p-8 rounded-xl shadow-lg border border-violet-200 relative animate-on-scroll opacity-0 transition-all hover:-translate-y-1 hover:shadow-xl">
+              <div className="absolute top-0 right-0 bg-violet-500 px-3 py-1 text-white text-xs font-semibold rounded-bl-lg rounded-tr-lg">
+                Lifetime
+              </div>
+              <h3 className="text-2xl font-bold mb-2">{isArabic ? arabicTranslations.lifetimeDeal : "Lifetime Deal"}</h3>
+              <div className="flex items-end gap-1 mb-6">
+                <span className="text-3xl font-bold">25,000</span>
+                <span className="text-gray-500 mb-1">DZD</span>
+              </div>
+              <div className="bg-violet-100 text-violet-800 text-xs font-bold uppercase px-2 py-1 rounded mb-6 inline-block">
+                {isArabic ? arabicTranslations.oneTime : "One-time payment"}
+              </div>
+              <ul className="space-y-3 mb-8">
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="text-green-500 shrink-0 mt-0.5" size={18} />
+                  <span>Unlimited QR codes</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="text-green-500 shrink-0 mt-0.5" size={18} />
+                  <span>All Pro features included</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="text-green-500 shrink-0 mt-0.5" size={18} />
+                  <span>Free updates for life</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="text-green-500 shrink-0 mt-0.5" size={18} />
+                  <span>Dedicated account manager</span>
+                </li>
+              </ul>
+              <Button asChild variant="outline" className="w-full border-violet-300 text-violet-600 hover:bg-violet-50">
+                <Link to="/login">Buy Lifetime Access</Link>
+              </Button>
+            </div>
+          </div>
+          
+          <div className="mt-12 text-center animate-on-scroll opacity-0">
+            <p className="text-gray-500">All plans include a 14-day free trial. No credit card required.</p>
+          </div>
+        </div>
+      </section>
+
+      {/* Final CTA */}
+      <section className="py-20 px-4 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-tr from-blue-50 to-violet-50 opacity-80"></div>
+        <div className="absolute -top-24 -right-24 w-64 h-64 bg-blue-200 rounded-full filter blur-3xl opacity-30"></div>
+        <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-violet-200 rounded-full filter blur-3xl opacity-30"></div>
+        
+        <div className="container mx-auto text-center max-w-3xl relative z-10">
+          <h2 className="text-3xl md:text-4xl font-bold mb-6 animate-on-scroll opacity-0 bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent inline-block">
+            {isArabic ? arabicTranslations.finalCTA : "Your Products. Verified, Protected, and Trusted."}
+          </h2>
+          <p className="text-lg text-gray-600 mb-10 animate-on-scroll opacity-0">
+            {isArabic ? arabicTranslations.startFree : "Start free. Upgrade anytime. Your brand is worth it."}
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center animate-on-scroll opacity-0">
+            <Button size="lg" asChild className="bg-gradient-to-r from-blue-500 to-violet-500 shadow-lg hover:shadow-blue-500/25">
+              <Link to="/signup">{isArabic ? arabicTranslations.createAccount : "Create Your Free Account"}</Link>
+            </Button>
+            <Button size="lg" variant="outline" asChild className="border-blue-300">
+              <a href="https://wa.me/+213555555555" target="_blank">{isArabic ? arabicTranslations.chatWhatsApp : "Chat With Us on WhatsApp"}</a>
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="bg-gray-50 border-t border-gray-100 py-12 px-4">
+        <div className="container mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div>
+              <h3 className="font-bold text-lg mb-4">seQRity</h3>
+              <p className="text-gray-600 text-sm mb-4">
+                Protect your products with smart QR authentication.
+                <span className="ml-2 text-xs px-2 py-0.5 bg-blue-500/20 text-blue-600 rounded-full">BETA</span>
+              </p>
+              <p className="text-gray-500 text-sm">
+                © 2025 seQRity Inc.
+              </p>
+            </div>
+            
+            <div>
+              <h4 className="font-semibold mb-4">Company</h4>
+              <ul className="space-y-2 text-gray-600">
+                <li><Link to="/about" className="hover:text-blue-600">About</Link></li>
+                <li><Link to="/contact" className="hover:text-blue-600">Contact</Link></li>
+                <li><Link to="/blog" className="hover:text-blue-600">Blog</Link></li>
+              </ul>
+            </div>
+            
+            <div>
+              <h4 className="font-semibold mb-4">Support</h4>
+              <ul className="space-y-2 text-gray-600">
+                <li><Link to="/faq" className="hover:text-blue-600">FAQ</Link></li>
+                <li><Link to="/support" className="hover:text-blue-600">Help Center</Link></li>
+              </ul>
+            </div>
+            
+            <div>
+              <h4 className="font-semibold mb-4">Legal</h4>
+              <ul className="space-y-2 text-gray-600">
+                <li><Link to="/terms-of-service" className="hover:text-blue-600">Terms of Service</Link></li>
+                <li><Link to="/privacy-policy" className="hover:text-blue-600">Privacy Policy</Link></li>
+                <li><Link to="/refund-policy" className="hover:text-blue-600">Refund Policy</Link></li>
+              </ul>
+            </div>
+          </div>
+          
+          <div className="border-t border-gray-200 mt-12 pt-8 text-center">
+            <p className="text-gray-500 text-sm">{isArabic ? arabicTranslations.madeInAlgeria : "Made in Algeria with passion"}</p>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+};
+
+export default LandingPage;
