@@ -36,6 +36,11 @@ export type ThemeSettings = {
   secondaryColor: string;
 };
 
+// Create interface for the context that includes both theme and update function
+interface AppearanceContextType extends ThemeSettings {
+  updateSettings: (settings: Partial<ThemeSettings>) => void;
+}
+
 export const defaultTheme: ThemeSettings = {
   // Default colors
   successBackground: "#f0fdf4", // green-50
@@ -56,11 +61,11 @@ export const defaultTheme: ThemeSettings = {
   // Default direction
   isRtl: false,
   
-  // Default feature toggles
+  // Feature toggles
   enableReviews: false,
   enableFeedback: false,
   
-  // Default logo
+  // Logo
   logoUrl: null,
   
   // Default brand colors
@@ -68,8 +73,12 @@ export const defaultTheme: ThemeSettings = {
   secondaryColor: "#8b5cf6", // violet-500
 };
 
-// Create the context
-export const AppearanceSettingsContext = createContext<ThemeSettings>(defaultTheme);
+// Create the context with a default update function
+const defaultUpdateSettings = () => {};
+export const AppearanceSettingsContext = createContext<AppearanceContextType>({
+  ...defaultTheme,
+  updateSettings: defaultUpdateSettings
+});
 
 // Create a provider component
 export const AppearanceSettingsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -104,8 +113,31 @@ export const AppearanceSettingsProvider: React.FC<{ children: React.ReactNode }>
     fetchSettings();
   }, []);
 
+  // Add the updateSettings method
+  const updateSettings = (newSettings: Partial<ThemeSettings>) => {
+    setTheme(prevTheme => {
+      const updatedTheme = { ...prevTheme, ...newSettings };
+      
+      // Save to database in the background
+      supabase
+        .from('app_settings')
+        .upsert({
+          id: 'theme',
+          settings: updatedTheme
+        })
+        .then(({ error }) => {
+          if (error) {
+            console.error('Error saving theme settings:', error);
+            toast.error('Failed to save appearance settings');
+          }
+        });
+      
+      return updatedTheme;
+    });
+  };
+
   return (
-    <AppearanceSettingsContext.Provider value={theme}>
+    <AppearanceSettingsContext.Provider value={{ ...theme, updateSettings }}>
       {children}
     </AppearanceSettingsContext.Provider>
   );

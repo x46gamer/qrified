@@ -27,7 +27,8 @@ export const domainService = {
       id: item.id,
       user_id: item.user_id,
       domain: item.domain,
-      status: item.status as 'pending' | 'verified' | 'failed',
+      // Ensure status is cast to the expected union type
+      status: (item.status as 'pending' | 'verified' | 'failed') || 'pending',
       verification_token: item.verification_token,
       created_at: item.created_at,
       verified_at: item.verified_at

@@ -10,6 +10,7 @@ interface QRCodeTemplatePreviewProps {
   websiteUrl: string;
   footerText: string;
   directionRTL: boolean;
+  size?: number; // Added size as an optional prop
 }
 
 const QRCodeTemplatePreview: React.FC<QRCodeTemplatePreviewProps> = ({
@@ -19,7 +20,8 @@ const QRCodeTemplatePreview: React.FC<QRCodeTemplatePreviewProps> = ({
   instructionText,
   websiteUrl,
   footerText,
-  directionRTL
+  directionRTL,
+  size = 200 // Default size if not provided
 }) => {
   // Define template-specific styles
   const getTemplateStyles = () => {
@@ -81,6 +83,7 @@ const QRCodeTemplatePreview: React.FC<QRCodeTemplatePreviewProps> = ({
               src={qrCodeDataUrl} 
               alt="QR Code" 
               className="w-full max-w-[200px] mx-auto"
+              style={size ? { maxWidth: `${size}px` } : undefined}
             />
           </div>
         )}
