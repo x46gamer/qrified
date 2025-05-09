@@ -117,6 +117,7 @@ const QRCodeGenerator = ({ onQRCodesGenerated, lastSequentialNumber }: QRCodeGen
       const generatedQRCodes: QRCode[] = [];
       const dbInserts = [];
       
+      // Generate each QR code with proper template settings
       for (let i = 0; i < quantity; i++) {
         const seqNumber = startingNumber + i;
         const uniqueId = generateUniqueId();
@@ -127,6 +128,7 @@ const QRCodeGenerator = ({ onQRCodesGenerated, lastSequentialNumber }: QRCodeGen
         const url = `${baseUrl}/product-check/?qr=${encodeURIComponent(encryptedData)}`;
         const qrCodeDataUrl = await generateQRCode(url);
         
+        // Use the selected template settings for all QR codes
         const qrCode = {
           id: uniqueId,
           sequentialNumber,

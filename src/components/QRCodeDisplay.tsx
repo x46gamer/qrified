@@ -1,24 +1,56 @@
 
-import React from 'react';
+import React, { useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { QRCode as QRCodeType } from '@/types/qrCode';
 import { toast } from "sonner";
 import QRCodeTemplatePreview from './QRCodeTemplatePreview';
+import html2canvas from 'html2canvas';
 
 interface QRCodeDisplayProps {
   qrCodes: (QRCodeType & { dataUrl: string })[];
 }
 
 const QRCodeDisplay = ({ qrCodes }: QRCodeDisplayProps) => {
-  const downloadQRCode = (dataUrl: string, sequentialNumber: string) => {
-    const link = document.createElement('a');
-    link.href = dataUrl;
-    link.download = `qrcode-${sequentialNumber}.png`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    toast.success(`QR Code #${sequentialNumber} downloaded`);
+  // Create refs to access the QR code template elements
+  const qrCodeRefs = useRef<(HTMLDivElement | null)[]>([]);
+
+  const downloadQRCode = async (index: number, sequentialNumber: string) => {
+    try {
+      const element = qrCodeRefs.current[index];
+      if (!element) {
+        toast.error('Could not capture QR code frame');
+        return;
+      }
+
+      toast.loading('Capturing QR code frame...');
+      
+      // Use html2canvas to capture the entire template as an image
+      const canvas = await html2canvas(element, {
+        backgroundColor: null,
+        scale: 2, // Better quality
+        logging: false,
+        useCORS: true
+      });
+      
+      // Convert the canvas to a data URL
+      const dataUrl = canvas.toDataURL('image/png');
+      
+      // Create a download link and trigger the download
+      const link = document.createElement('a');
+      link.href = dataUrl;
+      link.download = `qrcode-${sequentialNumber}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      toast.dismiss();
+      toast.success(`QR Code #${sequentialNumber} downloaded`);
+    } catch (error) {
+      console.error('Error downloading QR code:', error);
+      toast.dismiss();
+      toast.error('Failed to download QR code');
+    }
   };
 
   const downloadAllQRCodes = async () => {
@@ -31,8 +63,8 @@ const QRCodeDisplay = ({ qrCodes }: QRCodeDisplayProps) => {
       qrCodes.forEach((qrCode, index) => {
         // Stagger downloads slightly to prevent browser overload
         setTimeout(() => {
-          downloadQRCode(qrCode.dataUrl, qrCode.sequentialNumber);
-        }, index * 200);
+          downloadQRCode(index, qrCode.sequentialNumber);
+        }, index * 500); // Increased delay between downloads
       });
     }, 500);
   };
@@ -54,36 +86,27 @@ const QRCodeDisplay = ({ qrCodes }: QRCodeDisplayProps) => {
         </Button>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
-        {qrCodes.map((qrCode) => (
+        {qrCodes.map((qrCode, index) => (
           <Card key={qrCode.id} className="flex flex-col overflow-hidden">
             <CardContent className="p-4 flex-grow">
-              {/* Use the template if available, otherwise just show the QR code */}
-              {qrCode.template && qrCode.template !== 'classic' ? (
-                <div className="bg-white rounded">
-                  <QRCodeTemplatePreview
-                    template={qrCode.template}
-                    qrCodeDataUrl={qrCode.dataUrl}
-                    headerText={qrCode.headerText || ''}
-                    instructionText={qrCode.instructionText || ''}
-                    websiteUrl={qrCode.websiteUrl || ''}
-                    footerText={qrCode.footerText || ''}
-                    directionRTL={qrCode.directionRTL || false}
-                  />
-                </div>
-              ) : (
-                <div className="flex flex-col items-center">
-                  <img 
-                    src={qrCode.dataUrl} 
-                    alt={`QR Code ${qrCode.sequentialNumber}`} 
-                    className="w-full max-w-[200px] mx-auto" 
-                  />
-                  <p className="mt-2 text-center font-semibold">#{qrCode.sequentialNumber}</p>
-                </div>
-              )}
+              <div 
+                ref={el => qrCodeRefs.current[index] = el} 
+                className="bg-white rounded"
+              >
+                <QRCodeTemplatePreview
+                  template={qrCode.template || 'classic'}
+                  qrCodeDataUrl={qrCode.dataUrl}
+                  headerText={qrCode.headerText || ''}
+                  instructionText={qrCode.instructionText || ''}
+                  websiteUrl={qrCode.websiteUrl || ''}
+                  footerText={qrCode.footerText || ''}
+                  directionRTL={qrCode.directionRTL || false}
+                />
+              </div>
             </CardContent>
             <CardFooter className="flex justify-center p-4 pt-0">
               <Button 
-                onClick={() => downloadQRCode(qrCode.dataUrl, qrCode.sequentialNumber)}
+                onClick={() => downloadQRCode(index, qrCode.sequentialNumber)}
                 size="sm"
                 variant="outline"
               >
