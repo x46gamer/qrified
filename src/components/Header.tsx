@@ -50,16 +50,14 @@ const Header: React.FC = () => {
           </Button>
         )}
         
-        
         <div className="flex-1 flex justify-center">
-  <Link to="/" className="flex items-center gap-2">
-    <img
-      src="https://files08.oaiusercontent.com/file-CeRPb526gbX59JCdmrAJuf?se=2025-05-09T19%3A19%3A47Z&sp=r&sv=2024-08-04&sr=b&rscc=max-age%3D299%2C%20immutable%2C%20private&rscd=attachment%3B%20filename%3D1fbd5402-f9f9-49b4-90f0-38d70c7dd216.png"
-      alt="SeQRity Logo"
-      className="h-8 w-auto"/>
-  
-
-
+          <Link to="/" className="flex items-center gap-2">
+            <h2 className="text-xl font-bold">
+              <span className="bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent">seQRity</span>
+            </h2>
+          </Link>
+        </div>
+        
         <div className="md:flex items-center gap-3 hidden">
           {!user && (
             <>
