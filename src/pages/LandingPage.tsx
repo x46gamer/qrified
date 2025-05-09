@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -602,3 +603,54 @@ const LandingPage: React.FC = () => {
             >
               <div className="w-14 h-14 bg-gradient-to-br from-amber-100 to-amber-200 text-amber-600 rounded-xl flex items-center justify-center mb-6 shadow-inner">
                 <MessageSquare size={28} />
+              </div>
+              <h3 className="font-bold text-xl mb-3 text-slate-800">Customer Reviews</h3>
+              <ul className="text-slate-600 list-disc pl-5 space-y-2">
+                <li>Collect authentic feedback</li>
+                <li>Star rating system</li>
+                <li>Photo & video reviews</li>
+                <li>Moderation tools</li>
+              </ul>
+            </motion.div>
+            
+            <motion.div 
+              variants={cardVariants}
+              whileHover="hover"
+              className="bg-white/80 backdrop-blur-md p-8 rounded-2xl shadow-lg border border-blue-100/30 transition-all duration-300"
+            >
+              <div className="w-14 h-14 bg-gradient-to-br from-blue-100 to-blue-200 text-blue-600 rounded-xl flex items-center justify-center mb-6 shadow-inner">
+                <CreditCard size={28} />
+              </div>
+              <h3 className="font-bold text-xl mb-3 text-slate-800">Payment Options</h3>
+              <ul className="text-slate-600 list-disc pl-5 space-y-2">
+                <li>Local payment methods</li>
+                <li>CIB/EDAHABIA support</li>
+                <li>Cash on delivery integration</li>
+                <li>Monthly subscription billing</li>
+              </ul>
+            </motion.div>
+            
+            <motion.div 
+              variants={cardVariants}
+              whileHover="hover"
+              className="bg-white/80 backdrop-blur-md p-8 rounded-2xl shadow-lg border border-blue-100/30 transition-all duration-300"
+            >
+              <div className="w-14 h-14 bg-gradient-to-br from-indigo-100 to-indigo-200 text-indigo-600 rounded-xl flex items-center justify-center mb-6 shadow-inner">
+                <Lock size={28} />
+              </div>
+              <h3 className="font-bold text-xl mb-3 text-slate-800">Security Features</h3>
+              <ul className="text-slate-600 list-disc pl-5 space-y-2">
+                <li>Military-grade encryption</li>
+                <li>Tamper-evident QR codes</li>
+                <li>Detailed security logs</li>
+                <li>User permission management</li>
+              </ul>
+            </motion.div>
+          </div>
+        </motion.div>
+      </section>
+    </div>
+  );
+};
+
+export default LandingPage;
