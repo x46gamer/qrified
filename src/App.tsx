@@ -21,7 +21,6 @@ import { AppearanceSettingsProvider } from './contexts/AppearanceContext';
 import { AuthProvider } from './contexts/AuthContext';
 import AppLayout from './components/AppLayout';
 import DashboardLayout from './components/DashboardLayout';
-import { SidebarProvider } from './components/ui/sidebar';
 
 function App() {
   return (
@@ -45,11 +44,9 @@ function App() {
               path="/dashboard"
               element={
                 <AuthGuard>
-                  <SidebarProvider>
-                    <DashboardLayout>
-                      <Index />
-                    </DashboardLayout>
-                  </SidebarProvider>
+                  <DashboardLayout>
+                    <Index />
+                  </DashboardLayout>
                 </AuthGuard>
               }
             />
@@ -57,11 +54,9 @@ function App() {
               path="/customize"
               element={
                 <AuthGuard>
-                  <SidebarProvider>
-                    <DashboardLayout>
-                      <CustomizeApp />
-                    </DashboardLayout>
-                  </SidebarProvider>
+                  <DashboardLayout>
+                    <CustomizeApp />
+                  </DashboardLayout>
                 </AuthGuard>
               }
             />

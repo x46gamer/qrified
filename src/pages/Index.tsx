@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Tabs, TabsContent } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"; // Import missing components
 import QRCodeGenerator from '@/components/QRCodeGenerator';
 import QRCodeDisplay from '@/components/QRCodeDisplay';
 import QRCodeManager from '@/components/QRCodeManager';
@@ -9,7 +9,7 @@ import { AppearanceSettings } from '@/components/AppearanceSettings';
 import { QRCode } from '@/types/qrCode';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from "sonner";
-import { TemplateType } from '@/components/QRCodeTemplates';
+import { TemplateType } from '@/types/qrCode';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";

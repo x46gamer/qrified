@@ -1,5 +1,7 @@
 
 import React, { createContext, useState, useContext, ReactNode } from 'react';
+import { Button } from "@/components/ui/button";
+import { Menu } from 'lucide-react';
 
 type SidebarContextType = {
   isCollapsed: boolean;
@@ -26,3 +28,14 @@ export const SidebarProvider: React.FC<{ children: ReactNode }> = ({ children })
 };
 
 export const useSidebar = () => useContext(SidebarContext);
+
+// Export SidebarTrigger component
+export const SidebarTrigger: React.FC = () => {
+  const { toggleCollapse } = useSidebar();
+  
+  return (
+    <Button variant="ghost" size="icon" onClick={toggleCollapse}>
+      <Menu className="h-5 w-5" />
+    </Button>
+  );
+};

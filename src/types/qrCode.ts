@@ -27,3 +27,12 @@ export interface QRCode {
   footerText?: string;
   directionRTL?: boolean;
 }
+
+// Add QRCodeTemplatePreviewProps interface to match component prop types
+export interface QRCodeTemplatePreviewProps {
+  template: TemplateType;
+  primaryColor?: string;
+  secondaryColor?: string;
+  size?: number;
+  text?: string; // Added text prop instead of value
+}
