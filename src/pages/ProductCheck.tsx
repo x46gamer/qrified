@@ -6,8 +6,18 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
+// Define ThemeColors type to match what we expect from the database
+type ThemeColors = {
+  successBackground: string;
+  successText: string;
+  successIcon: string;
+  failureBackground: string;
+  failureText: string;
+  failureIcon: string;
+};
+
 // Default theme colors
-const defaultTheme = {
+const defaultTheme: ThemeColors = {
   successBackground: "#f0fdf4", // green-50
   successText: "#16a34a", // green-600
   successIcon: "#22c55e", // green-500
@@ -24,7 +34,7 @@ const ProductCheck = () => {
   const [debugInfo, setDebugInfo] = useState<string | null>(null);
   const [rawEncryptedData, setRawEncryptedData] = useState<string | null>(null);
   const [detailedDebugInfo, setDetailedDebugInfo] = useState<any>(null);
-  const [theme, setTheme] = useState(defaultTheme);
+  const [theme, setTheme] = useState<ThemeColors>(defaultTheme);
 
   useEffect(() => {
     // Fetch theme settings from the database
@@ -42,7 +52,18 @@ const ProductCheck = () => {
         }
         
         if (data && data.settings) {
-          setTheme(data.settings);
+          // Type check and cast the settings to ensure it matches our ThemeColors structure
+          const settings = data.settings as Record<string, any>;
+          const themeData: ThemeColors = {
+            successBackground: settings.successBackground as string || defaultTheme.successBackground,
+            successText: settings.successText as string || defaultTheme.successText,
+            successIcon: settings.successIcon as string || defaultTheme.successIcon,
+            failureBackground: settings.failureBackground as string || defaultTheme.failureBackground,
+            failureText: settings.failureText as string || defaultTheme.failureText,
+            failureIcon: settings.failureIcon as string || defaultTheme.failureIcon
+          };
+          
+          setTheme(themeData);
         }
       } catch (error) {
         console.error('Failed to load theme settings:', error);
