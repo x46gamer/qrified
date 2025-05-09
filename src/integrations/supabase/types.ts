@@ -98,35 +98,53 @@ export type Database = {
         Row: {
           created_at: string
           data_url: string | null
+          direction_rtl: boolean | null
           encrypted_data: string
+          footer_text: string | null
+          header_text: string | null
           id: string
+          instruction_text: string | null
           is_enabled: boolean
           is_scanned: boolean
           scanned_at: string | null
           sequential_number: string
+          template: string | null
           url: string
+          website_url: string | null
         }
         Insert: {
           created_at?: string
           data_url?: string | null
+          direction_rtl?: boolean | null
           encrypted_data: string
+          footer_text?: string | null
+          header_text?: string | null
           id?: string
+          instruction_text?: string | null
           is_enabled?: boolean
           is_scanned?: boolean
           scanned_at?: string | null
           sequential_number: string
+          template?: string | null
           url: string
+          website_url?: string | null
         }
         Update: {
           created_at?: string
           data_url?: string | null
+          direction_rtl?: boolean | null
           encrypted_data?: string
+          footer_text?: string | null
+          header_text?: string | null
           id?: string
+          instruction_text?: string | null
           is_enabled?: boolean
           is_scanned?: boolean
           scanned_at?: string | null
           sequential_number?: string
+          template?: string | null
           url?: string
+          website_url?: string | null
         }
         Relationships: []
       }
