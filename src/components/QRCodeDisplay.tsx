@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { QRCode as QRCodeType } from '@/types/qrCode';
 import { toast } from "sonner";
+import QRCodeTemplatePreview from './QRCodeTemplatePreview';
 
 interface QRCodeDisplayProps {
   qrCodes: (QRCodeType & { dataUrl: string })[];
@@ -52,16 +53,33 @@ const QRCodeDisplay = ({ qrCodes }: QRCodeDisplayProps) => {
           Download All
         </Button>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
         {qrCodes.map((qrCode) => (
-          <Card key={qrCode.id} className="flex flex-col">
-            <CardContent className="p-4 flex-grow flex flex-col items-center justify-center">
-              <img 
-                src={qrCode.dataUrl} 
-                alt={`QR Code ${qrCode.sequentialNumber}`} 
-                className="w-full max-w-[200px]" 
-              />
-              <p className="mt-2 text-center font-semibold">#{qrCode.sequentialNumber}</p>
+          <Card key={qrCode.id} className="flex flex-col overflow-hidden">
+            <CardContent className="p-4 flex-grow">
+              {/* Use the template if available, otherwise just show the QR code */}
+              {qrCode.template && qrCode.template !== 'classic' ? (
+                <div className="bg-white rounded">
+                  <QRCodeTemplatePreview
+                    template={qrCode.template}
+                    qrCodeDataUrl={qrCode.dataUrl}
+                    headerText={qrCode.headerText || ''}
+                    instructionText={qrCode.instructionText || ''}
+                    websiteUrl={qrCode.websiteUrl || ''}
+                    footerText={qrCode.footerText || ''}
+                    directionRTL={qrCode.directionRTL || false}
+                  />
+                </div>
+              ) : (
+                <div className="flex flex-col items-center">
+                  <img 
+                    src={qrCode.dataUrl} 
+                    alt={`QR Code ${qrCode.sequentialNumber}`} 
+                    className="w-full max-w-[200px] mx-auto" 
+                  />
+                  <p className="mt-2 text-center font-semibold">#{qrCode.sequentialNumber}</p>
+                </div>
+              )}
             </CardContent>
             <CardFooter className="flex justify-center p-4 pt-0">
               <Button 

@@ -8,5 +8,13 @@ export interface QRCode {
   isEnabled: boolean;
   createdAt: string;
   scannedAt?: string;
-  dataUrl?: string; // Add this property for the image data URL
+  dataUrl?: string;
+  
+  // Template settings
+  template?: 'classic' | 'modern-blue' | 'modern-beige' | 'arabic';
+  headerText?: string;
+  instructionText?: string;
+  websiteUrl?: string;
+  footerText?: string;
+  directionRTL?: boolean;
 }

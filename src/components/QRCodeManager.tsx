@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,24 +7,27 @@ import { Switch } from "@/components/ui/switch";
 import { QRCode } from '@/types/qrCode';
 import { toast } from "sonner";
 import { supabase } from '@/integrations/supabase/client';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Eye, Settings, FileText } from "lucide-react";
+import { Eye, Settings, FileText, Trash2 } from "lucide-react";
 import { generateQRCode } from '@/utils/qrCodeUtils';
-import { Link } from 'react-router-dom';
+import QRCodeTemplatePreview from './QRCodeTemplatePreview';
 
 interface QRCodeManagerProps {
   qrCodes: QRCode[];
   onUpdateQRCode: (qrCode: QRCode) => void;
   onRefresh: () => void;
+  onDeleteQRCode: (id: string) => void;
 }
 
-const QRCodeManager = ({ qrCodes, onUpdateQRCode, onRefresh }: QRCodeManagerProps) => {
+const QRCodeManager = ({ qrCodes, onUpdateQRCode, onRefresh, onDeleteQRCode }: QRCodeManagerProps) => {
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [selectedQRCode, setSelectedQRCode] = useState<QRCode | null>(null);
   const [previewOpen, setPreviewOpen] = useState<boolean>(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState<boolean>(false);
+  const [qrToDelete, setQrToDelete] = useState<QRCode | null>(null);
   const itemsPerPage = 10;
   
   const filteredQRCodes = qrCodes.filter((qrCode) => 
@@ -98,7 +100,6 @@ const QRCodeManager = ({ qrCodes, onUpdateQRCode, onRefresh }: QRCodeManagerProp
         setPreviewUrl(qrCode.dataUrl);
       } else {
         // Otherwise, regenerate the QR code
-        // Use the URL as the data for the QR code
         const generatedUrl = await generateQRCode(qrCode.url);
         setPreviewUrl(generatedUrl);
       }
@@ -109,30 +110,46 @@ const QRCodeManager = ({ qrCodes, onUpdateQRCode, onRefresh }: QRCodeManagerProp
     }
   };
 
+  const handleDeleteClick = (qrCode: QRCode) => {
+    setQrToDelete(qrCode);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!qrToDelete) return;
+    
+    try {
+      // Delete from the database
+      const { error } = await supabase
+        .from('qr_codes')
+        .delete()
+        .eq('id', qrToDelete.id);
+      
+      if (error) {
+        throw error;
+      }
+      
+      onDeleteQRCode(qrToDelete.id);
+      toast.success(`QR Code #${qrToDelete.sequentialNumber} deleted successfully`);
+    } catch (error) {
+      console.error('Error deleting QR code:', error);
+      toast.error('Failed to delete QR Code');
+    } finally {
+      setDeleteDialogOpen(false);
+      setQrToDelete(null);
+    }
+  };
+
   return (
     <div className="w-full">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <h2 className="text-2xl font-semibold">QR Code Management</h2>
-        <div className="flex items-center gap-2 sm:gap-4">
-          <Link to="/customize">
-            <Button variant="outline" size="sm" className="flex items-center gap-2">
-              <Settings className="h-4 w-4" />
-              Customize App
-            </Button>
-          </Link>
-          <Link to="/admin/feedback">
-            <Button variant="outline" size="sm" className="flex items-center gap-2">
-              <FileText className="h-4 w-4" />
-              View Feedback
-            </Button>
-          </Link>
-          <div className="w-full sm:w-64">
-            <Input
-              placeholder="Search by number..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
+        <div className="w-full sm:w-64">
+          <Input
+            placeholder="Search by number..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
         </div>
       </div>
       
@@ -189,6 +206,13 @@ const QRCodeManager = ({ qrCodes, onUpdateQRCode, onRefresh }: QRCodeManagerProp
                           Reset
                         </Button>
                       )}
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => handleDeleteClick(qrCode)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -245,13 +269,28 @@ const QRCodeManager = ({ qrCodes, onUpdateQRCode, onRefresh }: QRCodeManagerProp
             <DialogTitle>QR Code #{selectedQRCode?.sequentialNumber}</DialogTitle>
           </DialogHeader>
           <div className="flex flex-col items-center justify-center p-4 bg-white rounded-lg">
-            {previewUrl ? (
+            {previewUrl && selectedQRCode ? (
               <div className="flex flex-col items-center space-y-4">
-                <img 
-                  src={previewUrl} 
-                  alt={`QR Code ${selectedQRCode?.sequentialNumber}`} 
-                  className="w-64 h-64 object-contain border border-gray-200 p-2 rounded-lg" 
-                />
+                {/* If the QR code has a template, use it */}
+                {selectedQRCode.template && selectedQRCode.template !== 'classic' ? (
+                  <div className="bg-white p-2 rounded border max-w-xs">
+                    <QRCodeTemplatePreview
+                      template={selectedQRCode.template}
+                      qrCodeDataUrl={previewUrl}
+                      headerText={selectedQRCode.headerText || ''}
+                      instructionText={selectedQRCode.instructionText || ''}
+                      websiteUrl={selectedQRCode.websiteUrl || ''}
+                      footerText={selectedQRCode.footerText || ''}
+                      directionRTL={selectedQRCode.directionRTL || false}
+                    />
+                  </div>
+                ) : (
+                  <img 
+                    src={previewUrl} 
+                    alt={`QR Code ${selectedQRCode?.sequentialNumber}`} 
+                    className="w-64 h-64 object-contain border border-gray-200 p-2 rounded-lg" 
+                  />
+                )}
                 <div className="text-sm text-gray-500">
                   <p>ID: {selectedQRCode?.id}</p>
                   <p>Created: {selectedQRCode?.createdAt && new Date(selectedQRCode.createdAt).toLocaleString()}</p>
@@ -267,6 +306,22 @@ const QRCodeManager = ({ qrCodes, onUpdateQRCode, onRefresh }: QRCodeManagerProp
               </div>
             )}
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete QR Code</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete QR Code #{qrToDelete?.sequentialNumber}? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
+            <Button variant="destructive" onClick={confirmDelete}>Delete</Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

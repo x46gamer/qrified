@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -13,6 +13,9 @@ import {
 } from '@/utils/qrCodeUtils';
 import { QRCode } from '@/types/qrCode';
 import { supabase } from '@/integrations/supabase/client';
+import QRCodeTemplates, { TemplateType } from './QRCodeTemplates';
+import QRCodeTemplatePreview from './QRCodeTemplatePreview';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface QRCodeGeneratorProps {
   onQRCodesGenerated: (qrCodes: QRCode[]) => void;
@@ -22,7 +25,46 @@ interface QRCodeGeneratorProps {
 const QRCodeGenerator = ({ onQRCodesGenerated, lastSequentialNumber }: QRCodeGeneratorProps) => {
   const [quantity, setQuantity] = useState<number>(1);
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
+  const [selectedTemplate, setSelectedTemplate] = useState<TemplateType>('classic');
+  const [websiteUrl, setWebsiteUrl] = useState<string>('https://example.com');
+  const [headerText, setHeaderText] = useState<string>('USE ORIGINAL PRODUCT!');
+  const [instructionText, setInstructionText] = useState<string>('Scan the QR Code to check your product');
+  const [footerText, setFooterText] = useState<string>('VOID IF REMOVED');
+  const [directionRTL, setDirectionRTL] = useState<boolean>(false);
+  const [previewQrCode, setPreviewQrCode] = useState<string>('');
+  
   const baseUrl = window.location.origin;
+  
+  useEffect(() => {
+    // Generate a preview QR code when the form changes
+    const generatePreview = async () => {
+      try {
+        const url = `${baseUrl}/product-check/?qr=preview`;
+        const qrCodeDataUrl = await generateQRCode(url);
+        setPreviewQrCode(qrCodeDataUrl);
+      } catch (error) {
+        console.error('Error generating preview QR code:', error);
+      }
+    };
+    
+    generatePreview();
+  }, [selectedTemplate, baseUrl]);
+  
+  // Set RTL automatically when Arabic template is selected
+  useEffect(() => {
+    if (selectedTemplate === 'arabic') {
+      setDirectionRTL(true);
+      setHeaderText('استخدم المنتج الأصلي!');
+      setInstructionText('امسح رمز الاستجابة السريعة للتحقق من منتجك');
+      setFooterText('يصبح المنتج ملغياً إذا إزالته!');
+    } else if (directionRTL && selectedTemplate !== 'arabic') {
+      // Only reset if we're changing from Arabic to another template
+      setDirectionRTL(false);
+      setHeaderText('USE ORIGINAL PRODUCT!');
+      setInstructionText('Scan the QR Code to check your product');
+      setFooterText('VOID IF REMOVED');
+    }
+  }, [selectedTemplate, directionRTL]);
   
   const handleGenerateQRCodes = async () => {
     if (quantity <= 0) {
@@ -94,6 +136,12 @@ const QRCodeGenerator = ({ onQRCodesGenerated, lastSequentialNumber }: QRCodeGen
           isEnabled: true,
           createdAt: new Date().toISOString(),
           dataUrl: qrCodeDataUrl,
+          template: selectedTemplate,
+          headerText,
+          instructionText,
+          websiteUrl,
+          footerText,
+          directionRTL,
         };
         
         generatedQRCodes.push(qrCode);
@@ -102,12 +150,18 @@ const QRCodeGenerator = ({ onQRCodesGenerated, lastSequentialNumber }: QRCodeGen
         dbInserts.push({
           id: uniqueId,
           sequential_number: sequentialNumber,
-          encrypted_data: encryptedData, // Store raw encrypted data without encoding
+          encrypted_data: encryptedData,
           url: url,
           data_url: qrCodeDataUrl,
           is_enabled: true,
           is_scanned: false,
-          created_at: new Date().toISOString()
+          created_at: new Date().toISOString(),
+          template: selectedTemplate,
+          header_text: headerText,
+          instruction_text: instructionText,
+          website_url: websiteUrl,
+          footer_text: footerText,
+          direction_rtl: directionRTL,
         });
       }
       
@@ -139,7 +193,6 @@ const QRCodeGenerator = ({ onQRCodesGenerated, lastSequentialNumber }: QRCodeGen
             encryptedData: firstQrCode.encrypted_data,
             result: verificationResult
           });
-          // Still continue since we've shown the warning
         }
       }
       
@@ -158,32 +211,139 @@ const QRCodeGenerator = ({ onQRCodesGenerated, lastSequentialNumber }: QRCodeGen
       <CardContent className="pt-6">
         <div className="flex flex-col gap-6">
           <h2 className="text-2xl font-semibold text-center">Generate QR Codes</h2>
-          <div className="flex items-end gap-4">
-            <div className="flex-1">
-              <label htmlFor="quantity" className="block text-sm font-medium text-gray-700 mb-1">
-                Quantity (1-100)
-              </label>
-              <Input
-                id="quantity"
-                type="number"
-                min="1"
-                max="100"
-                value={quantity}
-                onChange={(e) => setQuantity(parseInt(e.target.value) || 0)}
+          
+          <Tabs defaultValue="basic" className="w-full">
+            <TabsList className="grid grid-cols-2 mb-4">
+              <TabsTrigger value="basic">Basic Settings</TabsTrigger>
+              <TabsTrigger value="appearance">Appearance & Templates</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="basic" className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label htmlFor="quantity" className="block text-sm font-medium text-gray-700 mb-1">
+                    Quantity (1-100)
+                  </label>
+                  <Input
+                    id="quantity"
+                    type="number"
+                    min="1"
+                    max="100"
+                    value={quantity}
+                    onChange={(e) => setQuantity(parseInt(e.target.value) || 0)}
+                    className="w-full"
+                  />
+                </div>
+                
+                <div>
+                  <label htmlFor="websiteUrl" className="block text-sm font-medium text-gray-700 mb-1">
+                    Website URL
+                  </label>
+                  <Input
+                    id="websiteUrl"
+                    type="text"
+                    value={websiteUrl}
+                    onChange={(e) => setWebsiteUrl(e.target.value)}
+                    className="w-full"
+                    placeholder="https://example.com"
+                  />
+                </div>
+              </div>
+              
+              <div className="text-sm text-muted-foreground">
+                Next sequential number: {formatSequentialNumber(lastSequentialNumber + 1)}
+              </div>
+              
+              <Button 
+                onClick={handleGenerateQRCodes} 
+                disabled={isGenerating}
                 className="w-full"
+              >
+                {isGenerating ? 'Generating...' : 'Generate QR Codes'}
+              </Button>
+            </TabsContent>
+            
+            <TabsContent value="appearance" className="space-y-6">
+              <QRCodeTemplates 
+                selectedTemplate={selectedTemplate}
+                onSelectTemplate={setSelectedTemplate}
               />
-            </div>
-            <Button 
-              onClick={handleGenerateQRCodes} 
-              disabled={isGenerating}
-              className="px-8"
-            >
-              {isGenerating ? 'Generating...' : 'Generate'}
-            </Button>
-          </div>
-          <div className="text-sm text-muted-foreground">
-            Next sequential number: {formatSequentialNumber(lastSequentialNumber + 1)}
-          </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label htmlFor="headerText" className="block text-sm font-medium text-gray-700 mb-1">
+                    Header Text
+                  </label>
+                  <Input
+                    id="headerText"
+                    value={headerText}
+                    onChange={(e) => setHeaderText(e.target.value)}
+                    className="w-full"
+                    placeholder="USE ORIGINAL PRODUCT!"
+                    dir={directionRTL ? 'rtl' : 'ltr'}
+                  />
+                </div>
+                
+                <div>
+                  <label htmlFor="instructionText" className="block text-sm font-medium text-gray-700 mb-1">
+                    Instruction Text
+                  </label>
+                  <Input
+                    id="instructionText"
+                    value={instructionText}
+                    onChange={(e) => setInstructionText(e.target.value)}
+                    className="w-full"
+                    placeholder="Scan the QR Code to check your product"
+                    dir={directionRTL ? 'rtl' : 'ltr'}
+                  />
+                </div>
+                
+                <div>
+                  <label htmlFor="footerText" className="block text-sm font-medium text-gray-700 mb-1">
+                    Footer Text
+                  </label>
+                  <Input
+                    id="footerText"
+                    value={footerText}
+                    onChange={(e) => setFooterText(e.target.value)}
+                    className="w-full"
+                    placeholder="VOID IF REMOVED"
+                    dir={directionRTL ? 'rtl' : 'ltr'}
+                  />
+                </div>
+                
+                <div className="flex items-end">
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="directionRTL"
+                      checked={directionRTL}
+                      onChange={(e) => setDirectionRTL(e.target.checked)}
+                      className="rounded border-gray-300 text-primary focus:ring-primary"
+                    />
+                    <label htmlFor="directionRTL" className="text-sm font-medium text-gray-700">
+                      Right-to-Left (RTL) Direction
+                    </label>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="border rounded-lg p-4">
+                <h3 className="text-sm font-medium text-gray-700 mb-2">Preview</h3>
+                <div className="bg-white p-4 rounded">
+                  <QRCodeTemplatePreview
+                    template={selectedTemplate}
+                    qrCodeDataUrl={previewQrCode}
+                    headerText={headerText}
+                    instructionText={instructionText}
+                    websiteUrl={websiteUrl}
+                    footerText={footerText}
+                    directionRTL={directionRTL}
+                  />
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
         </div>
       </CardContent>
     </Card>

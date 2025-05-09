@@ -5,12 +5,10 @@ import QRCodeGenerator from '@/components/QRCodeGenerator';
 import QRCodeDisplay from '@/components/QRCodeDisplay';
 import QRCodeManager from '@/components/QRCodeManager';
 import QRCodeAnalytics from '@/components/QRCodeAnalytics';
+import { AppearanceSettings } from '@/components/AppearanceSettings';
 import { QRCode } from '@/types/qrCode';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from "sonner";
-import { Link } from 'react-router-dom';
-import { FileText } from "lucide-react";
-import { Button } from '@/components/ui/button';
 
 const Index = () => {
   const [qrCodes, setQRCodes] = useState<QRCode[]>([]);
@@ -51,7 +49,13 @@ const Index = () => {
           isEnabled: qr.is_enabled,
           createdAt: qr.created_at,
           scannedAt: qr.scanned_at,
-          dataUrl: qr.data_url
+          dataUrl: qr.data_url,
+          template: qr.template,
+          headerText: qr.header_text,
+          instructionText: qr.instruction_text,
+          websiteUrl: qr.website_url,
+          footerText: qr.footer_text,
+          directionRTL: qr.direction_rtl,
         }));
         
         setQRCodes(mappedQrCodes);
@@ -112,6 +116,10 @@ const Index = () => {
       )
     );
   };
+
+  const handleDeleteQRCode = (id: string) => {
+    setQRCodes(qrCodes.filter(qrCode => qrCode.id !== id));
+  };
   
   const handleTabChange = (value: string) => {
     setActiveTab(value);
@@ -152,33 +160,12 @@ const Index = () => {
             qrCodes={qrCodes}
             onUpdateQRCode={handleUpdateQRCode}
             onRefresh={fetchQRCodes}
+            onDeleteQRCode={handleDeleteQRCode}
           />
         </TabsContent>
         
         <TabsContent value="customize">
-          <div className="flex flex-col items-center justify-center py-8 space-y-6">
-            <div className="text-center space-y-4">
-              <h2 className="text-2xl font-bold">Customize the App Experience</h2>
-              <p className="text-muted-foreground max-w-lg">
-                Configure the appearance of verification pages, enable reviews and feedback, and more.
-              </p>
-            </div>
-            
-            <div className="flex flex-col gap-6 w-full max-w-lg">
-              <Link to="/customize" className="w-full">
-                <Button className="w-full h-16 text-lg" size="lg">
-                  App Appearance Settings
-                </Button>
-              </Link>
-              
-              <Link to="/admin/feedback" className="w-full">
-                <Button className="w-full h-16 text-lg flex items-center justify-center" variant="outline" size="lg">
-                  <FileText className="mr-2 h-5 w-5" />
-                  View Reviews & Feedback
-                </Button>
-              </Link>
-            </div>
-          </div>
+          <AppearanceSettings />
         </TabsContent>
         
         <TabsContent value="analytics">
