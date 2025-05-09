@@ -23,6 +23,8 @@ import TermsOfServicePage from "./pages/TermsOfServicePage";
 import RefundPolicyPage from "./pages/RefundPolicyPage";
 import BlogPage from "./pages/BlogPage";
 import SupportPage from "./pages/SupportPage";
+import Sidebar from "./components/Sidebar";
+import AppLayout from "./components/AppLayout";
 
 const queryClient = new QueryClient();
 
@@ -53,37 +55,42 @@ const App = () => (
             
             {/* Allow product-check without login */}
             <Route path="/product-check" element={
-              <>
-                <Header />
+              <AppLayout>
                 <ProductCheck />
-              </>
+              </AppLayout>
             } />
             
             <Route path="/dashboard" element={
               <AuthGuard>
-                <>
-                  <Header />
-                  <Index />
-                </>
+                <div className="flex h-screen overflow-hidden">
+                  <Sidebar />
+                  <div className="flex-1 overflow-y-auto bg-gradient-to-br from-gray-50 to-blue-50">
+                    <Index />
+                  </div>
+                </div>
               </AuthGuard>
             } />
             
             <Route path="/admin/feedback" element={
               <AuthGuard requiredRole="admin">
-                <>
-                  <Header />
-                  <AdminFeedback />
-                </>
+                <div className="flex h-screen overflow-hidden">
+                  <Sidebar />
+                  <div className="flex-1 overflow-y-auto bg-gradient-to-br from-gray-50 to-blue-50">
+                    <AdminFeedback />
+                  </div>
+                </div>
               </AuthGuard>
             } />
             
             {/* Redirect to login if not authenticated */}
             <Route path="*" element={
               <AuthGuard>
-                <>
-                  <Header />
-                  <NotFound />
-                </>
+                <div className="flex h-screen overflow-hidden">
+                  <Sidebar />
+                  <div className="flex-1 overflow-y-auto bg-gradient-to-br from-gray-50 to-blue-50">
+                    <NotFound />
+                  </div>
+                </div>
               </AuthGuard>
             } />
           </Routes>

@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
@@ -16,14 +15,57 @@ import {
   Settings,
   CreditCard,
   Lock,
-  ChevronUp
+  ChevronUp,
+  Globe
 } from 'lucide-react';
+
+// Arabic translations
+const arabicTranslations = {
+  heroTitle: "منتجاتك تستحق الأصالة.",
+  heroSubtitle: "أوقف التزييف، ابني الثقة، واجمع ملاحظات حقيقية — فورًا.",
+  heroDescription: "أطلق نظام المصادقة الخاص بك عبر رموز QR الذكية في دقائق. مصمم خصيصًا للتجار الجزائريين. مدعوم بتقنيات التشفير الحديثة والتحليلات وأدوات ملاحظات العملاء.",
+  tryDemo: "جرب العرض التوضيحي",
+  watchHow: "شاهد كيف يعمل",
+  forSmart: "مصممة للبائعين الأذكياء الذين يريدون البقاء في المقدمة",
+  ecommerce: "تجار التجارة الإلكترونية",
+  localBrands: "العلامات التجارية المحلية",
+  wholesale: "موزعين الجملة",
+  dropshippers: "دروبشيبرز",
+  steps: "3 خطوات بسيطة لتأمين منتجاتك",
+  step1: "إنشاء رموز QR مشفرة",
+  step2: "طباعة وإرفاق",
+  step3: "مسح ضوئي والتحقق",
+  customizeTemplate: "تخصيص القالب والكمية والعلامة التجارية",
+  teamPrint: "يمكن لفريقك الطباعة بكميات كبيرة — بدون مهارات تقنية",
+  customerScan: "يمسح العملاء للتحقق من المنتج وترك المراجعات",
+  secureNote: "كل رمز QR يستخدم مرة واحدة، مشفر بـ AES، ويتم تتبعه بتحليلات كاملة.",
+  allInOne: "منصة شاملة. مليئة بالميزات الذكية.",
+  pricingTitle: "تسعير بسيط وشفاف لكل مرحلة",
+  starterPlan: "المبتدئ",
+  proPlan: "برو",
+  lifetimeDeal: "صفقة مدى الحياة",
+  perMonth: "شهريًا",
+  oneTime: "مرة واحدة",
+  merchantsLove: "التجار يحبونه بالفعل",
+  techTitle: "مبني بأحدث التقنيات، حتى لا تضطر للقلق",
+  encryption: "تشفير AES-256",
+  oneTimeValidation: "التحقق لمرة واحدة",
+  isolatedPermissions: "أذونات معزولة",
+  mobileFriendly: "تصميم متوافق مع الجوال",
+  finalCTA: "منتجاتك. تم التحقق منها، وحمايتها، وموثوقة.",
+  startFree: "ابدأ مجانًا. الترقية في أي وقت. علامتك التجارية تستحق ذلك.",
+  createAccount: "أنشئ حسابك المجاني",
+  chatWhatsApp: "تحدث معنا على واتساب",
+  buyLifetime: "اشتر الصفقة المؤبدة الآن",
+  madeInAlgeria: "صنع في الجزائر بشغف"
+};
 
 const LandingPage: React.FC = () => {
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const [scrolled, setScrolled] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [isArabic, setIsArabic] = useState(false);
 
   // Handle scroll events
   useEffect(() => {
@@ -65,20 +107,43 @@ const LandingPage: React.FC = () => {
       behavior: 'smooth'
     });
   };
+  
+  const toggleLanguage = () => {
+    setIsArabic(!isArabic);
+    // If we're switching to Arabic, add RTL class to body
+    if (!isArabic) {
+      document.documentElement.dir = 'rtl';
+      document.body.classList.add('rtl');
+    } else {
+      document.documentElement.dir = 'ltr';
+      document.body.classList.remove('rtl');
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-white overflow-x-hidden">
+    <div className={`min-h-screen bg-white overflow-x-hidden ${isArabic ? 'rtl' : 'ltr'}`}>
       {/* Header - Now with auto-hide on scroll */}
       <header className={`fixed top-0 w-full z-50 transition-all duration-300 ${
-        scrolled ? 'bg-white/90 shadow-md backdrop-blur-sm -translate-y-full' : 'bg-white/80 backdrop-blur-sm border-b border-gray-100'
+        scrolled ? 'bg-white/90 shadow-md backdrop-blur-sm py-3' : 'bg-white/80 backdrop-blur-sm border-b border-gray-100 py-4'
       }`}>
         <div className="container mx-auto py-4 px-4 md:px-6 flex justify-between items-center">
           <div>
             <h1 className="text-xl font-bold">
               <span className="bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent">seQRity</span>
+              <span className="ml-2 text-xs px-2 py-0.5 bg-blue-500/20 text-blue-600 rounded-full">BETA</span>
             </h1>
           </div>
           <div className="flex gap-4">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="flex items-center gap-1.5" 
+              onClick={toggleLanguage}
+            >
+              <Globe size={16} />
+              {isArabic ? 'English' : 'العربية'}
+            </Button>
+            
             {isAuthenticated ? (
               <Button asChild variant="default" className="bg-gradient-to-r from-blue-500 to-violet-500 hover:from-blue-600 hover:to-violet-600 shadow-lg hover:shadow-blue-500/25">
                 <Link to="/dashboard">Go to Dashboard</Link>
@@ -116,24 +181,23 @@ const LandingPage: React.FC = () => {
         <div className="container mx-auto text-center max-w-4xl relative z-10">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 animate-on-scroll opacity-0 relative">
             <span className="bg-gradient-to-br from-blue-600 via-indigo-500 to-violet-600 bg-clip-text text-transparent relative">
-              Your Products Deserve Authenticity.
+              {isArabic ? arabicTranslations.heroTitle : "Your Products Deserve Authenticity."}
               <div className="absolute -top-4 -left-4 w-14 h-14 border-t-2 border-l-2 border-blue-400 opacity-60"></div>
               <div className="absolute -bottom-4 -right-4 w-14 h-14 border-b-2 border-r-2 border-violet-400 opacity-60"></div>
             </span>
           </h1>
           <h2 className="text-xl md:text-2xl text-gray-600 mb-10 max-w-3xl mx-auto animate-on-scroll opacity-0">
-            Stop Fakes, Build Trust, and Collect Real Feedback — Instantly.
+            {isArabic ? arabicTranslations.heroSubtitle : "Stop Fakes, Build Trust, and Collect Real Feedback — Instantly."}
           </h2>
           <p className="text-lg text-gray-500 mb-10 max-w-2xl mx-auto animate-on-scroll opacity-0">
-            Launch your smart QR code authentication system in minutes. Designed for Algerian merchants. 
-            Powered by modern encryption, analytics, and customer feedback tools.
+            {isArabic ? arabicTranslations.heroDescription : "Launch your smart QR code authentication system in minutes. Designed for Algerian merchants. Powered by modern encryption, analytics, and customer feedback tools."}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16 animate-on-scroll opacity-0">
             <Button size="lg" asChild className="px-8 bg-gradient-to-r from-blue-500 to-violet-500 hover:from-blue-600 hover:to-violet-600 shadow-lg hover:shadow-blue-500/25 transition-all">
-              <Link to="/product-check">Try the Demo</Link>
+              <Link to="/product-check">{isArabic ? arabicTranslations.tryDemo : "Try the Demo"}</Link>
             </Button>
             <Button size="lg" variant="outline" asChild className="px-8 border-blue-500 text-blue-600 hover:bg-blue-50">
-              <Link to="/login">Watch How It Works</Link>
+              <Link to="/login">{isArabic ? arabicTranslations.watchHow : "Watch How It Works"}</Link>
             </Button>
           </div>
           <div className="bg-white/80 backdrop-blur-sm rounded-xl p-8 shadow-xl shadow-blue-200/50 max-w-2xl mx-auto animate-on-scroll opacity-0 transform transition-all hover:shadow-2xl hover:shadow-blue-200/70 hover:-translate-y-1">
@@ -151,7 +215,9 @@ const LandingPage: React.FC = () => {
                   <Star size={32} className="animate-pulse" />
                 </div>
               </div>
-              <p className="text-gray-600 mt-4 font-medium">Customer scans QR code → Verification → Leaves review</p>
+              <p className="text-gray-600 mt-4 font-medium">
+                {isArabic ? "العميل يمسح رمز QR → التحقق → يترك تقييم" : "Customer scans QR code → Verification → Leaves review"}
+              </p>
             </div>
           </div>
         </div>
@@ -162,35 +228,35 @@ const LandingPage: React.FC = () => {
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGcgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIj48cGF0aCBmaWxsPSIjZjBmNGZhIiBkPSJNMCAwaDYwdjYwSDB6Ii8+PHBhdGggZD0iTTM2IDE4YzIuMjA5IDAgNCAxLjc5MSA0IDRzLTEuNzkxIDQtNCA0LTQtMS43OTEtNC00IDEuNzkxLTQgNC00eiIgZmlsbD0iI2UwZTdmZiIvPjwvZz48L3N2Zz4=')] opacity-20"></div>
         <div className="container mx-auto text-center max-w-5xl relative z-10">
           <h2 className="text-3xl md:text-4xl font-bold mb-12 animate-on-scroll opacity-0 bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent inline-block">
-            Built for Smart Sellers Who Want to Stay Ahead
+            {isArabic ? arabicTranslations.forSmart : "Built for Smart Sellers Who Want to Stay Ahead"}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             <div className="bg-white/80 backdrop-blur-sm p-6 rounded-xl shadow-lg transition-all duration-300 hover:-translate-y-2 hover:shadow-xl animate-on-scroll opacity-0">
               <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-blue-300 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner">
                 <ShoppingCart size={32} />
               </div>
-              <h3 className="font-bold text-lg mb-2">E-commerce Merchants</h3>
+              <h3 className="font-bold text-lg mb-2">{isArabic ? arabicTranslations.ecommerce : "E-commerce Merchants"}</h3>
               <p className="text-gray-600">Add authenticity & boost conversions</p>
             </div>
             <div className="bg-white/80 backdrop-blur-sm p-6 rounded-xl shadow-lg transition-all duration-300 hover:-translate-y-2 hover:shadow-xl animate-on-scroll opacity-0">
               <div className="w-16 h-16 bg-gradient-to-br from-green-100 to-green-300 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner">
                 <Shield size={32} />
               </div>
-              <h3 className="font-bold text-lg mb-2">Local Brands</h3>
+              <h3 className="font-bold text-lg mb-2">{isArabic ? "العلامات التجارية المحلية" : "Local Brands"}</h3>
               <p className="text-gray-600">Protect reputation from cheap copies</p>
             </div>
             <div className="bg-white/80 backdrop-blur-sm p-6 rounded-xl shadow-lg transition-all duration-300 hover:-translate-y-2 hover:shadow-xl animate-on-scroll opacity-0">
               <div className="w-16 h-16 bg-gradient-to-br from-purple-100 to-purple-300 text-purple-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner">
                 <Users size={32} />
               </div>
-              <h3 className="font-bold text-lg mb-2">Wholesale Distributors</h3>
+              <h3 className="font-bold text-lg mb-2">{isArabic ? "موزعين الجملة" : "Wholesale Distributors"}</h3>
               <p className="text-gray-600">Manage large batches with ease</p>
             </div>
             <div className="bg-white/80 backdrop-blur-sm p-6 rounded-xl shadow-lg transition-all duration-300 hover:-translate-y-2 hover:shadow-xl animate-on-scroll opacity-0">
               <div className="w-16 h-16 bg-gradient-to-br from-amber-100 to-amber-300 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner">
                 <TrendingUp size={32} />
               </div>
-              <h3 className="font-bold text-lg mb-2">Dropshippers</h3>
+              <h3 className="font-bold text-lg mb-2">{isArabic ? "دروبشيبرز" : "Dropshippers"}</h3>
               <p className="text-gray-600">Give your product a professional edge</p>
             </div>
           </div>
@@ -202,7 +268,7 @@ const LandingPage: React.FC = () => {
         <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-blue-50 to-transparent"></div>
         <div className="container mx-auto max-w-5xl relative z-10">
           <h2 className="text-3xl md:text-4xl font-bold mb-12 text-center animate-on-scroll opacity-0 bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent inline-block">
-            3 Simple Steps to Secure Your Products
+            {isArabic ? arabicTranslations.steps : "3 Simple Steps to Secure Your Products"}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
             {/* Connection lines between steps */}
@@ -213,29 +279,29 @@ const LandingPage: React.FC = () => {
               <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-blue-200 text-blue-600 rounded-lg flex items-center justify-center mb-4 shadow-inner">
                 <FileText size={32} />
               </div>
-              <h3 className="font-bold text-lg mb-2">Generate Encrypted QR Codes</h3>
-              <p className="text-gray-600">Customize template, quantity, and branding</p>
+              <h3 className="font-bold text-lg mb-2">{isArabic ? arabicTranslations.step1 : "Generate Encrypted QR Codes"}</h3>
+              <p className="text-gray-600">{isArabic ? "تخصيص القالب والكمية والعلامة التجارية" : "Customize template, quantity, and branding"}</p>
             </div>
             <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100 relative animate-on-scroll opacity-0">
               <div className="absolute -top-4 -left-4 w-10 h-10 bg-gradient-to-br from-blue-500 to-violet-500 text-white rounded-full flex items-center justify-center font-bold text-lg shadow-lg">2</div>
               <div className="w-16 h-16 bg-gradient-to-br from-green-100 to-green-200 text-green-600 rounded-lg flex items-center justify-center mb-4 shadow-inner">
                 <FileText size={32} />
               </div>
-              <h3 className="font-bold text-lg mb-2">Print & Attach</h3>
-              <p className="text-gray-600">Your team can print in bulk — no tech skills needed</p>
+              <h3 className="font-bold text-lg mb-2">{isArabic ? arabicTranslations.step2 : "Print & Attach"}</h3>
+              <p className="text-gray-600">{isArabic ? "يمكن لفريقك الطباعة بكميات كبيرة — بدون مهارات تقنية" : "Your team can print in bulk — no tech skills needed"}</p>
             </div>
             <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100 relative animate-on-scroll opacity-0">
               <div className="absolute -top-4 -left-4 w-10 h-10 bg-gradient-to-br from-blue-500 to-violet-500 text-white rounded-full flex items-center justify-center font-bold text-lg shadow-lg">3</div>
               <div className="w-16 h-16 bg-gradient-to-br from-amber-100 to-amber-200 text-amber-600 rounded-lg flex items-center justify-center mb-4 shadow-inner">
                 <CheckCircle size={32} />
               </div>
-              <h3 className="font-bold text-lg mb-2">Scan & Verify</h3>
-              <p className="text-gray-600">Customers scan to verify product and leave reviews</p>
+              <h3 className="font-bold text-lg mb-2">{isArabic ? arabicTranslations.step3 : "Scan & Verify"}</h3>
+              <p className="text-gray-600">{isArabic ? "يمسح العملاء للتحقق من المنتج وترك المراجعات" : "Customers scan to verify product and leave reviews"}</p>
             </div>
           </div>
           <div className="bg-gradient-to-r from-blue-50 via-indigo-50 to-blue-50 border border-blue-100 rounded-xl p-6 mt-10 text-center animate-on-scroll opacity-0">
             <p className="text-blue-800 font-medium">
-              "Each QR code is one-time use, AES-encrypted, and tracked with full analytics."
+              {isArabic ? arabicTranslations.secureNote : "Each QR code is one-time use, AES-encrypted, and tracked with full analytics."}
             </p>
           </div>
         </div>
@@ -246,7 +312,7 @@ const LandingPage: React.FC = () => {
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAxOGMxIDAgMS43OTIuNjQgMi4xLjk0bDIuMjcgMi4yOGMuMy4zMS45NCAxLjA1Ljk0IDIuMDYgMCAyLjIxLTEuNzkgNC00IDQtMi4yMDkgMC00LTEuNzktNC00czEuNzkxLTQgNC00eiIgc3Ryb2tlPSIjZWRlZGZmIiBzdHJva2Utd2lkdGg9IjIiLz48cGF0aCBmaWxsPSIjZjVmNWZmIiBkPSJNMCAwaDYwdjYwSDB6Ii8+PC9nPjwvc3ZnPg==')] opacity-20"></div>
         <div className="container mx-auto max-w-6xl relative z-10">
           <h2 className="text-3xl md:text-4xl font-bold mb-12 text-center animate-on-scroll opacity-0 bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent inline-block">
-            All-in-One Platform. Packed with Smart Features.
+            {isArabic ? arabicTranslations.allInOne : "All-in-One Platform. Packed with Smart Features."}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             <div className="bg-white/80 backdrop-blur-sm p-6 rounded-xl shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-xl animate-on-scroll opacity-0">
@@ -365,359 +431,4 @@ const LandingPage: React.FC = () => {
 
       {/* Pricing - Updated with new price */}
       <section className="py-20 bg-gradient-to-br from-gray-50 to-blue-50 px-4 relative">
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0wIDBoNDB2NDBIMHoiLz48cGF0aCBkPSJNMTAgMjBhMiAyIDAgMSAwIDAtNCAxIDEgMCAwIDEgMC0yIDEgMSAwIDAgMSAwIDIgMiAyIDAgMSAwIDAgNHptMTAgMGEyIDIgMCAxIDAgMC00IDEgMSAwIDAgMSAwLTIgMSAxIDAgMCAxIDAgMiAyIDIgMCAxIDAgMCA0em0xMCAwYTIgMiAwIDEgMCAwLTQgMSAxIDAgMCAxIDAtMiAxIDEgMCAwIDEgMCAyIDIgMiAwIDEgMCAwIDR6IiBmaWxsPSIjZTJlOGY0Ii8+PC9nPjwvc3ZnPg==')] opacity-20"></div>
-        <div className="container mx-auto max-w-6xl relative z-10">
-          <h2 className="text-3xl md:text-4xl font-bold mb-12 text-center animate-on-scroll opacity-0 bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent inline-block">
-            Simple, Transparent Pricing for Every Stage
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {/* Starter Plan */}
-            <div className="bg-white rounded-2xl overflow-hidden border border-gray-200 shadow-lg transition-all hover:shadow-xl hover:-translate-y-1 animate-on-scroll opacity-0">
-              <div className="p-6 border-b bg-gradient-to-r from-gray-50 to-gray-100">
-                <h3 className="font-bold text-xl mb-1">Starter</h3>
-                <p className="text-gray-600 mb-4">For solo entrepreneurs</p>
-                <div className="flex items-end gap-1">
-                  <span className="text-3xl font-bold">1,200 DZD</span>
-                  <span className="text-gray-500 mb-1">/month</span>
-                </div>
-              </div>
-              <div className="p-6 space-y-4">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle size={18} className="text-green-500" />
-                    <span>100 QR Codes / month</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle size={18} className="text-green-500" />
-                    <span>Limited Templates</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle size={18} className="text-green-500" />
-                    <span>Employee Panel</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-gray-400">
-                    <div className="text-gray-300">✕</div>
-                    <span>Admin Panel</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-gray-400">
-                    <div className="text-gray-300">✕</div>
-                    <span>Analytics</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-gray-400">
-                    <div className="text-gray-300">✕</div>
-                    <span>Custom Pages</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-gray-400">
-                    <div className="text-gray-300">✕</div>
-                    <span>Reviews</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle size={18} className="text-green-500" />
-                    <span>Email Support</span>
-                  </div>
-                </div>
-              </div>
-              <div className="p-6 border-t">
-                <Button asChild className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700">
-                  <Link to="/login">Start Free</Link>
-                </Button>
-              </div>
-            </div>
-
-            {/* Pro Plan */}
-            <div className="bg-white rounded-2xl overflow-hidden border-2 border-blue-500 shadow-xl transform scale-105 relative animate-on-scroll opacity-0">
-              <div className="absolute -top-3 left-0 w-full flex justify-center">
-                <div className="bg-gradient-to-r from-blue-500 to-violet-500 text-white px-4 py-1 rounded-full text-sm font-medium shadow-lg">
-                  Most Popular
-                </div>
-              </div>
-              <div className="p-6 border-b bg-gradient-to-r from-blue-50 to-indigo-50">
-                <h3 className="font-bold text-xl mb-1">Pro</h3>
-                <p className="text-gray-600 mb-4">For growing businesses</p>
-                <div className="flex items-end gap-1">
-                  <span className="text-3xl font-bold">2,500 DZD</span>
-                  <span className="text-gray-500 mb-1">/month</span>
-                </div>
-              </div>
-              <div className="p-6 space-y-4">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle size={18} className="text-green-500" />
-                    <span>500 QR Codes / month</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle size={18} className="text-green-500" />
-                    <span>Full Templates</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle size={18} className="text-green-500" />
-                    <span>Employee Panel</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle size={18} className="text-green-500" />
-                    <span>Admin Panel</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle size={18} className="text-green-500" />
-                    <span>Full Analytics</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle size={18} className="text-green-500" />
-                    <span>Custom Pages</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle size={18} className="text-green-500" />
-                    <span>Reviews System</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle size={18} className="text-green-500" />
-                    <span>Priority Support</span>
-                  </div>
-                </div>
-              </div>
-              <div className="p-6 border-t">
-                <Button asChild className="w-full bg-gradient-to-r from-blue-500 to-violet-500 hover:from-blue-600 hover:to-violet-600 shadow-lg hover:shadow-blue-500/25">
-                  <Link to="/login">Upgrade Now</Link>
-                </Button>
-              </div>
-            </div>
-
-            {/* Lifetime Plan - Updated price */}
-            <div className="bg-white rounded-2xl overflow-hidden border border-gray-200 shadow-lg transition-all hover:shadow-xl hover:-translate-y-1 animate-on-scroll opacity-0">
-              <div className="p-6 border-b bg-gradient-to-r from-violet-50 to-blue-50">
-                <h3 className="font-bold text-xl mb-1">Lifetime Deal</h3>
-                <p className="text-gray-600 mb-4">For agencies & resellers</p>
-                <div className="flex items-end gap-1">
-                  <span className="text-3xl font-bold">25,000 DZD</span>
-                  <span className="text-gray-500 mb-1">one-time</span>
-                </div>
-              </div>
-              <div className="p-6 space-y-4">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle size={18} className="text-green-500" />
-                    <span>Unlimited QR Codes</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle size={18} className="text-green-500" />
-                    <span>Full Templates</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle size={18} className="text-green-500" />
-                    <span>Employee Panel</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle size={18} className="text-green-500" />
-                    <span>Admin Panel</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle size={18} className="text-green-500" />
-                    <span>Full Analytics</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle size={18} className="text-green-500" />
-                    <span>Custom Pages</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle size={18} className="text-green-500" />
-                    <span>Reviews System</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle size={18} className="text-green-500" />
-                    <span>Priority Support</span>
-                  </div>
-                </div>
-              </div>
-              <div className="p-6 border-t">
-                <Button asChild variant="outline" className="w-full border-blue-500 text-blue-600 hover:bg-blue-50">
-                  <Link to="/login">Buy Lifetime Access</Link>
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Testimonials/Social Proof */}
-      <section className="py-20 px-4 relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-blue-50 to-transparent"></div>
-        <div className="absolute -left-40 top-40 w-80 h-80 bg-blue-200 rounded-full filter blur-3xl opacity-20"></div>
-        <div className="absolute -right-40 bottom-40 w-80 h-80 bg-violet-200 rounded-full filter blur-3xl opacity-20"></div>
-        <div className="container mx-auto max-w-4xl relative z-10">
-          <h2 className="text-3xl md:text-4xl font-bold mb-12 text-center animate-on-scroll opacity-0 bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent inline-block">
-            Merchants Already Love It
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="bg-white/80 backdrop-blur-sm p-6 rounded-xl shadow-lg border border-gray-100 transition-all hover:-translate-y-1 hover:shadow-xl animate-on-scroll opacity-0">
-              <div className="flex gap-2 mb-4">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <Star key={star} size={20} className="fill-amber-400 text-amber-400" />
-                ))}
-              </div>
-              <p className="text-gray-700 mb-4 italic">
-                "Since using the QR system, my returns dropped by 30%. Customers trust us more."
-              </p>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-400 to-blue-500"></div>
-                <div>
-                  <p className="font-medium">Yasmine</p>
-                  <p className="text-sm text-gray-500">Local Skincare Brand Owner</p>
-                </div>
-              </div>
-            </div>
-            <div className="bg-white/80 backdrop-blur-sm p-6 rounded-xl shadow-lg border border-gray-100 transition-all hover:-translate-y-1 hover:shadow-xl animate-on-scroll opacity-0">
-              <div className="flex gap-2 mb-4">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <Star key={star} size={20} className="fill-amber-400 text-amber-400" />
-                ))}
-              </div>
-              <p className="text-gray-700 mb-4 italic">
-                "We use it to collect reviews with every order. Game changer."
-              </p>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-green-500"></div>
-                <div>
-                  <p className="font-medium">Walid</p>
-                  <p className="text-sm text-gray-500">Dropshipper</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Tech Stack & Security */}
-      <section className="py-20 bg-gradient-to-br from-gray-900 to-indigo-900 text-white px-4 relative overflow-hidden">
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAxOGMxIDAgMS43OTIuNjQgMi4xLjk0bDIuMjcgMi4yOGMuMy4zMS45NCAxLjA1Ljk0IDIuMDYgMCAyLjIxLTEuNzkgNC00IDQtMi4yMDkgMC00LTEuNzktNC00czEuNzkxLTQgNC00eiIgc3Ryb2tlPSIjMzkzZjYwIiBzdHJva2Utd2lkdGg9IjIiLz48cGF0aCBmaWxsPSIjMWEyMTNmIiBkPSJNMCAwaDYwdjYwSDB6Ii8+PC9nPjwvc3ZnPg==')] opacity-10"></div>
-        <div className="container mx-auto max-w-4xl relative z-10">
-          <h2 className="text-3xl md:text-4xl font-bold mb-12 text-center animate-on-scroll opacity-0 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent inline-block">
-            Built with the Latest Tech, So You Don't Have to Worry
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="bg-gradient-to-br from-gray-800/70 to-gray-900/70 backdrop-blur-sm p-6 rounded-xl border border-gray-700 transition-all hover:-translate-y-1 hover:shadow-lg hover:shadow-blue-900/20 animate-on-scroll opacity-0">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="p-2 bg-gradient-to-br from-green-500/20 to-green-600/20 rounded-lg">
-                  <Lock size={24} className="text-green-400" />
-                </div>
-                <h3 className="font-bold text-lg">AES-256 Encryption</h3>
-              </div>
-              <p className="text-gray-300">
-                Every QR code is encrypted using industry-standard AES-256, ensuring that product data stays protected from tampering or duplication.
-              </p>
-            </div>
-            <div className="bg-gradient-to-br from-gray-800/70 to-gray-900/70 backdrop-blur-sm p-6 rounded-xl border border-gray-700 transition-all hover:-translate-y-1 hover:shadow-lg hover:shadow-blue-900/20 animate-on-scroll opacity-0">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="p-2 bg-gradient-to-br from-green-500/20 to-green-600/20 rounded-lg">
-                  <ShieldCheck size={24} className="text-green-400" />
-                </div>
-                <h3 className="font-bold text-lg">One-Time Validation</h3>
-              </div>
-              <p className="text-gray-300">
-                Each QR code becomes invalid after it's scanned once — preventing reuse or counterfeiting attempts.
-              </p>
-            </div>
-            <div className="bg-gradient-to-br from-gray-800/70 to-gray-900/70 backdrop-blur-sm p-6 rounded-xl border border-gray-700 transition-all hover:-translate-y-1 hover:shadow-lg hover:shadow-blue-900/20 animate-on-scroll opacity-0">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="p-2 bg-gradient-to-br from-green-500/20 to-green-600/20 rounded-lg">
-                  <Users size={24} className="text-green-400" />
-                </div>
-                <h3 className="font-bold text-lg">Isolated Permissions</h3>
-              </div>
-              <p className="text-gray-300">
-                Admins control settings, analytics, and feedback. Employees only access QR generation — keeping your data secure from internal leaks.
-              </p>
-            </div>
-            <div className="bg-gradient-to-br from-gray-800/70 to-gray-900/70 backdrop-blur-sm p-6 rounded-xl border border-gray-700 transition-all hover:-translate-y-1 hover:shadow-lg hover:shadow-blue-900/20 animate-on-scroll opacity-0">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="p-2 bg-gradient-to-br from-green-500/20 to-green-600/20 rounded-lg">
-                  <CreditCard size={24} className="text-green-400" />
-                </div>
-                <h3 className="font-bold text-lg">Mobile-First Design</h3>
-              </div>
-              <p className="text-gray-300">
-                Fully responsive and optimized for all devices, ensuring your customers have a seamless experience on any screen size.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Final CTA */}
-      <section className="py-20 px-4 bg-gradient-to-br from-blue-600 via-indigo-600 to-violet-600 text-white relative overflow-hidden">
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute -top-40 -right-40 w-96 h-96 bg-blue-400 rounded-full filter blur-3xl opacity-20"></div>
-          <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-violet-400 rounded-full filter blur-3xl opacity-20"></div>
-        </div>
-        <div className="container mx-auto max-w-4xl text-center relative z-10">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4 animate-on-scroll opacity-0 text-white">
-            Your Products. Verified, Protected, and Trusted.
-          </h2>
-          <p className="text-xl mb-10 max-w-2xl mx-auto text-blue-100 animate-on-scroll opacity-0">
-            Start free. Upgrade anytime. Your brand is worth it.
-          </p>
-          <div className="flex flex-col md:flex-row gap-4 justify-center animate-on-scroll opacity-0">
-            <Button asChild size="lg" className="bg-white text-blue-600 hover:bg-gray-100 shadow-lg hover:shadow-xl transition-all">
-              <Link to="/login">Create Your Free Account</Link>
-            </Button>
-            <Button asChild size="lg" variant="outline" className="border-white text-white hover:bg-white/10">
-              <Link to="/login">Chat With Us on WhatsApp</Link>
-            </Button>
-            <Button asChild size="lg" variant="secondary" className="bg-indigo-900 text-white hover:bg-indigo-800 border-none shadow-lg">
-              <Link to="/login">Buy Lifetime Deal Now</Link>
-            </Button>
-          </div>
-        </div>
-      </section>
-
-      {/* Footer - Updated with new links */}
-      <footer className="bg-gradient-to-br from-gray-900 to-indigo-950 text-white py-12 px-4">
-        <div className="container mx-auto">
-          <div className="flex flex-col md:flex-row justify-between mb-8">
-            <div className="mb-8 md:mb-0">
-              <h2 className="text-xl font-bold mb-4 flex items-center">
-                <span className="bg-gradient-to-r from-blue-400 to-violet-400 bg-clip-text text-transparent">seQRity</span>
-                <span className="ml-2 text-xs px-2 py-0.5 bg-blue-500/20 text-blue-300 rounded-full">BETA</span>
-              </h2>
-              <p className="text-gray-400 max-w-xs">Protecting brands from counterfeiting with smart technology.</p>
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-8">
-              <div>
-                <h3 className="font-medium mb-4">Company</h3>
-                <ul className="space-y-2 text-gray-400">
-                  <li><Link to="/login" className="hover:text-white transition-colors">About</Link></li>
-                  <li><Link to="/login" className="hover:text-white transition-colors">FAQ</Link></li>
-                  <li><Link to="/login" className="hover:text-white transition-colors">Contact</Link></li>
-                </ul>
-              </div>
-              <div>
-                <h3 className="font-medium mb-4">Legal</h3>
-                <ul className="space-y-2 text-gray-400">
-                  <li><Link to="/login" className="hover:text-white transition-colors">Privacy Policy</Link></li>
-                  <li><Link to="/login" className="hover:text-white transition-colors">Terms of Service</Link></li>
-                  <li><Link to="/login" className="hover:text-white transition-colors">Refund Policy</Link></li>
-                </ul>
-              </div>
-              <div>
-                <h3 className="font-medium mb-4">Resources</h3>
-                <ul className="space-y-2 text-gray-400">
-                  <li><Link to="/login" className="hover:text-white transition-colors">Blog</Link></li>
-                  <li><Link to="/login" className="hover:text-white transition-colors">Documentation</Link></li>
-                  <li><Link to="/login" className="hover:text-white transition-colors">Support</Link></li>
-                </ul>
-              </div>
-            </div>
-          </div>
-          <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center">
-            <p className="text-gray-400 text-sm">© 2025 seQRity - QR Code Authentication System. All rights reserved.</p>
-            <p className="text-gray-400 text-sm flex items-center mt-4 md:mt-0">
-              <span>Made in Algeria with passion</span>
-              <span className="ml-2 px-2 py-0.5 text-xs bg-blue-900/30 text-blue-300 rounded-full">BETA</span>
-            </p>
-          </div>
-        </div>
-      </footer>
-    </div>
-  );
-};
-
-export default LandingPage;
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0wIDBoNDB2NDBIMHoiLz48cGF0aCBkPSJNMTAgMjBhMiAyIDAgMSAwIDAtNCAxIDEgMCAwIDEgMC

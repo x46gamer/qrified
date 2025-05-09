@@ -2,13 +2,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, Plus, Minus } from 'lucide-react';
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
+import { ChevronLeft } from 'lucide-react';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 const FAQPage = () => {
   return (
@@ -21,64 +16,92 @@ const FAQPage = () => {
           </Link>
         </Button>
         
-        <div className="max-w-3xl mx-auto bg-white rounded-xl shadow-lg p-8">
-          <h1 className="text-3xl font-bold mb-6 bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent">Frequently Asked Questions</h1>
+        <div className="max-w-3xl mx-auto bg-white/80 backdrop-blur-sm rounded-xl shadow-lg p-8 border border-gray-100">
+          <h1 className="text-3xl font-bold mb-6 bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent">
+            Frequently Asked Questions
+          </h1>
           
-          <Accordion type="single" collapsible className="w-full">
-            <AccordionItem value="item-1">
-              <AccordionTrigger className="text-left font-medium">How does the QR code authentication work?</AccordionTrigger>
-              <AccordionContent>
-                Our system generates unique, encrypted QR codes that you attach to your products. When customers scan these codes, our system verifies if the code is legitimate and hasn't been scanned before. This confirms the product's authenticity and allows customers to leave feedback.
-              </AccordionContent>
-            </AccordionItem>
-            
-            <AccordionItem value="item-2">
-              <AccordionTrigger className="text-left font-medium">Can fake products simply copy my QR codes?</AccordionTrigger>
-              <AccordionContent>
-                No. Each QR code contains a unique encrypted identifier that becomes invalid after the first scan. Counterfeiters can copy the visual QR code, but when scanned, the system will show it's already been used or is invalid, alerting customers to a potential fake.
-              </AccordionContent>
-            </AccordionItem>
-            
-            <AccordionItem value="item-3">
-              <AccordionTrigger className="text-left font-medium">How do I print the QR codes?</AccordionTrigger>
-              <AccordionContent>
-                You can easily print QR codes directly from our platform on any standard printer. We support various formats including sheets of stickers, labels, or individual codes. You can also export them as PDF or PNG files to send to a professional printing service.
-              </AccordionContent>
-            </AccordionItem>
-            
-            <AccordionItem value="item-4">
-              <AccordionTrigger className="text-left font-medium">Can I customize what customers see when they scan?</AccordionTrigger>
-              <AccordionContent>
-                Yes! You can customize the verification page with your brand colors, logo, and custom messages for both successful verifications and counterfeit alerts. Pro and Lifetime plans also allow you to collect customer feedback after verification.
-              </AccordionContent>
-            </AccordionItem>
-            
-            <AccordionItem value="item-5">
-              <AccordionTrigger className="text-left font-medium">Does seQRity work offline?</AccordionTrigger>
-              <AccordionContent>
-                The QR codes themselves can be printed and attached to products offline, but the verification process requires an internet connection to check our secure database. This is essential for maintaining the security and validity of the authentication system.
-              </AccordionContent>
-            </AccordionItem>
-            
-            <AccordionItem value="item-6">
-              <AccordionTrigger className="text-left font-medium">How do I pay for the service?</AccordionTrigger>
-              <AccordionContent>
-                We offer multiple payment methods including credit cards, CCP, and BaridiMob. For the Lifetime deal, we also accept bank transfers. Contact our support team for more information on payment options available in your region.
-              </AccordionContent>
-            </AccordionItem>
-            
-            <AccordionItem value="item-7">
-              <AccordionTrigger className="text-left font-medium">Is there a free trial?</AccordionTrigger>
-              <AccordionContent>
-                Yes! You can sign up and generate up to 10 QR codes for free to test the system. This gives you access to the basic features so you can see how the system works before committing to a paid plan.
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
+          <div className="space-y-6">
+            <Accordion type="single" collapsible className="w-full">
+              <AccordionItem value="item-1">
+                <AccordionTrigger className="text-left font-medium">
+                  What is seQRity and how does it work?
+                </AccordionTrigger>
+                <AccordionContent className="text-gray-600">
+                  seQRity is an anti-counterfeiting solution that uses unique, encrypted QR codes to authenticate products. Each code can only be verified once, providing proof of authenticity. When a customer scans the code, they'll immediately know if the product is genuine or fake, and can leave feedback for the merchant.
+                </AccordionContent>
+              </AccordionItem>
+              
+              <AccordionItem value="item-2">
+                <AccordionTrigger className="text-left font-medium">
+                  How secure are the QR codes?
+                </AccordionTrigger>
+                <AccordionContent className="text-gray-600">
+                  Our QR codes use AES-256 encryption, the same standard used by banks and government agencies. Each code is unique, one-time use, and linked to your specific products. They cannot be copied or replicated by counterfeiters.
+                </AccordionContent>
+              </AccordionItem>
+              
+              <AccordionItem value="item-3">
+                <AccordionTrigger className="text-left font-medium">
+                  Can I customize the verification page customers see?
+                </AccordionTrigger>
+                <AccordionContent className="text-gray-600">
+                  Yes, with Pro and Lifetime plans, you can fully customize the verification pages with your logo, colors, and custom messages in both Arabic and French. You can also collect customer feedback and reviews during the verification process.
+                </AccordionContent>
+              </AccordionItem>
+              
+              <AccordionItem value="item-4">
+                <AccordionTrigger className="text-left font-medium">
+                  How many team members can use my account?
+                </AccordionTrigger>
+                <AccordionContent className="text-gray-600">
+                  Our Pro plan includes up to 3 team members. Each team member can have specific permissions (admin or employee). Employees can only generate QR codes, while admins have full access to all features including analytics and settings.
+                </AccordionContent>
+              </AccordionItem>
+              
+              <AccordionItem value="item-5">
+                <AccordionTrigger className="text-left font-medium">
+                  Do you offer technical support?
+                </AccordionTrigger>
+                <AccordionContent className="text-gray-600">
+                  Yes, all plans include email support. Pro and Lifetime plans include priority support via WhatsApp and email with a maximum 24-hour response time.
+                </AccordionContent>
+              </AccordionItem>
+              
+              <AccordionItem value="item-6">
+                <AccordionTrigger className="text-left font-medium">
+                  What happens if I exceed my monthly QR code limit?
+                </AccordionTrigger>
+                <AccordionContent className="text-gray-600">
+                  If you exceed your monthly limit, you can purchase additional QR codes at a rate of 500 DZD per 100 codes. Alternatively, you can upgrade to a higher plan or the Lifetime deal for unlimited codes.
+                </AccordionContent>
+              </AccordionItem>
+              
+              <AccordionItem value="item-7">
+                <AccordionTrigger className="text-left font-medium">
+                  Is there a free trial available?
+                </AccordionTrigger>
+                <AccordionContent className="text-gray-600">
+                  Yes, we offer a 7-day free trial with access to all Pro features and up to 25 QR codes. No credit card required to start your trial.
+                </AccordionContent>
+              </AccordionItem>
+              
+              <AccordionItem value="item-8">
+                <AccordionTrigger className="text-left font-medium">
+                  What payment methods do you accept?
+                </AccordionTrigger>
+                <AccordionContent className="text-gray-600">
+                  We accept BaridiMob, CCP transfers, and in-person cash payments in major Algerian cities. For international clients, we also accept PayPal and bank transfers.
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          </div>
           
-          <div className="mt-8 p-4 bg-blue-50 rounded-lg border border-blue-100">
-            <p className="text-center text-gray-700">
-              Don't see your question here? <Link to="/login" className="text-blue-600 font-medium hover:underline">Contact our support team</Link>
-            </p>
+          <div className="mt-8 text-center">
+            <p className="text-gray-600 mb-4">Still have questions?</p>
+            <Button asChild className="bg-gradient-to-r from-blue-500 to-violet-500 hover:from-blue-600 hover:to-violet-600 transition-all">
+              <Link to="/contact">Contact Us</Link>
+            </Button>
           </div>
         </div>
       </div>
