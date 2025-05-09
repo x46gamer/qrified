@@ -120,17 +120,21 @@ const UserManagement: React.FC = () => {
       // Generate a unique token for the invite
       const token = uuidv4();
       
+      // Convert permissions to a format that matches the database
+      const permissionsObject = {
+        ...permissions
+      };
+      
+      // Insert a single invite record
       const { error } = await supabase
         .from('user_invites')
-        .insert([
-          {
-            email,
-            token,
-            role: selectedRole,
-            permissions: permissions,
-            invited_by: user?.id
-          }
-        ]);
+        .insert({
+          email,
+          token,
+          role: selectedRole,
+          permissions: permissionsObject,
+          invited_by: user?.id
+        });
       
       if (error) throw error;
       
@@ -261,6 +265,13 @@ const UserManagement: React.FC = () => {
                       </TableCell>
                     </TableRow>
                   ))}
+                  {users.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-center py-4 text-gray-500">
+                        No users found
+                      </TableCell>
+                    </TableRow>
+                  )}
                 </TableBody>
               </Table>
             </div>

@@ -1,284 +1,216 @@
-import React, { useState, useCallback } from 'react';
-import QRCode from 'qrcode';
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { QRCodeData, QRCode, TemplateType } from '@/types/qrCode';
+import { QRCodeData, TemplateType } from '@/types/qrCode';
 import QRCodeTemplates from './QRCodeTemplates';
 import QRCodeTemplatePreview from './QRCodeTemplatePreview';
+import { HexColorPicker } from "react-colorful";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { v4 as uuidv4 } from 'uuid';
+import CryptoJS from 'crypto-js';
 import { supabase } from '@/integrations/supabase/client';
+import { v4 as uuidv4 } from 'uuid';
+import QRCode from 'qrcode';
 
-interface QRCodeGeneratorProps {
-  onQRCodesGenerated: (qrCodes: QRCode[]) => void;
-  lastSequentialNumber: number;
+interface ColorPickerProps {
+  color: string;
+  onChange: (color: string) => void;
 }
 
-const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ onQRCodesGenerated, lastSequentialNumber }) => {
-  const [text, setText] = useState('');
-  const [numberOfCodes, setNumberOfCodes] = useState(1);
-  const [generatedQRCodes, setGeneratedQRCodes] = useState<QRCode[]>([]);
-  const [selectedTemplate, setSelectedTemplate] = useState<TemplateType>('classic');
-  const [headerText, setHeaderText] = useState('');
-  const [instructionText, setInstructionText] = useState('');
-  const [websiteUrl, setWebsiteUrl] = useState('');
-  const [footerText, setFooterText] = useState('');
-  const [directionRTL, setDirectionRTL] = useState(false);
-  const [isGenerating, setIsGenerating] = useState(false);
-  
-  const generateQRCode = useCallback(async (data: string): Promise<string> => {
-    try {
-      const qrCodeDataUrl = await QRCode.toDataURL(data, {
-        width: 256,
-        margin: 1,
-        color: {
-          dark: '#000',
-          light: '#fff',
-        },
-      });
-      return qrCodeDataUrl;
-    } catch (error) {
-      console.error("Failed to generate QR code:", error);
-      toast.error("Failed to generate QR code.");
-      return '';
-    }
-  }, []);
-  
-  const validateQRCodeData = (data: QRCodeData): boolean => {
-    // Removed product name validation since it's now optional
-    return true;
+const ColorPicker: React.FC<ColorPickerProps> = ({ color, onChange }) => {
+  return (
+    <HexColorPicker color={color} onChange={onChange} />
+  );
+};
+
+const QRCodeGenerator: React.FC = () => {
+  const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>('');
+  const [foregroundColor, setForegroundColor] = useState<string>('#000000');
+  const [backgroundColor, setBackgroundColor] = useState<string>('#FFFFFF');
+  const [template, setTemplate] = useState<TemplateType>('classic');
+  const [headerText, setHeaderText] = useState<string>('');
+  const [instructionText, setInstructionText] = useState<string>('');
+  const [websiteUrl, setWebsiteUrl] = useState<string>('');
+  const [footerText, setFooterText] = useState<string>('');
+  const [directionRTL, setDirectionRTL] = useState<boolean>(false);
+  const [isColorDialogOpen, setIsColorDialogOpen] = useState<boolean>(false);
+  const [selectedColorType, setSelectedColorType] = useState<'foreground' | 'background' | null>(null);
+  const [productId, setProductId] = useState<string>('');
+
+  const handleColorDialogOpen = (type: 'foreground' | 'background') => {
+    setSelectedColorType(type);
+    setIsColorDialogOpen(true);
   };
 
-  const handleGenerateQRCodes = async () => {
-    if (numberOfCodes <= 0) {
-      toast.error('Number of codes must be greater than 0.');
-      return;
+  const handleColorChange = (color: string) => {
+    if (selectedColorType === 'foreground') {
+      setForegroundColor(color);
+    } else if (selectedColorType === 'background') {
+      setBackgroundColor(color);
     }
-    
-    setIsGenerating(true);
-    
-    const newQRCodes: QRCode[] = [];
-    
-    for (let i = 0; i < numberOfCodes; i++) {
-      const sequentialNumber = lastSequentialNumber + i + 1;
-      const qrCodeData: QRCodeData = {
-        text: `${text}-${sequentialNumber}`,
-        template: selectedTemplate,
-      };
-      
-      const isValidData = Boolean(selectedTemplate);
-      
-      if (!isValidData) {
-        toast.error('Please select a QR code template.');
-        setIsGenerating(false);
-        return;
-      }
-      
-      try {
-        // Encrypt the data
-        const encryptedData = btoa(JSON.stringify(qrCodeData));
-        
-        // Generate a unique ID for the QR code
-        const id = uuidv4();
-        
-        // Construct the URL
-        const baseUrl = window.location.origin;
-        const url = `${baseUrl}/check?id=${id}`;
-        
-        // Generate the QR code
-        const dataUrl = await generateQRCode(url);
-        
-        // Create the QR code object
-        const newQRCode: QRCode = {
-          id: id,
-          sequentialNumber: sequentialNumber.toString(),
-          encryptedData: encryptedData,
-          url: url,
-          isScanned: false,
-          isEnabled: true,
-          createdAt: new Date().toISOString(),
-          dataUrl: dataUrl,
-          template: selectedTemplate,
-          headerText: headerText,
-          instructionText: instructionText,
-          websiteUrl: websiteUrl,
-          footerText: footerText,
-          directionRTL: directionRTL,
-        };
-        
-        // Add the QR code to the array
-        newQRCodes.push(newQRCode);
-      } catch (error) {
-        console.error("QR code generation failed:", error);
-        toast.error("QR code generation failed. Please try again.");
-        setIsGenerating(false);
-        return;
-      }
-    }
-    
+  };
+  
+  const encryptData = (text: string) => {
+    console.log("Encrypting data:", text);
+    const encrypted = CryptoJS.AES.encrypt(text, 'your-secret-key').toString();
+    console.log("Encrypted data:", encrypted);
+    return encrypted;
+  };
+
+  const generateQRCode = async () => {
     try {
-      // Insert the new QR codes into the database
-      const { data, error } = await supabase
-        .from('qr_codes')
-        .insert(newQRCodes.map(qrCode => ({
-          id: qrCode.id,
-          sequential_number: qrCode.sequentialNumber,
-          encrypted_data: qrCode.encryptedData,
-          url: qrCode.url,
-          is_scanned: qrCode.isScanned,
-          is_enabled: qrCode.isEnabled,
-          created_at: qrCode.createdAt,
-          data_url: qrCode.dataUrl,
-          template: qrCode.template,
-          header_text: qrCode.headerText,
-          instruction_text: qrCode.instructionText,
-          website_url: qrCode.websiteUrl,
-          footer_text: qrCode.footerText,
-          direction_rtl: qrCode.directionRTL,
-        })));
+      // Allow empty productId (optional)
+      const dataToEncrypt = productId ? productId : uuidv4();
       
-      if (error) {
-        console.error('Error inserting QR codes:', error);
-        toast.error('Failed to save QR codes to database');
-        setIsGenerating(false);
-        return;
-      }
-      
-      // Update the sequence counter
-      const { error: counterError } = await supabase
-        .from('sequence_counters')
-        .update({ current_value: lastSequentialNumber + numberOfCodes })
-        .eq('id', 'qr_code_sequential');
-      
-      if (counterError) {
-        console.error('Error updating counter:', counterError);
-      }
-      
-      // Update state and notify parent component
-      setGeneratedQRCodes(newQRCodes);
-      onQRCodesGenerated(newQRCodes);
-      toast.success(`${numberOfCodes} QR codes generated successfully!`);
-    } catch (dbError) {
-      console.error("Database insertion failed:", dbError);
-      toast.error("Failed to save QR codes. Please try again.");
-    } finally {
-      setIsGenerating(false);
+      const encryptedData = encryptData(dataToEncrypt);
+      const baseUrl = window.location.origin;
+      const url = `${baseUrl}/check?data=${encryptedData}`;
+
+      const qrCodeOptions = {
+        errorCorrectionLevel: 'H',
+        color: {
+          dark: foregroundColor,
+          light: backgroundColor,
+        },
+      };
+
+      QRCode.toDataURL(url, qrCodeOptions, (err, qrCodeDataUrl) => {
+        if (err) {
+          console.error("Error generating QR code:", err);
+          toast.error("Failed to generate QR code");
+          return;
+        }
+        setQrCodeDataUrl(qrCodeDataUrl);
+      });
+    } catch (error) {
+      console.error("Error generating QR code:", error);
+      toast.error("Failed to generate QR code");
     }
   };
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      {/* Input and Configuration Section */}
-      <div className="space-y-4">
-        <div>
-          <Label htmlFor="text">Product Name</Label>
-          <Input
-            id="text"
-            type="text"
-            placeholder="Enter product name"
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-          />
-        </div>
-        
-        <div>
-          <Label htmlFor="numberOfCodes">Number of Codes</Label>
-          <Input
-            id="numberOfCodes"
-            type="number"
-            placeholder="Enter number of codes to generate"
-            value={numberOfCodes.toString()}
-            onChange={(e) => setNumberOfCodes(parseInt(e.target.value, 10))}
-          />
-        </div>
-        
-        <QRCodeTemplates 
-          selectedTemplate={selectedTemplate}
-          onSelectTemplate={setSelectedTemplate}
-        />
-        
-        {selectedTemplate !== 'classic' && (
-          <>
-            <div>
+      <Card>
+        <CardContent className="pt-6">
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="productId">Product Identifier (Optional)</Label>
+              <Input
+                id="productId"
+                placeholder="Enter product ID or leave blank for auto-generated ID"
+                value={productId}
+                onChange={(e) => setProductId(e.target.value)}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="template">Template</Label>
+              <QRCodeTemplates template={template} setTemplate={setTemplate} />
+            </div>
+            
+            <div className="space-y-2">
+              <Label>Colors</Label>
+              <div className="flex gap-3">
+                <Button onClick={() => handleColorDialogOpen('foreground')}>
+                  Foreground: {foregroundColor}
+                </Button>
+                <Button onClick={() => handleColorDialogOpen('background')}>
+                  Background: {backgroundColor}
+                </Button>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
               <Label htmlFor="headerText">Header Text</Label>
               <Input
                 id="headerText"
-                type="text"
                 placeholder="Enter header text"
                 value={headerText}
                 onChange={(e) => setHeaderText(e.target.value)}
               />
             </div>
             
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="instructionText">Instruction Text</Label>
               <Input
                 id="instructionText"
-                type="text"
                 placeholder="Enter instruction text"
                 value={instructionText}
                 onChange={(e) => setInstructionText(e.target.value)}
               />
             </div>
             
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="websiteUrl">Website URL</Label>
               <Input
                 id="websiteUrl"
-                type="url"
                 placeholder="Enter website URL"
                 value={websiteUrl}
                 onChange={(e) => setWebsiteUrl(e.target.value)}
               />
             </div>
             
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="footerText">Footer Text</Label>
               <Input
                 id="footerText"
-                type="text"
                 placeholder="Enter footer text"
                 value={footerText}
                 onChange={(e) => setFooterText(e.target.value)}
               />
             </div>
             
-            {selectedTemplate === 'arabic' && (
-              <div>
-                <Label htmlFor="directionRTL">Right-to-Left Direction</Label>
-                <Input
-                  id="directionRTL"
-                  type="checkbox"
-                  checked={directionRTL}
-                  onChange={(e) => setDirectionRTL(e.target.checked)}
-                />
-              </div>
-            )}
-          </>
-        )}
-        
-        <Button 
-          onClick={handleGenerateQRCodes}
-          disabled={isGenerating}
-        >
-          {isGenerating ? 'Generating...' : 'Generate QR Codes'}
-        </Button>
-      </div>
+            <div className="flex items-center space-x-2">
+              <Label htmlFor="directionRTL">Right-to-Left Direction</Label>
+              <Input
+                id="directionRTL"
+                type="checkbox"
+                checked={directionRTL}
+                onChange={(e) => setDirectionRTL(e.target.checked)}
+              />
+            </div>
+            
+            <Button onClick={generateQRCode}>Generate QR Code</Button>
+          </div>
+        </CardContent>
+      </Card>
       
-      {/* Template Preview Section */}
-      <div>
-        <h3 className="text-lg font-medium mb-4">Template Preview</h3>
-        <QRCodeTemplatePreview
-          template={selectedTemplate}
-          qrCodeDataUrl={generatedQRCodes.length > 0 ? generatedQRCodes[0].dataUrl || '' : ''}
-          headerText={headerText}
-          instructionText={instructionText}
-          websiteUrl={websiteUrl}
-          footerText={footerText}
-          directionRTL={directionRTL}
-        />
-      </div>
+      <Card>
+        <CardContent>
+          <h3 className="text-xl font-semibold mb-4">Preview</h3>
+          <QRCodeTemplatePreview
+            template={template}
+            qrCodeDataUrl={qrCodeDataUrl}
+            headerText={headerText}
+            instructionText={instructionText}
+            websiteUrl={websiteUrl}
+            footerText={footerText}
+            directionRTL={directionRTL}
+          />
+        </CardContent>
+      </Card>
+
+      {/* Color Picker Dialog */}
+      <Dialog open={isColorDialogOpen} onOpenChange={setIsColorDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Pick a color</DialogTitle>
+            <DialogDescription>
+              Choose a color for the {selectedColorType === 'foreground' ? 'foreground' : 'background'}.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-1 gap-2">
+              <ColorPicker
+                color={selectedColorType === 'foreground' ? foregroundColor : backgroundColor}
+                onChange={handleColorChange}
+              />
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

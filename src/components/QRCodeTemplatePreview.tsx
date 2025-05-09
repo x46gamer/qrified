@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { TemplateType } from './QRCodeTemplates';
+import { TemplateType } from '../types/qrCode';
 
 interface QRCodeTemplatePreviewProps {
   template: TemplateType | string;
@@ -27,38 +27,38 @@ const QRCodeTemplatePreview: React.FC<QRCodeTemplatePreviewProps> = ({
       case 'modern-blue':
         return {
           bgColor: 'bg-blue-100',
-          headerClass: 'text-3xl font-bold uppercase mb-3', // Increased margin
-          instructionClass: 'text-xl mb-2', // Increased margin
-          websiteClass: 'font-medium mb-3', // Increased margin
-          footerClass: 'bg-black text-white font-medium py-2 px-4 rounded-md mt-3', // Increased margin
+          headerClass: 'text-3xl font-bold uppercase mb-3',
+          instructionClass: 'text-xl mb-2',
+          websiteClass: 'font-medium mb-3',
+          footerClass: 'bg-black text-white font-medium py-2 px-4 rounded-md mt-3',
           containerClass: 'p-6 rounded-lg'
         };
       case 'modern-beige':
         return {
           bgColor: 'bg-amber-50',
-          headerClass: 'text-3xl font-bold uppercase mb-3', // Increased margin
-          instructionClass: 'text-xl mb-2', // Increased margin
-          websiteClass: 'font-medium mb-3', // Increased margin
-          footerClass: 'bg-black text-white font-medium py-2 px-4 rounded-md mt-3', // Increased margin
+          headerClass: 'text-3xl font-bold uppercase mb-3',
+          instructionClass: 'text-xl mb-2',
+          websiteClass: 'font-medium mb-3',
+          footerClass: 'bg-black text-white font-medium py-2 px-4 rounded-md mt-3',
           containerClass: 'p-6 rounded-lg'
         };
       case 'arabic':
         return {
           bgColor: 'bg-amber-50',
-          headerClass: 'text-3xl font-bold mb-3', // Increased margin
-          instructionClass: 'text-xl mb-2', // Increased margin
-          websiteClass: 'font-medium mb-3', // Increased margin
-          footerClass: 'bg-green-800 text-white font-medium py-2 px-4 rounded-md mt-3', // Increased margin
+          headerClass: 'text-3xl font-bold mb-3',
+          instructionClass: 'text-xl mb-2',
+          websiteClass: 'font-medium mb-3',
+          footerClass: 'bg-green-800 text-white font-medium py-2 px-4 rounded-md mt-3',
           containerClass: 'p-6 rounded-lg border-4 border-brown-600 rounded-xl'
         };
       case 'classic':
       default:
         return {
           bgColor: 'bg-white',
-          headerClass: 'text-2xl font-bold mb-3', // Increased margin
-          instructionClass: 'text-lg mb-2', // Increased margin
-          websiteClass: 'font-normal mb-3', // Increased margin
-          footerClass: 'bg-gray-800 text-white py-2 px-4 mt-3', // Increased margin
+          headerClass: 'text-2xl font-bold mb-3',
+          instructionClass: 'text-lg mb-2',
+          websiteClass: 'font-normal mb-3',
+          footerClass: 'bg-gray-800 text-white py-2 px-4 mt-3',
           containerClass: 'p-4'
         };
     }
@@ -103,7 +103,7 @@ const QRCodeTemplatePreview: React.FC<QRCodeTemplatePreviewProps> = ({
             <img 
               src={qrCodeDataUrl} 
               alt="QR Code" 
-              className="w-full max-w-[200px] mx-auto"
+              className="w-full max-w-[240px] mx-auto" /* Increased from 200px to 240px (20% wider) */
             />
           </div>
         )}

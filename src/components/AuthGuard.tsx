@@ -26,11 +26,6 @@ const AuthGuard: React.FC<AuthGuardProps> = ({ children, requiredRole }) => {
     return <Navigate to="/" replace />;
   }
 
-  // Wrap with SidebarProvider for dashboard routes
-  if (location.pathname.includes('/dashboard') || location.pathname === '/settings') {
-    return <SidebarProvider>{children}</SidebarProvider>;
-  }
-
   return <>{children}</>;
 };
 

@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { v4 as uuidv4 } from 'uuid';
+import { Clipboard, CheckCircle2 } from 'lucide-react';
 
 interface Domain {
   id: string;
@@ -23,6 +24,7 @@ const DomainSettings: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const [domains, setDomains] = useState<Domain[]>([]);
+  const [copiedTokens, setCopiedTokens] = useState<Record<string, boolean>>({});
   const { user } = useAuth();
   
   useEffect(() => {
@@ -107,18 +109,34 @@ const DomainSettings: React.FC = () => {
       }
       
       // In a real implementation, we would check the DNS records here
-      // For demo purposes, we'll simulate a successful verification
-      const { error } = await supabase
-        .from('custom_domains')
-        .update({
-          status: 'verified',
-          verified_at: new Date().toISOString()
-        })
-        .eq('id', domainId);
+      // For simplicity, we'll simulate a fake verification check
+      const simulateVerification = async () => {
+        // This simulates contacting DNS servers to verify records
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        // For demo, we'll randomly succeed or fail verification
+        // In a real app, you'd check actual DNS records
+        return Math.random() > 0.3; // 70% chance of success
+      };
       
-      if (error) throw error;
+      const isVerified = await simulateVerification();
       
-      toast.success('Domain verified successfully');
+      if (isVerified) {
+        const { error } = await supabase
+          .from('custom_domains')
+          .update({
+            status: 'verified',
+            verified_at: new Date().toISOString()
+          })
+          .eq('id', domainId);
+        
+        if (error) throw error;
+        
+        toast.success('Domain verified successfully!');
+      } else {
+        toast.error('Domain verification failed. Please check your DNS settings and try again.');
+      }
+      
       await fetchDomains();
     } catch (error: any) {
       console.error('Error verifying domain:', error.message);
@@ -126,6 +144,15 @@ const DomainSettings: React.FC = () => {
     } finally {
       setIsVerifying(false);
     }
+  };
+  
+  const copyToClipboard = (text: string, domainId: string) => {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopiedTokens({...copiedTokens, [domainId]: true});
+      setTimeout(() => {
+        setCopiedTokens({...copiedTokens, [domainId]: false});
+      }, 3000);
+    });
   };
   
   const deleteDomain = async (domainId: string) => {
@@ -204,7 +231,7 @@ const DomainSettings: React.FC = () => {
                             onClick={() => verifyDomain(domain.id)}
                             disabled={isVerifying}
                           >
-                            Verify
+                            {isVerifying ? 'Verifying...' : 'Verify'}
                           </Button>
                         )}
                         <Button 
@@ -223,10 +250,38 @@ const DomainSettings: React.FC = () => {
                         <p className="font-medium mb-1">To verify this domain:</p>
                         <ol className="list-decimal list-inside space-y-1">
                           <li>Add a CNAME record in your DNS settings</li>
-                          <li>Point it to <span className="font-mono bg-gray-100 px-1">xowxgbovrbnpsreqgrlt.supabase.co</span></li>
+                          <li>
+                            <div className="flex items-center mt-1">
+                              <span className="font-mono bg-gray-100 px-1 py-1 rounded flex-grow">
+                                xowxgbovrbnpsreqgrlt.supabase.co
+                              </span>
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                className="ml-2 h-8 w-8 p-0" 
+                                onClick={() => copyToClipboard('xowxgbovrbnpsreqgrlt.supabase.co', 'cname-' + domain.id)}
+                              >
+                                {copiedTokens['cname-' + domain.id] ? <CheckCircle2 className="h-4 w-4 text-green-500" /> : <Clipboard className="h-4 w-4" />}
+                              </Button>
+                            </div>
+                          </li>
                           <li>Use <span className="font-mono bg-gray-100 px-1">@</span> for root domain or <span className="font-mono bg-gray-100 px-1">subdomain</span> for subdomains</li>
                           <li>Add a TXT record with name <span className="font-mono bg-gray-100 px-1">_seqrity</span></li>
-                          <li>Set its value to <span className="font-mono bg-gray-100 px-1">{domain.verification_token}</span></li>
+                          <li>
+                            <div className="flex items-center mt-1">
+                              <span className="font-mono bg-gray-100 px-1 py-1 rounded flex-grow overflow-auto">
+                                {domain.verification_token}
+                              </span>
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                className="ml-2 h-8 w-8 p-0" 
+                                onClick={() => copyToClipboard(domain.verification_token, 'token-' + domain.id)}
+                              >
+                                {copiedTokens['token-' + domain.id] ? <CheckCircle2 className="h-4 w-4 text-green-500" /> : <Clipboard className="h-4 w-4" />}
+                              </Button>
+                            </div>
+                          </li>
                           <li>After DNS propagation (may take up to 24h), click 'Verify'</li>
                         </ol>
                       </div>
