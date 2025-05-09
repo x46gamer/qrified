@@ -9,16 +9,16 @@ const Login = () => {
   const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
-  // If user is already authenticated, redirect to home
+  // If user is already authenticated, redirect to dashboard
   React.useEffect(() => {
     if (isAuthenticated) {
-      navigate('/');
+      navigate('/dashboard');
     }
   }, [isAuthenticated, navigate]);
 
   const handleLogin = (role: 'admin' | 'employee') => {
     login(role);
-    navigate('/');
+    navigate('/dashboard');
   };
 
   return (
@@ -52,6 +52,9 @@ const Login = () => {
         <CardFooter className="flex flex-col">
           <p className="text-sm text-center text-gray-500">
             Don't have an account? <Link to="/signup" className="text-blue-600 hover:underline">Sign up</Link>
+          </p>
+          <p className="text-sm text-center text-gray-500 mt-4">
+            <Link to="/" className="text-blue-600 hover:underline">Back to Home</Link>
           </p>
         </CardFooter>
       </Card>

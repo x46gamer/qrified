@@ -14,6 +14,7 @@ import Settings from "./pages/Settings";
 import { AuthProvider } from "./contexts/AuthContext";
 import AuthGuard from "./components/AuthGuard";
 import Header from "./components/Header";
+import LandingPage from "./pages/LandingPage";
 
 const queryClient = new QueryClient();
 
@@ -25,6 +26,9 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
+            {/* Landing page as the default route */}
+            <Route path="/" element={<LandingPage />} />
+            
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
             
@@ -36,7 +40,7 @@ const App = () => (
               </>
             } />
             
-            <Route path="/" element={
+            <Route path="/dashboard" element={
               <AuthGuard>
                 <>
                   <Header />
