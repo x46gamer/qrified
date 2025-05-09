@@ -243,21 +243,21 @@ const LandingPage: React.FC = () => {
               <div className="w-16 h-16 bg-gradient-to-br from-green-100 to-green-300 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner">
                 <Shield size={32} />
               </div>
-              <h3 className="font-bold text-lg mb-2">{isArabic ? "العلامات التجارية المحلية" : "Local Brands"}</h3>
+              <h3 className="font-bold text-lg mb-2">{isArabic ? arabicTranslations.localBrands : "Local Brands"}</h3>
               <p className="text-gray-600">Protect reputation from cheap copies</p>
             </div>
             <div className="bg-white/80 backdrop-blur-sm p-6 rounded-xl shadow-lg transition-all duration-300 hover:-translate-y-2 hover:shadow-xl animate-on-scroll opacity-0">
               <div className="w-16 h-16 bg-gradient-to-br from-purple-100 to-purple-300 text-purple-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner">
                 <Users size={32} />
               </div>
-              <h3 className="font-bold text-lg mb-2">{isArabic ? "موزعين الجملة" : "Wholesale Distributors"}</h3>
+              <h3 className="font-bold text-lg mb-2">{isArabic ? arabicTranslations.wholesale : "Wholesale Distributors"}</h3>
               <p className="text-gray-600">Manage large batches with ease</p>
             </div>
             <div className="bg-white/80 backdrop-blur-sm p-6 rounded-xl shadow-lg transition-all duration-300 hover:-translate-y-2 hover:shadow-xl animate-on-scroll opacity-0">
               <div className="w-16 h-16 bg-gradient-to-br from-amber-100 to-amber-300 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner">
                 <TrendingUp size={32} />
               </div>
-              <h3 className="font-bold text-lg mb-2">{isArabic ? "دروبشيبرز" : "Dropshippers"}</h3>
+              <h3 className="font-bold text-lg mb-2">{isArabic ? arabicTranslations.dropshippers : "Dropshippers"}</h3>
               <p className="text-gray-600">Give your product a professional edge</p>
             </div>
           </div>
@@ -281,7 +281,7 @@ const LandingPage: React.FC = () => {
                 <FileText size={32} />
               </div>
               <h3 className="font-bold text-lg mb-2">{isArabic ? arabicTranslations.step1 : "Generate Encrypted QR Codes"}</h3>
-              <p className="text-gray-600">{isArabic ? "تخصيص القالب والكمية والعلامة التجارية" : "Customize template, quantity, and branding"}</p>
+              <p className="text-gray-600">{isArabic ? arabicTranslations.customizeTemplate : "Customize template, quantity, and branding"}</p>
             </div>
             <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100 relative animate-on-scroll opacity-0">
               <div className="absolute -top-4 -left-4 w-10 h-10 bg-gradient-to-br from-blue-500 to-violet-500 text-white rounded-full flex items-center justify-center font-bold text-lg shadow-lg">2</div>
@@ -289,7 +289,7 @@ const LandingPage: React.FC = () => {
                 <FileText size={32} />
               </div>
               <h3 className="font-bold text-lg mb-2">{isArabic ? arabicTranslations.step2 : "Print & Attach"}</h3>
-              <p className="text-gray-600">{isArabic ? "يمكن لفريقك الطباعة بكميات كبيرة — بدون مهارات تقنية" : "Your team can print in bulk — no tech skills needed"}</p>
+              <p className="text-gray-600">{isArabic ? arabicTranslations.teamPrint : "Your team can print in bulk — no tech skills needed"}</p>
             </div>
             <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100 relative animate-on-scroll opacity-0">
               <div className="absolute -top-4 -left-4 w-10 h-10 bg-gradient-to-br from-blue-500 to-violet-500 text-white rounded-full flex items-center justify-center font-bold text-lg shadow-lg">3</div>
@@ -297,7 +297,7 @@ const LandingPage: React.FC = () => {
                 <CheckCircle size={32} />
               </div>
               <h3 className="font-bold text-lg mb-2">{isArabic ? arabicTranslations.step3 : "Scan & Verify"}</h3>
-              <p className="text-gray-600">{isArabic ? "يمسح العملاء للتحقق من المنتج وترك المراجعات" : "Customers scan to verify product and leave reviews"}</p>
+              <p className="text-gray-600">{isArabic ? arabicTranslations.customerScan : "Customers scan to verify product and leave reviews"}</p>
             </div>
           </div>
           <div className="bg-gradient-to-r from-blue-50 via-indigo-50 to-blue-50 border border-blue-100 rounded-xl p-6 mt-10 text-center animate-on-scroll opacity-0">
