@@ -1,9 +1,9 @@
 
 import QRCode from 'qrcode';
 import CryptoJS from 'crypto-js';
-import { v4 as uuidv4 } from 'uuid'; // Using browser-compatible uuid package
+import { v4 as uuidv4 } from 'uuid';
 
-// Secret key for encryption
+// Secret key for encryption - in a real app, this would be stored securely
 const SECRET_KEY = 'qrcode-secret-key';
 
 // Generate a proper UUID for QR code
@@ -11,13 +11,18 @@ export const generateUniqueId = (): string => {
   return uuidv4();
 };
 
-// Encrypt the QR code data
+// Encrypt the QR code data with improved approach
 export const encryptData = (data: string): string => {
   console.log('Encrypting data:', data);
   try {
-    const encrypted = CryptoJS.AES.encrypt(data, SECRET_KEY).toString();
-    // Important: We're NOT using encodeURIComponent here anymore as it causes issues with validation
-    console.log('Encrypted data:', encrypted);
+    // Using AES encryption with a consistent padding and mode
+    const encrypted = CryptoJS.AES.encrypt(data, SECRET_KEY, {
+      mode: CryptoJS.mode.CBC,
+      padding: CryptoJS.pad.Pkcs7
+    }).toString();
+    
+    // Return raw encrypted string - no URL encoding
+    console.log('Encrypted data length:', encrypted.length);
     return encrypted;
   } catch (error) {
     console.error('Error encrypting data:', error);
@@ -28,8 +33,8 @@ export const encryptData = (data: string): string => {
 // Decrypt the QR code data
 export const decryptData = (encryptedData: string): string => {
   try {
-    console.log('Decrypting data:', encryptedData);
-    // We're NOT using decodeURIComponent here anymore
+    console.log('Decrypting data of length:', encryptedData.length);
+    
     const decrypted = CryptoJS.AES.decrypt(encryptedData, SECRET_KEY).toString(CryptoJS.enc.Utf8);
     console.log('Decrypted data:', decrypted);
     return decrypted;
@@ -39,12 +44,14 @@ export const decryptData = (encryptedData: string): string => {
   }
 };
 
-// Generate QR code as data URL
+// Generate QR code as data URL with improved options
 export const generateQRCode = async (data: string): Promise<string> => {
   try {
+    // More robust QR code generation with error correction
     return await QRCode.toDataURL(data, {
       margin: 1,
       width: 300,
+      errorCorrectionLevel: 'H', // High error correction level
       color: {
         dark: '#000000',
         light: '#ffffff',
@@ -56,7 +63,7 @@ export const generateQRCode = async (data: string): Promise<string> => {
   }
 };
 
-// Generate QR code with template options - This is the missing function that was being imported
+// Generate QR code with template options
 export const generateQRCodeImage = async (data: string, options?: {
   template?: string;
   primaryColor?: string;
@@ -64,11 +71,11 @@ export const generateQRCodeImage = async (data: string, options?: {
   size?: number;
 }): Promise<string> => {
   try {
-    // For now, just use the basic QR code generator
-    // Template styling will be applied on the frontend
+    // Using higher error correction for better scanning reliability
     return await QRCode.toDataURL(data, {
       margin: 1,
       width: options?.size || 300,
+      errorCorrectionLevel: 'H', // High error correction level
       color: {
         dark: options?.primaryColor || '#000000',
         light: '#ffffff',
@@ -80,7 +87,7 @@ export const generateQRCodeImage = async (data: string, options?: {
   }
 };
 
-// Format a 6-digit number with leading zeros
+// Format a 6-digit sequential number with leading zeros
 export const formatSequentialNumber = (number: number): string => {
   return number.toString().padStart(6, '0');
 };
@@ -128,47 +135,40 @@ export const getTimeAgo = (dateString: string): string => {
 export const validateEncryptedData = (encryptedData: string | null): boolean => {
   if (!encryptedData) return false;
   try {
-    // Just check if the string has some length and isn't obviously malformed
-    console.log('Validating encrypted data:', encryptedData);
-    return encryptedData.length > 20; // Simple validation check
+    // Making sure we have a valid string of reasonable length
+    return encryptedData.length > 20;
   } catch (error) {
     console.error('Invalid encrypted data format:', error);
     return false;
   }
 };
 
-// Function to extract the "qr" parameter from a URL
+// Function to extract the "id" parameter from a URL
 export const extractQRCodeFromURL = (url: string): string | null => {
   try {
     const urlObj = new URL(url);
-    const qrParam = urlObj.searchParams.get('qr');
-    console.log('Extracted QR param from URL:', qrParam);
-    return qrParam;
+    // Changed from 'qr' to 'id' parameter for more clarity
+    const idParam = urlObj.searchParams.get('id');
+    console.log('Extracted ID param from URL:', idParam);
+    return idParam;
   } catch (error) {
-    console.error('Error extracting QR code from URL:', error);
+    console.error('Error extracting QR code ID from URL:', error);
     return null;
   }
 };
 
 // Debug utility to check if a QR code exists in the database
-export const debugVerifyQRCodeInDatabase = async (encryptedData: string) => {
+export const debugVerifyQRCodeInDatabase = async (id: string) => {
   const { supabase } = await import('@/integrations/supabase/client');
-  if (!encryptedData) return { exists: false, message: 'No encrypted data provided' };
+  if (!id) return { exists: false, message: 'No ID provided' };
   
   try {
-    console.log('Debug: Checking database for QR code:', encryptedData);
-    // Log all records for debugging
-    const { data: allQrCodes } = await supabase
-      .from('qr_codes')
-      .select('encrypted_data')
-      .limit(10);
-    
-    console.log('Debug: First 10 QR codes in database:', allQrCodes);
+    console.log('Debug: Checking database for QR code ID:', id);
     
     const { data, error, count } = await supabase
       .from('qr_codes')
       .select('*', { count: 'exact' })
-      .eq('encrypted_data', encryptedData);
+      .eq('id', id);
     
     if (error) {
       console.error('Debug: Database error:', error);
@@ -187,20 +187,7 @@ export const debugVerifyQRCodeInDatabase = async (encryptedData: string) => {
   }
 };
 
-// Normalize encoded data to ensure consistency between storage and retrieval
-export const normalizeQRData = (data: string): string => {
-  try {
-    // Replace problematic characters that might cause inconsistencies
-    return data.replace(/\+/g, '%2B')
-              .replace(/\//g, '%2F')
-              .replace(/=/g, '%3D');
-  } catch (error) {
-    console.error('Error normalizing QR data:', error);
-    return data;
-  }
-};
-
-// New utility to fetch a QR code directly by its ID
+// Direct fetch by QR code ID
 export const fetchQRCodeById = async (id: string) => {
   try {
     const { supabase } = await import('@/integrations/supabase/client');
@@ -224,7 +211,13 @@ export const fetchQRCodeById = async (id: string) => {
       isEnabled: data.is_enabled,
       createdAt: data.created_at,
       scannedAt: data.scanned_at,
-      dataUrl: data.data_url
+      dataUrl: data.data_url,
+      template: data.template,
+      headerText: data.header_text,
+      instructionText: data.instruction_text,
+      websiteUrl: data.website_url,
+      footerText: data.footer_text,
+      directionRTL: data.direction_rtl
     } : null;
   } catch (error) {
     console.error('Exception fetching QR code by ID:', error);

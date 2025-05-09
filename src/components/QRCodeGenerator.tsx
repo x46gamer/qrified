@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,7 +7,7 @@ import { Slider } from "@/components/ui/slider";
 import { toast } from "sonner";
 import { useForm } from "react-hook-form";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import QRCodeTemplatePreview from './QRCodeTemplatePreview';
+import { QRCodeTemplatePreview } from './QRCodeTemplatePreview';
 import { ShieldCheck, Loader2, QrCode } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { generateQRCodeImage, encryptData } from '@/utils/qrCodeUtils';
@@ -53,7 +54,7 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
   
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
   const [primaryColor, setPrimaryColor] = useState<string>('#3b82f6'); // blue-500
-  const [secondaryColor, setPrimaryColorDark] = useState<string>('#8b5cf6'); // purple-500
+  const [secondaryColor, setSecondaryColor] = useState<string>('#8b5cf6'); // purple-500
   
   const template = watch('template');
   const quantity = watch('quantity');
@@ -69,6 +70,7 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
     
     try {
       setIsGenerating(true);
+      console.log('Generating QR codes with data:', data);
       
       // Create an array of QR codes based on quantity
       const qrCodes = [];
@@ -79,12 +81,16 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
         const sequentialNumber = startingSeqNumber + i;
         const url = `${data.baseUrl}/check?id=${id}`;
         
+        // Log data about to be encrypted
+        console.log('Encrypting product data:', data.productData);
+        
         // Encrypt product data
         const encryptedData = await encryptData(data.productData);
+        console.log('Encrypted result:', encryptedData);
         
-        // Generate QR Code
+        // Generate QR Code with the URL that contains the ID
         const dataUrl = await generateQRCodeImage(url, {
-          template: data.template as string,
+          template: data.template,
           primaryColor,
           secondaryColor,
           size: 300,
@@ -109,6 +115,8 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
       
       // Save to database
       try {
+        console.log('Saving QR codes to database:', qrCodes);
+        
         // Insert into database
         const { error } = await supabase
           .from('qr_codes')
@@ -122,10 +130,17 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
 
         // Update sequence counter
         const newCount = startingSeqNumber + data.quantity - 1;
-        await supabase.rpc('increment_counter', {
+        const { data: counterData, error: counterError } = await supabase.rpc('increment_counter', {
           counter_id: 'qr_code_sequential',
-          new_value: newCount
+          increment_by: data.quantity
         });
+        
+        if (counterError) {
+          console.error('Error updating counter:', counterError);
+          // Continue anyway as QR codes were created
+        } else {
+          console.log('Updated counter to:', counterData);
+        }
         
         toast.success(`Successfully generated ${data.quantity} QR code(s)`);
         onQRCodesGenerated(qrCodes);
@@ -253,7 +268,7 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
                       type="color"
                       id="secondaryColor"
                       value={secondaryColor}
-                      onChange={(e) => setPrimaryColorDark(e.target.value)}
+                      onChange={(e) => setSecondaryColor(e.target.value)}
                       className="w-10 h-10 rounded cursor-pointer"
                     />
                   </div>

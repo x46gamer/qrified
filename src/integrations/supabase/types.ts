@@ -126,9 +126,6 @@ export type Database = {
       }
       qr_codes: {
         Row: {
-          arabic_footer_text: string | null
-          arabic_header_text: string | null
-          arabic_instruction_text: string | null
           created_at: string
           data_url: string | null
           direction_rtl: boolean | null
@@ -146,9 +143,6 @@ export type Database = {
           website_url: string | null
         }
         Insert: {
-          arabic_footer_text?: string | null
-          arabic_header_text?: string | null
-          arabic_instruction_text?: string | null
           created_at?: string
           data_url?: string | null
           direction_rtl?: boolean | null
@@ -166,9 +160,6 @@ export type Database = {
           website_url?: string | null
         }
         Update: {
-          arabic_footer_text?: string | null
-          arabic_header_text?: string | null
-          arabic_instruction_text?: string | null
           created_at?: string
           data_url?: string | null
           direction_rtl?: boolean | null
@@ -267,7 +258,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      increment_counter: {
+        Args: { counter_id: string; increment_by?: number }
+        Returns: number
+      }
     }
     Enums: {
       [_ in never]: never
