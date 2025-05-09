@@ -1,147 +1,76 @@
+import React, { createContext, useState, useEffect, useContext } from 'react';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
+const supabase = createClientComponentClient();
 
-export interface AppearanceSettings {
-  successBackground: string;
-  successText: string;
-  successIcon: string;
-  failureBackground: string;
-  failureText: string;
-  failureIcon: string;
-  successTitle: string;
-  successDescription: string;
-  successFooterText: string;
-  failureTitle: string;
-  failureDescription: string;
-  failureFooterText: string;
-  isRtl: boolean;
-  enableReviews: boolean;
-  enableFeedback: boolean;
-  logoUrl: string | null;
+interface AppearanceSettings {
   primaryColor: string;
   secondaryColor: string;
+  logoUrl: string;
 }
 
-export const DEFAULT_SETTINGS: AppearanceSettings = {
-  successBackground: '#f0fdf4',
-  successText: '#16a34a',
-  successIcon: '#22c55e',
-  failureBackground: '#fef2f2',
-  failureText: '#dc2626',
-  failureIcon: '#ef4444',
-  successTitle: 'Product Verified',
-  successDescription: 'This product is legitimate and original. Thank you for checking its authenticity.',
-  successFooterText: 'This QR code has been marked as used and cannot be verified again.',
-  failureTitle: 'Not Authentic',
-  failureDescription: 'This product could not be verified as authentic. It may be counterfeit or has been previously verified.',
-  failureFooterText: 'If you believe this is an error, please contact the product manufacturer.',
-  isRtl: false,
-  enableReviews: true,
-  enableFeedback: true,
-  logoUrl: null,
-  primaryColor: '#3b82f6',
-  secondaryColor: '#8b5cf6'
+interface AppearanceContextType {
+  appearance: AppearanceSettings;
+  setAppearance: (settings: AppearanceSettings) => void;
+}
+
+interface AppearanceProviderProps {
+  children: React.ReactNode;
+}
+
+const defaultAppearanceSettings: AppearanceSettings = {
+  primaryColor: '#3B82F6',
+  secondaryColor: '#8B5CF6',
+  logoUrl: 'https://xowxgbovrbnpsreqgrlt.supabase.co/storage/v1/object/public/content//1fbd5402-f9f9-49b4-90f0-38d70c7dd216.png',
 };
 
-interface AppearanceContextType extends AppearanceSettings {
-  updateSettings: (settings: Partial<AppearanceSettings>) => Promise<void>;
-  isLoading: boolean;
-  isSaving: boolean;
-}
-
-const AppearanceSettingsContext = createContext<AppearanceContextType>({
-  ...DEFAULT_SETTINGS,
-  updateSettings: async () => {},
-  isLoading: false,
-  isSaving: false
+export const AppearanceContext = createContext<AppearanceContextType>({
+  appearance: defaultAppearanceSettings,
+  setAppearance: () => {},
 });
 
-export const AppearanceSettingsProvider: React.FC<{
-  children: React.ReactNode;
-}> = ({ children }) => {
-  const [settings, setSettings] = useState<AppearanceSettings>(DEFAULT_SETTINGS);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
+export const AppearanceProvider: React.FC<AppearanceProviderProps> = ({ children }) => {
+  const [appearance, setAppearance] = useState<AppearanceSettings>(defaultAppearanceSettings);
 
   useEffect(() => {
-    async function loadSettings() {
-      try {
-        setIsLoading(true);
-        const { data, error } = await supabase
-          .from('app_settings')
-          .select('*')
-          .eq('id', 'theme')
-          .single();
-
-        if (error && error.code !== 'PGRST116') { // PGRST116 is the "no rows" error
-          console.error('Error fetching appearance settings:', error);
-          toast.error('Failed to load appearance settings');
-          return;
-        }
-
-        if (data?.settings) {
-          setSettings({
-            ...DEFAULT_SETTINGS,
-            ...(data.settings as AppearanceSettings)
-          });
-        }
-      } catch (err) {
-        console.error('Error in loading settings:', err);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    loadSettings();
+    getStoredSettings();
   }, []);
 
-  const updateSettings = async (newSettings: Partial<AppearanceSettings>) => {
+  const getStoredSettings = async () => {
     try {
-      setIsSaving(true);
-      const updatedSettings = {
-        ...settings,
-        ...newSettings
-      };
-
-      const { error } = await supabase
-        .from('app_settings')
-        .upsert({
-          id: 'theme',
-          settings: updatedSettings
-        }, {
-          onConflict: 'id'
-        });
+      const { data, error } = await supabase
+        .from('settings')
+        .select('*')
+        .eq('key', 'appearance')
+        .single();
 
       if (error) {
-        console.error('Error updating settings:', error);
-        toast.error('Failed to save appearance settings');
+        console.error('Error fetching appearance settings:', error);
+        setAppearance(defaultAppearanceSettings);
         return;
       }
 
-      setSettings(updatedSettings);
-      toast.success('Appearance settings saved successfully');
-    } catch (err) {
-      console.error('Error in updating settings:', err);
-      toast.error('Failed to save settings');
-    } finally {
-      setIsSaving(false);
+      if (data?.value) {
+        // Add type assertion to handle the conversion safely
+        setAppearance(data.value as AppearanceSettings);
+      } else {
+        setAppearance(defaultAppearanceSettings);
+      }
+    } catch (error) {
+      console.error('Error fetching appearance settings:', error);
+      setAppearance(defaultAppearanceSettings);
     }
   };
 
+  const updateAppearance = (settings: AppearanceSettings) => {
+    setAppearance(settings);
+  };
+
   return (
-    <AppearanceSettingsContext.Provider
-      value={{
-        ...settings,
-        updateSettings,
-        isLoading,
-        isSaving
-      }}
-    >
+    <AppearanceContext.Provider value={{ appearance, setAppearance: updateAppearance }}>
       {children}
-    </AppearanceSettingsContext.Provider>
+    </AppearanceContext.Provider>
   );
 };
 
-export const useAppearanceSettings = () => useContext(AppearanceSettingsContext);
+export const useAppearance = () => useContext(AppearanceContext);

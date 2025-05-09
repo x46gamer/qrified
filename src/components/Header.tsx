@@ -53,7 +53,7 @@ const Header: React.FC = () => {
         <div className="flex-1 flex justify-center">
           <Link to="/" className="flex items-center gap-2">
             <img
-              src="https://files08.oaiusercontent.com/file-CeRPb526gbX59JCdmrAJuf?se=2025-05-09T19%3A19%3A47Z&sp=r&sv=2024-08-04&sr=b&rscc=max-age%3D299%2C%20immutable%2C%20private&rscd=attachment%3B%20filename%3D1fbd5402-f9f9-49b4-90f0-38d70c7dd216.png"
+              src="https://xowxgbovrbnpsreqgrlt.supabase.co/storage/v1/object/public/content//1fbd5402-f9f9-49b4-90f0-38d70c7dd216.png"
               alt="SeQRity Logo"
               className="h-8 w-auto"
             />
