@@ -5,25 +5,28 @@ import { decryptData, validateEncryptedData, debugVerifyQRCodeInDatabase } from 
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import ReviewForm from '@/components/ReviewForm';
+import FeedbackForm from '@/components/FeedbackForm';
+import { ThemeSettings } from '@/components/AppearanceSettings';
 
-// Define ThemeColors type to match what we expect from the database
-type ThemeColors = {
-  successBackground: string;
-  successText: string;
-  successIcon: string;
-  failureBackground: string;
-  failureText: string;
-  failureIcon: string;
-};
-
-// Default theme colors
-const defaultTheme: ThemeColors = {
+// Default theme settings
+const defaultTheme: ThemeSettings = {
   successBackground: "#f0fdf4", // green-50
   successText: "#16a34a", // green-600
   successIcon: "#22c55e", // green-500
   failureBackground: "#fef2f2", // red-50
   failureText: "#dc2626", // red-600
-  failureIcon: "#ef4444", // red-500
+  failureIcon: "#ef4444", // red-500,
+  successTitle: "Product Verified",
+  successDescription: "This product is legitimate and original. Thank you for checking its authenticity.",
+  successFooterText: "This QR code has been marked as used and cannot be verified again.",
+  failureTitle: "Not Authentic",
+  failureDescription: "This product could not be verified as authentic. It may be counterfeit or has been previously verified.",
+  failureFooterText: "If you believe this is an error, please contact the product manufacturer.",
+  isRtl: false,
+  enableReviews: false,
+  enableFeedback: false,
+  logoUrl: null,
 };
 
 const ProductCheck = () => {
@@ -34,7 +37,8 @@ const ProductCheck = () => {
   const [debugInfo, setDebugInfo] = useState<string | null>(null);
   const [rawEncryptedData, setRawEncryptedData] = useState<string | null>(null);
   const [detailedDebugInfo, setDetailedDebugInfo] = useState<any>(null);
-  const [theme, setTheme] = useState<ThemeColors>(defaultTheme);
+  const [theme, setTheme] = useState<ThemeSettings>(defaultTheme);
+  const [qrId, setQrId] = useState<string | null>(null);
 
   useEffect(() => {
     // Fetch theme settings from the database
@@ -52,15 +56,27 @@ const ProductCheck = () => {
         }
         
         if (data && data.settings) {
-          // Type check and cast the settings to ensure it matches our ThemeColors structure
+          // Type check and cast the settings to ensure it matches our ThemeSettings structure
           const settings = data.settings as Record<string, any>;
-          const themeData: ThemeColors = {
+          
+          // Merge with default theme to ensure we have all properties
+          const themeData: ThemeSettings = {
             successBackground: settings.successBackground as string || defaultTheme.successBackground,
             successText: settings.successText as string || defaultTheme.successText,
             successIcon: settings.successIcon as string || defaultTheme.successIcon,
             failureBackground: settings.failureBackground as string || defaultTheme.failureBackground,
             failureText: settings.failureText as string || defaultTheme.failureText,
-            failureIcon: settings.failureIcon as string || defaultTheme.failureIcon
+            failureIcon: settings.failureIcon as string || defaultTheme.failureIcon,
+            successTitle: settings.successTitle as string || defaultTheme.successTitle,
+            successDescription: settings.successDescription as string || defaultTheme.successDescription,
+            successFooterText: settings.successFooterText as string || defaultTheme.successFooterText,
+            failureTitle: settings.failureTitle as string || defaultTheme.failureTitle,
+            failureDescription: settings.failureDescription as string || defaultTheme.failureDescription,
+            failureFooterText: settings.failureFooterText as string || defaultTheme.failureFooterText,
+            isRtl: settings.isRtl as boolean || defaultTheme.isRtl,
+            enableReviews: settings.enableReviews as boolean || defaultTheme.enableReviews,
+            enableFeedback: settings.enableFeedback as boolean || defaultTheme.enableFeedback,
+            logoUrl: settings.logoUrl as string || null,
           };
           
           setTheme(themeData);
@@ -151,6 +167,7 @@ const ProductCheck = () => {
         }
 
         console.log('QR code found:', qrCode);
+        setQrId(qrCode.id);
         
         // Check if the QR code is enabled and not scanned
         if (qrCode.is_enabled && !qrCode.is_scanned) {
@@ -212,9 +229,22 @@ const ProductCheck = () => {
 
   if (isValid === true) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-4" style={{ backgroundColor: theme.successBackground }}>
+      <div 
+        className="min-h-screen flex flex-col items-center justify-center p-4" 
+        style={{ backgroundColor: theme.successBackground, direction: theme.isRtl ? 'rtl' : 'ltr' }}
+      >
         <div className="max-w-md w-full mx-auto bg-white rounded-xl shadow-lg overflow-hidden">
           <div className="p-8">
+            {theme.logoUrl && (
+              <div className="flex justify-center mb-6">
+                <img 
+                  src={theme.logoUrl} 
+                  alt="Brand logo" 
+                  className="max-h-16 max-w-full object-contain" 
+                />
+              </div>
+            )}
+            
             <div className="flex justify-center">
               <div className="w-24 h-24 rounded-full flex items-center justify-center" style={{ backgroundColor: theme.successIcon }}>
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -223,15 +253,17 @@ const ProductCheck = () => {
               </div>
             </div>
             
-            <h1 className="mt-6 text-3xl font-bold text-center" style={{ color: theme.successText }}>Product Verified</h1>
+            <h1 className="mt-6 text-3xl font-bold text-center" style={{ color: theme.successText }}>
+              {theme.successTitle}
+            </h1>
             
             <p className="mt-4 text-lg text-center">
-              This product is legitimate and original. Thank you for checking its authenticity.
+              {theme.successDescription}
             </p>
             
             <div className="mt-8 p-4 rounded-lg" style={{ backgroundColor: `${theme.successBackground}` }}>
               <p className="text-sm text-center" style={{ color: theme.successText }}>
-                This QR code has been marked as used and cannot be verified again.
+                {theme.successFooterText}
               </p>
             </div>
             
@@ -245,14 +277,49 @@ const ProductCheck = () => {
             </div>
           </div>
         </div>
+        
+        {/* Reviews Form - conditionally rendered */}
+        {theme.enableReviews && qrId && (
+          <div className="max-w-md w-full mx-auto">
+            <ReviewForm 
+              qrId={qrId} 
+              successBackground={theme.successBackground}
+              successText={theme.successText}
+            />
+          </div>
+        )}
+        
+        {/* Feedback Form - conditionally rendered */}
+        {theme.enableFeedback && qrId && (
+          <div className="max-w-md w-full mx-auto">
+            <FeedbackForm 
+              qrId={qrId}
+              successBackground={theme.successBackground}
+              successText={theme.successText}
+            />
+          </div>
+        )}
       </div>
     );
   }
   
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4" style={{ backgroundColor: theme.failureBackground }}>
+    <div 
+      className="min-h-screen flex flex-col items-center justify-center p-4" 
+      style={{ backgroundColor: theme.failureBackground, direction: theme.isRtl ? 'rtl' : 'ltr' }}
+    >
       <div className="max-w-md w-full mx-auto bg-white rounded-xl shadow-lg overflow-hidden">
         <div className="p-8">
+          {theme.logoUrl && (
+            <div className="flex justify-center mb-6">
+              <img 
+                src={theme.logoUrl} 
+                alt="Brand logo" 
+                className="max-h-16 max-w-full object-contain" 
+              />
+            </div>
+          )}
+          
           <div className="flex justify-center">
             <div className="w-24 h-24 rounded-full flex items-center justify-center" style={{ backgroundColor: theme.failureIcon }}>
               <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -261,15 +328,17 @@ const ProductCheck = () => {
             </div>
           </div>
           
-          <h1 className="mt-6 text-3xl font-bold text-center" style={{ color: theme.failureText }}>Not Authentic</h1>
+          <h1 className="mt-6 text-3xl font-bold text-center" style={{ color: theme.failureText }}>
+            {theme.failureTitle}
+          </h1>
           
           <p className="mt-4 text-lg text-center">
-            This product could not be verified as authentic. It may be counterfeit or has been previously verified.
+            {theme.failureDescription}
           </p>
           
           <div className="mt-8 p-4 rounded-lg">
             <p className="text-sm text-center" style={{ color: theme.failureText }}>
-              If you believe this is an error, please contact the product manufacturer.
+              {theme.failureFooterText}
             </p>
             {debugInfo && (
               <Alert className="mt-3 border-red-200" style={{ backgroundColor: `${theme.failureBackground}40` }}>
