@@ -23,7 +23,8 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ className }) => {
-  const { isCollapsed: isOpen, toggleSidebar: toggle } = useSidebar();
+  const { state, toggleSidebar } = useSidebar();
+  const isOpen = state === 'expanded';
   const location = useLocation();
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
@@ -52,7 +53,7 @@ const Sidebar: React.FC<SidebarProps> = ({ className }) => {
           <Button
             variant="ghost"
             size="icon"
-            onClick={toggle}
+            onClick={toggleSidebar}
             className="rounded-full h-8 w-8"
           >
             {isOpen ? <ChevronLeft size={18} /> : <ChevronRight size={18} />}

@@ -2,15 +2,17 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { useAuth } from '../contexts/AuthContext';
-import { MenuIcon, X } from 'lucide-react';
+import { MenuIcon, X, PanelLeft, PanelRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { SidebarTrigger } from './ui/sidebar';
+import { SidebarTrigger, useSidebar } from './ui/sidebar';
 
 const Header: React.FC = () => {
   const { user } = useAuth();
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { state, toggleSidebar } = useSidebar();
+  const isExpanded = state === 'expanded';
   
   // Handle scroll events for header
   useEffect(() => {
@@ -37,9 +39,15 @@ const Header: React.FC = () => {
     )}>
       <div className="container mx-auto flex items-center px-4">
         {user && (
-          <div className="flex md:hidden">
-            <SidebarTrigger />
-          </div>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={toggleSidebar} 
+            className="mr-2"
+          >
+            {isExpanded ? <PanelLeft size={20} /> : <PanelRight size={20} />}
+            <span className="sr-only">Toggle Sidebar</span>
+          </Button>
         )}
         
         <div className="flex-1 flex justify-center">
