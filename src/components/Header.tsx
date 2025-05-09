@@ -16,17 +16,8 @@ const Header: React.FC = () => {
   // Check if we're in a route that has the sidebar
   const hasSidebar = location.pathname.includes('/dashboard') || location.pathname === '/settings';
   
-  // Use useSidebar conditionally
-  let sidebarControls = null;
-  try {
-    // Only try to use useSidebar if we're in a route with a sidebar
-    if (hasSidebar) {
-      sidebarControls = useSidebar();
-    }
-  } catch (error) {
-    // Silently ignore errors - the hook will throw if used outside of provider
-    // which is fine in this case as we're conditionally using it
-  }
+  // Use useSidebar conditionally - we know it's available now because AppLayout includes SidebarProvider
+  const sidebarControls = useSidebar();
   
   // Handle scroll events for header
   useEffect(() => {

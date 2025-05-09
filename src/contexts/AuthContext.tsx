@@ -133,7 +133,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (error) throw error;
       
       toast.success('Login successful');
-      return data;
+      // Don't return data, just resolve the promise
     } catch (error: any) {
       toast.error(`Login failed: ${error.message}`);
       throw error;
@@ -165,7 +165,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (error) throw error;
       
-      return data;
+      // Don't return data, just resolve the promise
     } catch (error: any) {
       toast.error(`Google login failed: ${error.message}`);
       throw error;
@@ -207,7 +207,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         toast.success('Signup successful. Please login to continue.');
       }
       
-      return data;
+      // Don't return data, just resolve the promise
     } catch (error: any) {
       toast.error(`Signup failed: ${error.message}`);
       throw error;
