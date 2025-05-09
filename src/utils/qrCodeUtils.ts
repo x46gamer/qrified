@@ -1,3 +1,4 @@
+
 import QRCode from 'qrcode';
 
 // Generate a unique ID
@@ -18,6 +19,12 @@ export function decryptData(encryptedData: string): string {
 // Format sequential number
 export function formatSequentialNumber(number: number): string {
   return String(number).padStart(6, '0');
+}
+
+// Calculate scan rate percentage
+export function calculateScanRate(totalQRCodes: number, scannedQRCodes: number): number {
+  if (totalQRCodes === 0) return 0;
+  return Math.round((scannedQRCodes / totalQRCodes) * 100);
 }
 
 // Generate a QR code as a data URL
