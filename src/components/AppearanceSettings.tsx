@@ -97,8 +97,8 @@ export const AppearanceSettings = () => {
           setTheme({...defaultTheme, ...data.settings as ThemeSettings});
           
           // Set logo preview if exists
-          if (data.settings.logoUrl) {
-            setLogoPreview(data.settings.logoUrl);
+          if ((data.settings as ThemeSettings).logoUrl) {
+            setLogoPreview((data.settings as ThemeSettings).logoUrl);
           }
         }
       } catch (error) {
