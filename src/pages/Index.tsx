@@ -1,250 +1,345 @@
 
 import React, { useState, useEffect } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 import QRCodeGenerator from '@/components/QRCodeGenerator';
+import QRCodeDisplay from '@/components/QRCodeDisplay';
 import QRCodeManager from '@/components/QRCodeManager';
 import QRCodeAnalytics from '@/components/QRCodeAnalytics';
-import UserManagement from '@/components/UserManagement';
-import { useAuth } from '@/contexts/AuthContext';
-import { useSearchParams } from 'react-router-dom';
+import { AppearanceSettings } from '@/components/AppearanceSettings';
+import { QRCode } from '@/types/qrCode';
 import { supabase } from '@/integrations/supabase/client';
-import { QRCode, QRCodeData } from '@/types/qrCode';
-import { toast } from 'sonner';
-import AppearanceSettings from '@/components/AppearanceSettings';
-import { v4 as uuidv4 } from 'uuid';
+import { toast } from "sonner";
+import { TemplateType } from '@/components/QRCodeTemplates';
+import { useAuth } from '@/contexts/AuthContext';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { useSearchParams } from 'react-router-dom';
 
-// Define a simplified QR code structure for database operations
-interface QRCodeDBRecord {
-  id: string;
-  user_id: string;
-  data: QRCodeData;
-  created_at: string;
-  scans: number;
-}
-
-const Index: React.FC = () => {
-  const [searchParams] = useSearchParams();
-  const tabParam = searchParams.get('tab') || 'dashboard';
+const Index = () => {
+  const [qrCodes, setQRCodes] = useState<QRCode[]>([]);
+  const [displayQRCodes, setDisplayQRCodes] = useState<(QRCode & { dataUrl: string })[]>([]);
+  const [lastSequentialNumber, setLastSequentialNumber] = useState<number>(0);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get('tab') || 'generate';
+  
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
-  const [lastSequentialNumber, setLastSequentialNumber] = useState<number>(0);
-  const [qrCodes, setQrCodes] = useState<QRCode[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
-
-  // Fetch QR codes for display
+  
+  // Load QR codes from Supabase on mount
+  useEffect(() => {
+    fetchQRCodes();
+    fetchLastSequentialNumber();
+  }, []);
+  
   const fetchQRCodes = async () => {
-    if (!user) return;
-    
-    setLoading(true);
+    setIsLoading(true);
     try {
+      // Fetch all QR codes
       const { data, error } = await supabase
         .from('qr_codes')
         .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-        
-      if (error) throw error;
+        .order('sequential_number', { ascending: false });
+      
+      if (error) {
+        console.error('Error fetching QR codes:', error);
+        toast.error('Failed to fetch QR codes');
+        return;
+      }
       
       if (data) {
-        setQrCodes(data as unknown as QRCode[]);
+        // Map database fields to our app's QRCode type
+        const mappedQrCodes: QRCode[] = data.map(qr => ({
+          id: qr.id,
+          sequentialNumber: qr.sequential_number,
+          encryptedData: qr.encrypted_data,
+          url: qr.url,
+          isScanned: qr.is_scanned,
+          isEnabled: qr.is_enabled,
+          createdAt: qr.created_at,
+          scannedAt: qr.scanned_at,
+          dataUrl: qr.data_url,
+          template: qr.template as TemplateType,
+          headerText: qr.header_text,
+          instructionText: qr.instruction_text,
+          websiteUrl: qr.website_url,
+          footerText: qr.footer_text,
+          directionRTL: qr.direction_rtl,
+        }));
+        
+        setQRCodes(mappedQrCodes);
+        console.log('Fetched QR codes:', mappedQrCodes);
       }
-    } catch (err) {
-      console.error("Error fetching QR codes:", err);
+    } catch (error) {
+      console.error('Error loading QR codes:', error);
+      toast.error('An error occurred while loading QR codes');
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
-
-  useEffect(() => {
-    fetchQRCodes();
-  }, [user]);
-
-  useEffect(() => {
-    const fetchLastSequentialNumber = async () => {
-      if (!user) return;
+  
+  const fetchLastSequentialNumber = async () => {
+    try {
+      // Fetch the current counter value
+      const { data, error } = await supabase
+        .from('sequence_counters')
+        .select('current_value')
+        .eq('id', 'qr_code_sequential')
+        .single();
       
-      try {
-        // Find the highest sequential number used in existing QR codes
-        const { data, error } = await supabase
-          .from('qr_codes')
-          .select('*')
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false })
-          .limit(100);
-        
-        if (error) throw error;
-        
-        if (data && data.length > 0) {
-          const numbers = data
-            .map(item => {
-              if (item.sequential_number) {
-                const num = parseInt(item.sequential_number);
-                return !isNaN(num) ? num : 0;
-              }
-              return 0;
-            })
-            .filter(num => num > 0);
-          
-          if (numbers.length > 0) {
-            setLastSequentialNumber(Math.max(...numbers));
-          }
-        }
-      } catch (err) {
-        console.error("Error fetching last sequential number:", err);
+      if (error) {
+        console.error('Error fetching counter:', error);
+        return;
       }
-    };
-
-    fetchLastSequentialNumber();
-  }, [user]);
+      
+      if (data) {
+        setLastSequentialNumber(data.current_value);
+      }
+    } catch (error) {
+      console.error('Error loading sequence counter:', error);
+    }
+  };
   
   const handleQRCodesGenerated = async (newQRCodes: QRCode[]) => {
-    if (!user || !newQRCodes.length) return;
+    // Update the state with the new QR codes
+    setQRCodes([...newQRCodes, ...qrCodes]);
     
-    try {
-      // Prepare records for database insert
-      const dbRecords = newQRCodes.map(code => {
-        // Generate sequential number if needed
-        const sequentialNumber = code.data?.uniqueId || uuidv4().substring(0, 8);
-        
-        return {
-          id: code.id,
-          user_id: user.id,
-          sequential_number: sequentialNumber,
-          encrypted_data: code.encryptedData || 'encrypted_placeholder',
-          url: code.url || code.data?.text || `https://seqrity.com/check?id=${sequentialNumber}`,
-          is_scanned: false,
-          is_enabled: true,
-          created_at: new Date().toISOString(),
-          template: code.data?.template || 'modern',
-          data_url: code.dataUrl || '',
-          header_text: code.headerText || '',
-          instruction_text: code.instructionText || '',
-          website_url: code.websiteUrl || '',
-          footer_text: code.footerText || '',
-        };
-      });
-      
-      // Save the new QR codes to the database
-      const { error } = await supabase.from('qr_codes').insert(dbRecords);
-      
-      if (error) throw error;
-      
-      // Refresh the QR codes list
-      fetchQRCodes();
-      
-      // Update the last sequential number
-      const newNumbers = newQRCodes
-        .map(code => {
-          const uniqueId = code.data?.uniqueId;
-          if (!uniqueId) return 0;
-          
-          const num = parseInt(uniqueId);
-          return !isNaN(num) ? num : 0;
-        })
-        .filter(num => num > 0);
-      
-      if (newNumbers.length > 0) {
-        setLastSequentialNumber(prevNum => Math.max(prevNum, Math.max(...newNumbers)));
-      }
-      
-      toast.success(`${newQRCodes.length} QR code${newQRCodes.length > 1 ? 's' : ''} saved successfully.`);
-    } catch (err) {
-      console.error("Error saving QR codes:", err);
-      toast.error("Failed to save QR codes.");
+    // Update the last sequential number
+    if (newQRCodes.length > 0) {
+      await fetchLastSequentialNumber();
     }
+    
+    // Set the display QR codes
+    const codesWithDataUrls = newQRCodes.map(code => ({
+      ...code,
+      dataUrl: code.dataUrl || ''
+    }));
+    
+    setDisplayQRCodes(codesWithDataUrls);
+  };
+  
+  const handleUpdateQRCode = (updatedQRCode: QRCode) => {
+    setQRCodes(
+      qrCodes.map((qrCode) => 
+        qrCode.id === updatedQRCode.id ? updatedQRCode : qrCode
+      )
+    );
   };
 
-  const handleUpdateQRCode = async (updatedQRCode: QRCode) => {
-    // Implement update logic
-    console.log("Update QR code:", updatedQRCode);
+  const handleDeleteQRCode = (id: string) => {
+    setQRCodes(qrCodes.filter(qrCode => qrCode.id !== id));
   };
-
-  const handleDeleteQRCode = async (id: string) => {
-    // Implement delete logic
-    console.log("Delete QR code:", id);
+  
+  const handleTabChange = (value: string) => {
+    setSearchParams({ tab: value });
+    // Refresh data when switching to analytics or manage tab
+    if (value === 'analytics' || value === 'manage') {
+      fetchQRCodes();
+    }
   };
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
-      <Tabs defaultValue={tabParam} className="space-y-6">
-        <TabsList className="bg-white backdrop-blur-sm border border-gray-100 shadow-sm">
-          <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-          <TabsTrigger value="generate">Generate</TabsTrigger>
-          <TabsTrigger value="manage">Manage</TabsTrigger>
-          {isAdmin && (
-            <>
-              <TabsTrigger value="analytics">Analytics</TabsTrigger>
-              <TabsTrigger value="customize">Appearance</TabsTrigger>
-              <TabsTrigger value="team">Team</TabsTrigger>
-            </>
-          )}
-        </TabsList>
-        
-        <TabsContent value="dashboard">
-          <div className="grid gap-6 md:grid-cols-2">
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-xl font-medium mb-4">Quick Generate</h2>
-              <QRCodeGenerator 
-                onQRCodesGenerated={handleQRCodesGenerated}
-                lastSequentialNumber={lastSequentialNumber}
-              />
-            </div>
-            
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-xl font-medium mb-4">Recent QR Codes</h2>
-              <QRCodeManager 
-                qrCodes={qrCodes.slice(0, 5)}
-                onUpdateQRCode={handleUpdateQRCode}
-                onDeleteQRCode={handleDeleteQRCode}
-                onRefresh={fetchQRCodes}
-                showActions={false}
-              />
-            </div>
-          </div>
-        </TabsContent>
-        
-        <TabsContent value="generate">
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-medium mb-4">QR Code Generator</h2>
+    <div className="container mx-auto py-8 px-4 md:px-6">
+      <header className="mb-8">
+        <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent">Dashboard</h1>
+        <p className="text-lg text-muted-foreground">Generate, manage, and verify product authenticity</p>
+      </header>
+      
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-8">
+        <TabsContent value="generate" className="space-y-8 animate-fade-in">
+          <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-gray-100">
             <QRCodeGenerator 
               onQRCodesGenerated={handleQRCodesGenerated}
               lastSequentialNumber={lastSequentialNumber}
             />
           </div>
-        </TabsContent>
-        
-        <TabsContent value="manage">
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-medium mb-4">QR Code Manager</h2>
-            <QRCodeManager 
-              qrCodes={qrCodes}
-              onUpdateQRCode={handleUpdateQRCode}
-              onDeleteQRCode={handleDeleteQRCode}
-              onRefresh={fetchQRCodes}
-            />
-          </div>
+          
+          {displayQRCodes.length > 0 && (
+            <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-gray-100">
+              <QRCodeDisplay qrCodes={displayQRCodes} />
+            </div>
+          )}
         </TabsContent>
         
         {isAdmin && (
           <>
-            <TabsContent value="analytics">
-              <div className="bg-white rounded-lg shadow p-6">
-                <h2 className="text-xl font-medium mb-4">Analytics</h2>
-                <QRCodeAnalytics qrCodes={qrCodes} />
+            <TabsContent value="manage" className="animate-fade-in">
+              <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-gray-100">
+                <QRCodeManager 
+                  qrCodes={qrCodes}
+                  onUpdateQRCode={handleUpdateQRCode}
+                  onRefresh={fetchQRCodes}
+                  onDeleteQRCode={handleDeleteQRCode}
+                />
               </div>
             </TabsContent>
             
-            <TabsContent value="customize">
-              <div className="bg-white rounded-lg shadow p-6">
-                <h2 className="text-xl font-medium mb-4">Appearance</h2>
+            <TabsContent value="customize" className="animate-fade-in">
+              <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-gray-100">
                 <AppearanceSettings />
               </div>
             </TabsContent>
             
-            <TabsContent value="team">
-              <div className="bg-white rounded-lg shadow p-6">
-                <h2 className="text-xl font-medium mb-4">Team Management</h2>
-                <UserManagement />
+            <TabsContent value="analytics" className="animate-fade-in">
+              <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-gray-100">
+                <QRCodeAnalytics qrCodes={qrCodes} />
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="settings" className="animate-fade-in">
+              <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-gray-100">
+                <Card className="border-none shadow-none bg-transparent">
+                  <CardHeader>
+                    <CardTitle>Admin Settings</CardTitle>
+                    <CardDescription>Manage your team and system settings</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-4">
+                      <div className="border rounded-lg p-4 bg-white/50 transition-shadow hover:shadow-md">
+                        <div className="flex justify-between items-center mb-2">
+                          <div>
+                            <h3 className="font-medium">Team Management</h3>
+                            <p className="text-sm text-gray-500">Add, edit or remove team members</p>
+                          </div>
+                        </div>
+                        <div className="mt-4 border-t pt-4">
+                          <div className="flex justify-between items-center mb-3">
+                            <div>
+                              <h4 className="font-medium">Employee User</h4>
+                              <p className="text-sm text-gray-500">employee@example.com</p>
+                            </div>
+                            <Button variant="outline" size="sm">Manage</Button>
+                          </div>
+                          
+                          <div className="mt-4">
+                            <Label htmlFor="new-member">Add Team Member</Label>
+                            <div className="flex gap-2 mt-1">
+                              <Input id="new-member" placeholder="Email address" />
+                              <Button>Add</Button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="border rounded-lg p-4 bg-white/50 transition-shadow hover:shadow-md">
+                        <h3 className="font-medium mb-2">System Settings</h3>
+                        <div className="space-y-4">
+                          <div>
+                            <Label htmlFor="company-name">Company Name</Label>
+                            <Input id="company-name" defaultValue="My Company" className="mt-1" />
+                          </div>
+                          
+                          <div>
+                            <Label htmlFor="default-template">Default QR Template</Label>
+                            <select 
+                              id="default-template"
+                              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 mt-1"
+                            >
+                              <option value="classic">Classic</option>
+                              <option value="modern-blue">Modern Blue</option>
+                              <option value="modern-beige">Modern Beige</option>
+                              <option value="arabic">Arabic</option>
+                            </select>
+                          </div>
+                          
+                          <Button className="bg-gradient-to-r from-blue-500 to-violet-500 hover:from-blue-600 hover:to-violet-600">
+                            Save Settings
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="team" className="animate-fade-in">
+              <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-gray-100">
+                <Card className="border-none shadow-none bg-transparent">
+                  <CardHeader>
+                    <CardTitle>Team Management</CardTitle>
+                    <CardDescription>Manage team members and their access levels</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="bg-white/50 rounded-lg p-6 shadow-sm">
+                      <h3 className="font-medium mb-4 text-lg">Team Members</h3>
+                      
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between p-3 border rounded-md bg-white hover:bg-gray-50 transition-colors">
+                          <div>
+                            <p className="font-medium">Admin User</p>
+                            <p className="text-sm text-gray-500">admin@seqrity.com</p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full">Admin</span>
+                            <Button variant="outline" size="sm">Edit</Button>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center justify-between p-3 border rounded-md bg-white hover:bg-gray-50 transition-colors">
+                          <div>
+                            <p className="font-medium">Employee User</p>
+                            <p className="text-sm text-gray-500">employee@seqrity.com</p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full">Employee</span>
+                            <Button variant="outline" size="sm">Edit</Button>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="mt-6">
+                        <h4 className="font-medium mb-2">Invite New Member</h4>
+                        <div className="flex gap-2">
+                          <Input placeholder="Email address" className="flex-1" />
+                          <select 
+                            className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                          >
+                            <option>Admin</option>
+                            <option>Employee</option>
+                          </select>
+                          <Button className="bg-gradient-to-r from-blue-500 to-violet-500 hover:from-blue-600 hover:to-violet-600">
+                            Send Invite
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="bg-white/50 rounded-lg p-6 shadow-sm">
+                      <h3 className="font-medium mb-2 text-lg">Permission Settings</h3>
+                      <p className="text-sm text-gray-500 mb-4">
+                        Configure what each role can access in the system
+                      </p>
+                      
+                      <div className="space-y-2">
+                        <div className="bg-white p-4 rounded-md border">
+                          <h4 className="font-medium mb-2">Employee Permissions</h4>
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                              <span>Generate QR codes</span>
+                              <input type="checkbox" checked disabled className="h-4 w-4 rounded border-gray-300" />
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <span>Manage QR codes</span>
+                              <input type="checkbox" className="h-4 w-4 rounded border-gray-300" />
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <span>Access analytics</span>
+                              <input type="checkbox" className="h-4 w-4 rounded border-gray-300" />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <Button className="mt-4 bg-gradient-to-r from-blue-500 to-violet-500 hover:from-blue-600 hover:to-violet-600">
+                        Save Permissions
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
             </TabsContent>
           </>

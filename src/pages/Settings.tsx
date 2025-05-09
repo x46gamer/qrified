@@ -6,70 +6,164 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Link, useSearchParams } from "react-router-dom";
-import { ExternalLink } from "lucide-react";
-import { useAuth } from '@/contexts/AuthContext';
-import UserManagement from '@/components/UserManagement';
+import { ExternalLink, Save } from "lucide-react";
 import DomainSettings from '@/components/DomainSettings';
+import TeamManagement from '@/components/TeamManagement';
+import { useAuth } from "@/contexts/AuthContext";
+import { useAppearanceSettings } from "@/contexts/AppearanceContext";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const Settings = () => {
+  const { profile } = useAuth();
+  const isAdmin = profile?.role === 'admin';
   const [searchParams, setSearchParams] = useSearchParams();
-  const activeTab = searchParams.get('section') || 'team';
-  const { user } = useAuth();
-  const isAdmin = user?.role === 'admin';
+  const activeTab = searchParams.get('section') || 'general';
+  const { primaryColor, secondaryColor, updateSettings } = useAppearanceSettings();
+  
+  const [companyName, setCompanyName] = useState('My Company');
+  const [defaultTemplate, setDefaultTemplate] = useState('classic');
+  const [isSaving, setIsSaving] = useState(false);
   
   const handleTabChange = (value: string) => {
     setSearchParams({ section: value });
   };
-
+  
+  const saveSettings = async () => {
+    try {
+      setIsSaving(true);
+      
+      // Get the app settings ID or create it if it doesn't exist
+      const { data: settingsData } = await supabase
+        .from('app_settings')
+        .select('id')
+        .limit(1);
+      
+      const settingsId = settingsData && settingsData.length > 0 
+        ? settingsData[0].id 
+        : 'default-settings';
+      
+      // Save the settings
+      const { error } = await supabase
+        .from('app_settings')
+        .upsert({
+          id: settingsId,
+          settings: {
+            companyName,
+            defaultTemplate,
+            primaryColor,
+            secondaryColor
+          }
+        }, {
+          onConflict: 'id'
+        });
+      
+      if (error) {
+        throw error;
+      }
+      
+      toast.success('Settings saved successfully');
+    } catch (error) {
+      console.error('Error saving settings:', error);
+      toast.error('Failed to save settings');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+  
   return (
     <div className="container mx-auto py-8">
       <header className="mb-8">
-        <h1 className="text-4xl font-bold mb-2">Admin Settings</h1>
-        <p className="text-lg text-muted-foreground">Manage your team and system settings</p>
+        <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent">Settings</h1>
+        <p className="text-lg text-muted-foreground">{isAdmin ? 'Manage your team and system settings' : 'Manage your personal settings'}</p>
       </header>
       
       <Tabs defaultValue={activeTab} value={activeTab} onValueChange={handleTabChange} className="space-y-8">
-        <TabsList className="grid w-full max-w-md grid-cols-3">
-          <TabsTrigger value="team">Team Management</TabsTrigger>
-          <TabsTrigger value="domains">Custom Domains</TabsTrigger>
-          <TabsTrigger value="help">Help & Resources</TabsTrigger>
+        <TabsList className="grid w-full max-w-md grid-cols-4">
+          <TabsTrigger value="general">General</TabsTrigger>
+          {isAdmin && <TabsTrigger value="domains">Domains</TabsTrigger>}
+          {isAdmin && <TabsTrigger value="team">Team</TabsTrigger>}
+          <TabsTrigger value="help">Help</TabsTrigger>
         </TabsList>
         
-        <TabsContent value="team">
-          {isAdmin ? (
-            <UserManagement />
-          ) : (
-            <Card>
-              <CardHeader>
-                <CardTitle>Team Management</CardTitle>
-                <CardDescription>You need admin privileges to access this section.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="bg-yellow-50 p-4 rounded-md border border-yellow-200">
-                  <p>This section is only accessible to administrators. Please contact your administrator for assistance.</p>
+        <TabsContent value="general">
+          <Card>
+            <CardHeader>
+              <CardTitle>General Settings</CardTitle>
+              <CardDescription>Configure system-wide settings</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid gap-6 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="company-name">Company Name</Label>
+                  <Input 
+                    id="company-name" 
+                    value={companyName} 
+                    onChange={(e) => setCompanyName(e.target.value)} 
+                  />
                 </div>
-              </CardContent>
-            </Card>
-          )}
+                
+                <div className="space-y-2">
+                  <Label htmlFor="default-template">Default QR Template</Label>
+                  <select 
+                    id="default-template"
+                    value={defaultTemplate}
+                    onChange={(e) => setDefaultTemplate(e.target.value)}
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <option value="classic">Classic</option>
+                    <option value="modern-blue">Modern Blue</option>
+                    <option value="modern-beige">Modern Beige</option>
+                    <option value="arabic">Arabic</option>
+                  </select>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="primary-color">Primary Color</Label>
+                  <Input 
+                    id="primary-color" 
+                    type="color" 
+                    value={primaryColor || '#000000'} 
+                    onChange={(e) => updateSettings({ primaryColor: e.target.value })}
+                    className="h-10 p-1"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="secondary-color">Secondary Color</Label>
+                  <Input 
+                    id="secondary-color" 
+                    type="color" 
+                    value={secondaryColor || '#FFFFFF'} 
+                    onChange={(e) => updateSettings({ secondaryColor: e.target.value })}
+                    className="h-10 p-1"
+                  />
+                </div>
+              </div>
+              
+              <Button 
+                onClick={saveSettings} 
+                disabled={isSaving}
+                className="bg-gradient-to-r from-blue-500 to-violet-500 hover:from-blue-600 hover:to-violet-600"
+              >
+                <Save className="mr-2 h-4 w-4" />
+                {isSaving ? 'Saving...' : 'Save Settings'}
+              </Button>
+            </CardContent>
+          </Card>
         </TabsContent>
         
-        <TabsContent value="domains">
-          {isAdmin ? (
+        {isAdmin && (
+          <TabsContent value="domains">
             <DomainSettings />
-          ) : (
-            <Card>
-              <CardHeader>
-                <CardTitle>Custom Domains</CardTitle>
-                <CardDescription>You need admin privileges to access this section.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="bg-yellow-50 p-4 rounded-md border border-yellow-200">
-                  <p>This section is only accessible to administrators. Please contact your administrator for assistance.</p>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
+          </TabsContent>
+        )}
+        
+        {isAdmin && (
+          <TabsContent value="team">
+            <TeamManagement />
+          </TabsContent>
+        )}
 
         <TabsContent value="help">
           <Card>

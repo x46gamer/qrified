@@ -14,9 +14,10 @@ interface AppLayoutProps {
 const AppLayout = ({ children, showHeader = true, className }: AppLayoutProps) => {
   const { user } = useAuth();
   
+  // Wrap with SidebarProvider to ensure sidebar components can use useSidebar hook
   return (
     <SidebarProvider>
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
+      <div className="min-h-screen w-full bg-gradient-to-br from-gray-50 to-blue-50">
         {showHeader && <Header />}
         <div className={cn("container mx-auto py-6 px-4", className)}>
           {children}

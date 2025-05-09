@@ -1,15 +1,15 @@
 
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation, Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { InfoIcon } from "lucide-react";
-import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Loader2, Mail } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
+import { useAuth } from '@/contexts/AuthContext';
 
 const Signup = () => {
   const [email, setEmail] = useState('');
@@ -17,80 +17,70 @@ const Signup = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [name, setName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [isInvited, setIsInvited] = useState(false);
   const navigate = useNavigate();
-  const location = useLocation();
-  const { signup, loginWithGoogle, isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth();
 
-  // Check if user is already authenticated
-  useEffect(() => {
+  // If user is already authenticated, redirect to dashboard
+  React.useEffect(() => {
     if (isAuthenticated) {
       navigate('/dashboard');
     }
   }, [isAuthenticated, navigate]);
 
-  // Check if this is an invited user (from query params)
-  useEffect(() => {
-    const searchParams = new URLSearchParams(location.search);
-    const inviteEmail = searchParams.get('email');
-    const inviteToken = searchParams.get('token');
-    
-    if (inviteEmail && inviteToken) {
-      // Validate the token and email
-      const checkInvite = async () => {
-        try {
-          const { data, error } = await supabase
-            .from('user_invites')
-            .select('*')
-            .eq('email', inviteEmail)
-            .eq('token', inviteToken)
-            .eq('accepted', false)
-            .single();
-          
-          if (error) {
-            toast.error('Invalid or expired invitation');
-            return;
-          }
-          
-          if (data) {
-            setEmail(inviteEmail);
-            setIsInvited(true);
-            toast.info('Please complete your account setup');
-          }
-        } catch (error) {
-          console.error('Error checking invitation:', error);
-        }
-      };
-      
-      checkInvite();
-    }
-  }, [location.search]);
-
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (password !== confirmPassword) {
-      toast.error('Passwords do not match');
+      toast.error("Passwords don't match");
       return;
     }
     
+    setIsLoading(true);
+    
     try {
-      setIsLoading(true);
-      await signup(email, password, name);
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            name,
+            role: 'admin' // Explicitly set role to admin
+          }
+        }
+      });
+      
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+      
+      toast.success('Account created! You can now log in');
       navigate('/login');
     } catch (error) {
       console.error('Signup error:', error);
+      toast.error('Failed to create account');
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleGoogleSignup = async () => {
+    setIsLoading(true);
+    
     try {
-      setIsLoading(true);
-      await loginWithGoogle();
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/dashboard`
+        }
+      });
+
+      if (error) {
+        toast.error(error.message);
+      }
     } catch (error) {
       console.error('Google signup error:', error);
+      toast.error('Failed to sign up with Google');
     } finally {
       setIsLoading(false);
     }
@@ -109,21 +99,20 @@ const Signup = () => {
       <Card className="w-full max-w-md bg-white/80 backdrop-blur-sm border border-gray-100 shadow-xl transition-all animate-fade-in">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent">
-            {isInvited ? 'Complete Your Account' : 'Create Account'}
+            Create Account
           </CardTitle>
           <CardDescription>
-            {isInvited 
-              ? 'You were invited to join seQRity Authentication System' 
-              : 'Sign up for seQRity Authentication System'}
+            Sign up for seQRity Authentication System
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-6">
           <form onSubmit={handleSignup} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="name">Full Name</Label>
               <Input 
                 id="name" 
-                placeholder="Enter your name" 
+                type="text" 
+                placeholder="John Doe" 
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
@@ -135,12 +124,10 @@ const Signup = () => {
               <Input 
                 id="email" 
                 type="email" 
-                placeholder="Enter your email" 
+                placeholder="your@email.com" 
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                readOnly={isInvited}
-                className={isInvited ? "bg-gray-50" : ""}
               />
             </div>
             
@@ -149,61 +136,70 @@ const Signup = () => {
               <Input 
                 id="password" 
                 type="password" 
-                placeholder="Create a password" 
+                placeholder="••••••••" 
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                minLength={6}
               />
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <Label htmlFor="confirm-password">Confirm Password</Label>
               <Input 
-                id="confirmPassword" 
+                id="confirm-password" 
                 type="password" 
-                placeholder="Confirm your password" 
+                placeholder="••••••••" 
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
+                minLength={6}
               />
             </div>
             
             <Button 
               type="submit" 
-              className="w-full bg-gradient-to-r from-blue-500 to-violet-500 hover:from-blue-600 hover:to-violet-600 transition-all shadow hover:shadow-blue-300/30"
+              className="w-full bg-gradient-to-r from-blue-500 to-violet-500 hover:from-blue-600 hover:to-violet-600"
               disabled={isLoading}
             >
-              {isLoading ? 'Creating account...' : isInvited ? 'Complete Setup' : 'Sign Up'}
+              {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Mail className="mr-2 h-4 w-4" />}
+              {isLoading ? 'Creating account...' : 'Sign up with Email'}
             </Button>
           </form>
           
-          {!isInvited && (
-            <>
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t border-gray-300"></span>
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-white px-2 text-gray-500">Or continue with</span>
-                </div>
-              </div>
-              
-              <Button 
-                type="button" 
-                className="w-full bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 flex items-center justify-center gap-2"
-                onClick={handleGoogleSignup}
-                disabled={isLoading}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="24px" height="24px">
-                  <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/>
-                  <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/>
-                  <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"/>
-                  <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/>
-                </svg>
-                Sign up with Google
-              </Button>
-            </>
-          )}
+          <div className="flex items-center">
+            <Separator className="flex-grow" />
+            <span className="px-3 text-xs text-gray-500">OR</span>
+            <Separator className="flex-grow" />
+          </div>
+          
+          <Button
+            variant="outline"
+            onClick={handleGoogleSignup}
+            disabled={isLoading}
+            className="w-full border-gray-300 hover:bg-gray-50 hover:border-gray-400"
+          >
+            <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
+              <path
+                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                fill="#4285F4"
+              />
+              <path
+                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                fill="#34A853"
+              />
+              <path
+                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                fill="#FBBC05"
+              />
+              <path
+                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                fill="#EA4335"
+              />
+              <path d="M1 1h22v22H1z" fill="none" />
+            </svg>
+            Continue with Google
+          </Button>
         </CardContent>
         <CardFooter className="flex flex-col">
           <p className="text-sm text-center text-gray-500">

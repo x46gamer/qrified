@@ -1,5 +1,5 @@
 
-import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Route, Routes, Navigate } from 'react-router-dom';
 import LandingPage from './pages/LandingPage';
 import Index from './pages/Index';
 import CustomizeApp from './pages/CustomizeApp';
@@ -13,7 +13,6 @@ import BlogPage from './pages/BlogPage';
 import ProductCheck from './pages/ProductCheck';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
-import AuthCallback from './pages/AuthCallback';
 import NotFound from './pages/NotFound';
 import AuthGuard from './components/AuthGuard';
 import { Toaster } from 'sonner';
@@ -40,9 +39,18 @@ function App() {
             <Route path="/check" element={<ProductCheck />} />
             <Route path="/login" element={<AppLayout><Login /></AppLayout>} />
             <Route path="/signup" element={<AppLayout><Signup /></AppLayout>} />
-            <Route path="/auth/callback" element={<AuthCallback />} />
             <Route
               path="/dashboard"
+              element={
+                <AuthGuard>
+                  <DashboardLayout>
+                    <Index />
+                  </DashboardLayout>
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="/dashboard/:tab"
               element={
                 <AuthGuard>
                   <DashboardLayout>

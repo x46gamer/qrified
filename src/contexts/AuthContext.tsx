@@ -1,258 +1,117 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { User, UserRole } from '../types/auth';
-import { toast } from "sonner";
+import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { v4 as uuidv4 } from 'uuid';
+import { UserRole } from '@/types/auth';
+import { toast } from 'sonner';
+
+interface UserProfile {
+  id: string;
+  display_name?: string;
+  role: UserRole;
+  created_at: string;
+  updated_at: string;
+}
 
 interface AuthContextType {
   user: User | null;
+  profile: UserProfile | null;
+  session: Session | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  loginWithGoogle: () => Promise<void>;
-  signup: (email: string, password: string, name: string) => Promise<void>;
-  logout: () => void;
-  resetPassword: (email: string) => Promise<void>;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const cleanupAuthState = () => {
-  // Remove standard auth tokens
-  localStorage.removeItem('supabase.auth.token');
-  // Remove all Supabase auth keys from localStorage
-  Object.keys(localStorage).forEach((key) => {
-    if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
-      localStorage.removeItem(key);
-    }
-  });
-  // Remove from sessionStorage if in use
-  Object.keys(sessionStorage || {}).forEach((key) => {
-    if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
-      sessionStorage.removeItem(key);
-    }
-  });
-};
-
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+
+  // Fetch user profile from database
+  const fetchUserProfile = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+      
+      if (error) {
+        console.error('Error fetching user profile:', error);
+        return null;
+      }
+      
+      // Force the role to admin for all users
+      const profile = data as UserProfile;
+      if (profile && profile.role !== 'admin') {
+        // Update the profile in the database to be admin
+        const { error: updateError } = await supabase
+          .from('user_profiles')
+          .update({ role: 'admin' })
+          .eq('id', userId);
+        
+        if (!updateError) {
+          profile.role = 'admin';
+        } else {
+          console.error('Error updating user role:', updateError);
+        }
+      }
+      
+      return profile;
+    } catch (error) {
+      console.error('Exception fetching user profile:', error);
+      return null;
+    }
+  };
 
   useEffect(() => {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (event === 'SIGNED_IN' && session?.user) {
-          // Fetch user profile from our database
+      async (event, newSession) => {
+        setSession(newSession);
+        setUser(newSession?.user ?? null);
+        
+        // Fetch user profile if user exists
+        if (newSession?.user) {
+          // Use setTimeout to prevent Supabase auth deadlocks
           setTimeout(async () => {
-            try {
-              const { data, error } = await supabase
-                .from('user_profiles')
-                .select('*')
-                .eq('id', session.user.id)
-                .single();
-  
-              if (error) throw error;
-  
-              if (data) {
-                const userData: User = {
-                  id: session.user.id,
-                  role: data.role as UserRole,
-                  name: data.display_name || session.user.email?.split('@')[0],
-                };
-                setUser(userData);
-              }
-            } catch (error: any) {
-              console.error('Error fetching user profile:', error.message);
-            }
+            const userProfile = await fetchUserProfile(newSession.user.id);
+            setProfile(userProfile);
           }, 0);
-        } else if (event === 'SIGNED_OUT') {
-          setUser(null);
+        } else {
+          setProfile(null);
         }
       }
     );
 
     // THEN check for existing session
-    const fetchUser = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        if (session?.user) {
-          // Fetch user profile
-          const { data, error } = await supabase
-            .from('user_profiles')
-            .select('*')
-            .eq('id', session.user.id)
-            .single();
-
-          if (error) throw error;
-
-          if (data) {
-            const userData: User = {
-              id: session.user.id,
-              role: data.role as UserRole,
-              name: data.display_name || session.user.email?.split('@')[0],
-            };
-            setUser(userData);
-          }
-        }
-      } catch (error: any) {
-        console.error('Error fetching session:', error.message);
-      } finally {
-        setIsLoading(false);
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      
+      if (session?.user) {
+        const userProfile = await fetchUserProfile(session.user.id);
+        setProfile(userProfile);
       }
-    };
-
-    fetchUser();
+      
+      setIsLoading(false);
+    });
 
     return () => {
       subscription.unsubscribe();
     };
   }, []);
 
-  const login = async (email: string, password: string) => {
-    try {
-      setIsLoading(true);
-      
-      // Clean up existing state
-      cleanupAuthState();
-      
-      // Attempt global sign out
-      try {
-        await supabase.auth.signOut({ scope: 'global' });
-      } catch (err) {
-        // Continue even if this fails
-      }
-      
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) throw error;
-      
-      toast.success('Login successful');
-      // Don't return data, just resolve the promise
-    } catch (error: any) {
-      toast.error(`Login failed: ${error.message}`);
-      throw error;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const loginWithGoogle = async () => {
-    try {
-      setIsLoading(true);
-      
-      // Clean up existing state
-      cleanupAuthState();
-      
-      // Attempt global sign out
-      try {
-        await supabase.auth.signOut({ scope: 'global' });
-      } catch (err) {
-        // Continue even if this fails
-      }
-      
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
-        }
-      });
-
-      if (error) throw error;
-      
-      // Don't return data, just resolve the promise
-    } catch (error: any) {
-      toast.error(`Google login failed: ${error.message}`);
-      throw error;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const signup = async (email: string, password: string, name: string) => {
-    try {
-      setIsLoading(true);
-      
-      // Clean up existing state
-      cleanupAuthState();
-      
-      // Check if this is an invited user
-      const { data: inviteData } = await supabase
-        .from('user_invites')
-        .select('*')
-        .eq('email', email)
-        .eq('accepted', false)
-        .single();
-
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            name: name,
-          },
-        },
-      });
-
-      if (error) throw error;
-      
-      if (inviteData) {
-        toast.success('Your employee account has been created. Please login.');
-      } else {
-        toast.success('Signup successful. Please login to continue.');
-      }
-      
-      // Don't return data, just resolve the promise
-    } catch (error: any) {
-      toast.error(`Signup failed: ${error.message}`);
-      throw error;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const resetPassword = async (email: string) => {
-    try {
-      setIsLoading(true);
-      
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
-      });
-      
-      if (error) throw error;
-      
-      toast.success('Password reset email sent. Please check your inbox.');
-    } catch (error: any) {
-      toast.error(`Password reset failed: ${error.message}`);
-      throw error;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const logout = async () => {
     try {
-      setIsLoading(true);
-      
-      // Clean up auth state
-      cleanupAuthState();
-      
-      // Attempt global sign out
-      await supabase.auth.signOut({ scope: 'global' });
-      
-      setUser(null);
-      
-      // Force page reload for a clean state
-      window.location.href = '/login';
-    } catch (error: any) {
-      console.error('Logout error:', error.message);
-    } finally {
-      setIsLoading(false);
+      await supabase.auth.signOut();
+      toast.success('Logged out successfully');
+    } catch (error) {
+      console.error('Error logging out:', error);
+      toast.error('Failed to log out');
     }
   };
 
@@ -260,13 +119,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     <AuthContext.Provider
       value={{
         user,
+        profile,
+        session,
         isAuthenticated: !!user,
         isLoading,
-        login,
-        loginWithGoogle,
-        signup,
         logout,
-        resetPassword,
       }}
     >
       {children}

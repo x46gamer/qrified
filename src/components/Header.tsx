@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { useAuth } from '../contexts/AuthContext';
 import { MenuIcon, X } from 'lucide-react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { SidebarTrigger, useSidebar } from './ui/sidebar';
 
@@ -11,13 +11,6 @@ const Header: React.FC = () => {
   const { user } = useAuth();
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const location = useLocation();
-  
-  // Check if we're in a route that has the sidebar
-  const hasSidebar = location.pathname.includes('/dashboard') || location.pathname === '/settings';
-  
-  // Use useSidebar conditionally - we know it's available now because AppLayout includes SidebarProvider
-  const sidebarControls = useSidebar();
   
   // Handle scroll events for header
   useEffect(() => {
@@ -35,6 +28,18 @@ const Header: React.FC = () => {
     };
   }, [scrolled]);
 
+  // Create a wrapper component to conditionally use useSidebar
+  const SidebarTriggerWrapper = () => {
+    try {
+      // This will throw an error if not within a SidebarProvider context
+      const sidebarContext = useSidebar();
+      return <SidebarTrigger />;
+    } catch (err) {
+      // If useSidebar fails, return null instead of triggering an error
+      return null;
+    }
+  };
+
   return (
     <header className={cn(
       "sticky top-0 w-full z-50 transition-all duration-300",
@@ -43,9 +48,9 @@ const Header: React.FC = () => {
         : "bg-white/80 backdrop-blur-sm border-b border-gray-100 py-4"
     )}>
       <div className="container mx-auto flex items-center px-4">
-        {user && hasSidebar && (
+        {user && (
           <div className="flex md:hidden">
-            <SidebarTrigger />
+            <SidebarTriggerWrapper />
           </div>
         )}
         

@@ -2,17 +2,13 @@
 export interface QRCodeData {
   text: string;
   template: TemplateType;
-  productName?: string;
-  productId?: string;
-  description?: string;
-  uniqueId: string;
   logo?: string;
   foregroundColor?: string;
   backgroundColor?: string;
 }
 
 // Make sure TemplateType is exported
-export type TemplateType = 'classic' | 'modern' | 'minimal' | 'business' | 'arabic' | 'modern-blue' | 'modern-beige';
+export type TemplateType = 'classic' | 'modern-blue' | 'modern-beige' | 'arabic';
 
 export interface QRCode {
   id: string;
@@ -30,5 +26,7 @@ export interface QRCode {
   websiteUrl?: string;
   footerText?: string;
   directionRTL?: boolean;
-  data?: QRCodeData;  // Add data field to match how it's used in Index.tsx
+  arabicHeaderText?: string;
+  arabicInstructionText?: string;
+  arabicFooterText?: string;
 }

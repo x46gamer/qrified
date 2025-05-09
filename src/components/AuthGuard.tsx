@@ -1,8 +1,8 @@
 
-import React, { useEffect } from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
+import React from 'react';
+import { Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { SidebarProvider } from './ui/sidebar';
+import { Loader2 } from 'lucide-react';
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -10,19 +10,24 @@ interface AuthGuardProps {
 }
 
 const AuthGuard: React.FC<AuthGuardProps> = ({ children, requiredRole }) => {
-  const { isAuthenticated, user, isLoading } = useAuth();
-  const location = useLocation();
+  const { isAuthenticated, profile, isLoading } = useAuth();
 
   if (isLoading) {
-    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen">
+        <Loader2 className="h-10 w-10 text-blue-500 animate-spin" />
+        <p className="mt-4 text-gray-600">Loading...</p>
+      </div>
+    );
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" state={{ from: location.pathname }} replace />;
+    return <Navigate to="/login" replace />;
   }
 
   // If a specific role is required and the user doesn't have it, redirect to home
-  if (requiredRole && user?.role !== requiredRole) {
+  // Note: We prioritize admin access - admins can access everything
+  if (requiredRole && profile?.role !== requiredRole && profile?.role !== 'admin') {
     return <Navigate to="/" replace />;
   }
 

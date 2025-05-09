@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { TemplateType } from '../types/qrCode';
+import { TemplateType } from './QRCodeTemplates';
 
 interface QRCodeTemplatePreviewProps {
   template: TemplateType | string;
@@ -10,6 +10,7 @@ interface QRCodeTemplatePreviewProps {
   websiteUrl: string;
   footerText: string;
   directionRTL: boolean;
+  size?: number; // Added size as an optional prop
 }
 
 const QRCodeTemplatePreview: React.FC<QRCodeTemplatePreviewProps> = ({
@@ -19,7 +20,8 @@ const QRCodeTemplatePreview: React.FC<QRCodeTemplatePreviewProps> = ({
   instructionText,
   websiteUrl,
   footerText,
-  directionRTL
+  directionRTL,
+  size = 200 // Default size if not provided
 }) => {
   // Define template-specific styles
   const getTemplateStyles = () => {
@@ -27,74 +29,51 @@ const QRCodeTemplatePreview: React.FC<QRCodeTemplatePreviewProps> = ({
       case 'modern-blue':
         return {
           bgColor: 'bg-blue-100',
-          headerClass: 'text-3xl font-bold uppercase mb-3',
-          instructionClass: 'text-xl mb-2',
-          websiteClass: 'font-medium mb-3',
-          footerClass: 'bg-black text-white font-medium py-2 px-4 rounded-md mt-3',
+          headerClass: 'text-3xl font-bold uppercase mb-3', // Increased margin
+          instructionClass: 'text-xl mb-2', // Increased margin
+          websiteClass: 'font-medium mb-3', // Increased margin
+          footerClass: 'bg-black text-white font-medium py-2 px-4 rounded-md mt-3', // Increased margin
           containerClass: 'p-6 rounded-lg'
         };
       case 'modern-beige':
         return {
           bgColor: 'bg-amber-50',
-          headerClass: 'text-3xl font-bold uppercase mb-3',
-          instructionClass: 'text-xl mb-2',
-          websiteClass: 'font-medium mb-3',
-          footerClass: 'bg-black text-white font-medium py-2 px-4 rounded-md mt-3',
+          headerClass: 'text-3xl font-bold uppercase mb-3', // Increased margin
+          instructionClass: 'text-xl mb-2', // Increased margin
+          websiteClass: 'font-medium mb-3', // Increased margin
+          footerClass: 'bg-black text-white font-medium py-2 px-4 rounded-md mt-3', // Increased margin
           containerClass: 'p-6 rounded-lg'
         };
       case 'arabic':
         return {
           bgColor: 'bg-amber-50',
-          headerClass: 'text-3xl font-bold mb-3',
-          instructionClass: 'text-xl mb-2',
-          websiteClass: 'font-medium mb-3',
-          footerClass: 'bg-green-800 text-white font-medium py-2 px-4 rounded-md mt-3',
+          headerClass: 'text-3xl font-bold mb-3', // Increased margin
+          instructionClass: 'text-xl mb-2', // Increased margin
+          websiteClass: 'font-medium mb-3', // Increased margin
+          footerClass: 'bg-green-800 text-white font-medium py-2 px-4 rounded-md mt-3', // Increased margin
           containerClass: 'p-6 rounded-lg border-4 border-brown-600 rounded-xl'
         };
       case 'classic':
       default:
         return {
           bgColor: 'bg-white',
-          headerClass: 'text-2xl font-bold mb-3',
-          instructionClass: 'text-lg mb-2',
-          websiteClass: 'font-normal mb-3',
-          footerClass: 'bg-gray-800 text-white py-2 px-4 mt-3',
+          headerClass: 'text-2xl font-bold mb-3', // Increased margin
+          instructionClass: 'text-lg mb-2', // Increased margin
+          websiteClass: 'font-normal mb-3', // Increased margin
+          footerClass: 'bg-gray-800 text-white py-2 px-4 mt-3', // Increased margin
           containerClass: 'p-4'
         };
     }
   };
 
-  // Get default texts for Arabic template
-  const getDefaultArabicText = () => {
-    if (template === 'arabic') {
-      return {
-        header: headerText || 'تحقق من المنتج',
-        instruction: instructionText || 'امسح رمز QR للتحقق من صحة المنتج',
-        website: websiteUrl,
-        footer: footerText || 'شكراً لاختيارك منتجاتنا',
-      };
-    }
-    
-    return {
-      header: headerText,
-      instruction: instructionText,
-      website: websiteUrl,
-      footer: footerText,
-    };
-  };
-
   const styles = getTemplateStyles();
-  const texts = getDefaultArabicText();
-  
-  // Force RTL for Arabic template
-  const isRTL = template === 'arabic' ? true : directionRTL;
   
   return (
-    <div className={`w-full ${styles.bgColor} ${styles.containerClass} ${isRTL ? 'rtl' : 'ltr'}`}>
+    <div className={`w-full ${styles.bgColor} ${styles.containerClass} ${directionRTL ? 'rtl' : 'ltr'}`}>
       <div className="flex flex-col items-center gap-4 max-w-xs mx-auto">
-        {texts.header && (
+        {headerText && (
           <div className={`text-center ${styles.headerClass}`}>
-            {texts.header}
+            {headerText}
           </div>
         )}
         
@@ -103,26 +82,27 @@ const QRCodeTemplatePreview: React.FC<QRCodeTemplatePreviewProps> = ({
             <img 
               src={qrCodeDataUrl} 
               alt="QR Code" 
-              className="w-full max-w-[240px] mx-auto" /* Increased from 200px to 240px (20% wider) */
+              className="w-full max-w-[200px] mx-auto"
+              style={size ? { maxWidth: `${size}px` } : undefined}
             />
           </div>
         )}
         
-        {texts.instruction && (
+        {instructionText && (
           <div className={`text-center ${styles.instructionClass}`}>
-            {texts.instruction}
+            {instructionText}
           </div>
         )}
         
-        {texts.website && (
+        {websiteUrl && (
           <div className={`text-center ${styles.websiteClass} break-all`}>
-            {texts.website}
+            {websiteUrl}
           </div>
         )}
         
-        {texts.footer && (
+        {footerText && (
           <div className={`text-center w-full ${styles.footerClass}`}>
-            {texts.footer}
+            {footerText}
           </div>
         )}
       </div>
