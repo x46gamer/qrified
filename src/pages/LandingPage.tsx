@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -164,7 +163,7 @@ const LandingPage: React.FC = () => {
         <div className="container mx-auto px-4 flex justify-between items-center">
           <Link to="/" className="flex items-center">
             <img
-              src="https://xowxgbovrbnpsreqgrlt.supabase.co/storage/v1/object/public/content//1fbd5402-f9f9-49b4-90f0-38d70c7dd216.png"
+              src="https://files08.oaiusercontent.com/file-CeRPb526gbX59JCdmrAJuf?se=2025-05-09T19%3A19%3A47Z&sp=r&sv=2024-08-04&sr=b&rscc=max-age%3D299%2C%20immutable%2C%20private&rscd=attachment%3B%20filename%3D1fbd5402-f9f9-49b4-90f0-38d70c7dd216.png"
               alt="SeQRity Logo"
               className="h-8 w-auto"
             />
@@ -604,12 +603,12 @@ const LandingPage: React.FC = () => {
               <div className="w-14 h-14 bg-gradient-to-br from-amber-100 to-amber-200 text-amber-600 rounded-xl flex items-center justify-center mb-6 shadow-inner">
                 <MessageSquare size={28} />
               </div>
-              <h3 className="font-bold text-xl mb-3 text-slate-800">Customer Reviews</h3>
+              <h3 className="font-bold text-xl mb-3 text-slate-800">Feedback System</h3>
               <ul className="text-slate-600 list-disc pl-5 space-y-2">
-                <li>Collect authentic feedback</li>
-                <li>Star rating system</li>
-                <li>Photo & video reviews</li>
-                <li>Moderation tools</li>
+                <li>Star ratings (1–5)</li>
+                <li>Comments + photo uploads</li>
+                <li>Linked directly to individual QR codes</li>
+                <li>Collect valuable customer insights</li>
               </ul>
             </motion.div>
             
@@ -619,14 +618,14 @@ const LandingPage: React.FC = () => {
               className="bg-white/80 backdrop-blur-md p-8 rounded-2xl shadow-lg border border-blue-100/30 transition-all duration-300"
             >
               <div className="w-14 h-14 bg-gradient-to-br from-blue-100 to-blue-200 text-blue-600 rounded-xl flex items-center justify-center mb-6 shadow-inner">
-                <CreditCard size={28} />
+                <TrendingUp size={28} />
               </div>
-              <h3 className="font-bold text-xl mb-3 text-slate-800">Payment Options</h3>
+              <h3 className="font-bold text-xl mb-3 text-slate-800">Analytics Dashboard</h3>
               <ul className="text-slate-600 list-disc pl-5 space-y-2">
-                <li>Local payment methods</li>
-                <li>CIB/EDAHABIA support</li>
-                <li>Cash on delivery integration</li>
-                <li>Monthly subscription billing</li>
+                <li>Scan rate trends and insights</li>
+                <li>Feedback analysis and sentiment</li>
+                <li>Interactive charts and visualizations</li>
+                <li>Comprehensive activity logging</li>
               </ul>
             </motion.div>
             
@@ -635,20 +634,492 @@ const LandingPage: React.FC = () => {
               whileHover="hover"
               className="bg-white/80 backdrop-blur-md p-8 rounded-2xl shadow-lg border border-blue-100/30 transition-all duration-300"
             >
-              <div className="w-14 h-14 bg-gradient-to-br from-indigo-100 to-indigo-200 text-indigo-600 rounded-xl flex items-center justify-center mb-6 shadow-inner">
-                <Lock size={28} />
+              <div className="w-14 h-14 bg-gradient-to-br from-purple-100 to-purple-200 text-purple-600 rounded-xl flex items-center justify-center mb-6 shadow-inner">
+                <Settings size={28} />
               </div>
-              <h3 className="font-bold text-xl mb-3 text-slate-800">Security Features</h3>
+              <h3 className="font-bold text-xl mb-3 text-slate-800">Custom Branding</h3>
               <ul className="text-slate-600 list-disc pl-5 space-y-2">
-                <li>Military-grade encryption</li>
-                <li>Tamper-evident QR codes</li>
-                <li>Detailed security logs</li>
-                <li>User permission management</li>
+                <li>Add your logo and brand colors</li>
+                <li>Personalize verification success screens</li>
+                <li>Control messaging for all user touchpoints</li>
+                <li>Create a seamless brand experience</li>
               </ul>
             </motion.div>
           </div>
         </motion.div>
       </section>
+
+      {/* Localized for Algeria */}
+      <section className="py-20 px-4 relative overflow-hidden reveal-on-scroll">
+        <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-violet-50 to-transparent"></div>
+        
+        <motion.div 
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+          variants={containerVariants}
+          className="container mx-auto max-w-4xl relative z-10"
+        >
+          <motion.h2 
+            variants={itemVariants}
+            className="text-3xl md:text-4xl font-bold mb-12 text-center bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent inline-block"
+          >
+            Made for Algerian Merchants
+          </motion.h2>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+            <motion.div 
+              variants={itemVariants}
+              whileHover={{ scale: 1.05 }}
+              className="bg-white p-6 rounded-2xl shadow-lg flex flex-col items-center text-center"
+            >
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-blue-200 text-blue-600 rounded-xl flex items-center justify-center mb-4">
+                <Globe size={24} />
+              </div>
+              <p className="font-medium">Arabic (RTL) Support</p>
+            </motion.div>
+            
+            <motion.div 
+              variants={itemVariants}
+              whileHover={{ scale: 1.05 }}
+              className="bg-white p-6 rounded-2xl shadow-lg flex flex-col items-center text-center"
+            >
+              <div className="w-12 h-12 bg-gradient-to-br from-green-100 to-green-200 text-green-600 rounded-xl flex items-center justify-center mb-4">
+                <CreditCard size={24} />
+              </div>
+              <p className="font-medium">Dinar-Based Pricing</p>
+            </motion.div>
+            
+            <motion.div 
+              variants={itemVariants}
+              whileHover={{ scale: 1.05 }}
+              className="bg-white p-6 rounded-2xl shadow-lg flex flex-col items-center text-center"
+            >
+              <div className="w-12 h-12 bg-gradient-to-br from-amber-100 to-amber-200 text-amber-600 rounded-xl flex items-center justify-center mb-4">
+                <CreditCard size={24} />
+              </div>
+              <p className="font-medium">BaridiMob / CCP Payment</p>
+            </motion.div>
+            
+            <motion.div 
+              variants={itemVariants}
+              whileHover={{ scale: 1.05 }}
+              className="bg-white p-6 rounded-2xl shadow-lg flex flex-col items-center text-center"
+            >
+              <div className="w-12 h-12 bg-gradient-to-br from-purple-100 to-purple-200 text-purple-600 rounded-xl flex items-center justify-center mb-4">
+                <Shield size={24} />
+              </div>
+              <p className="font-medium">Local Hosting & Privacy</p>
+            </motion.div>
+            
+            <motion.div 
+              variants={itemVariants}
+              whileHover={{ scale: 1.05 }}
+              className="bg-white p-6 rounded-2xl shadow-lg flex flex-col items-center text-center"
+            >
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-blue-200 text-blue-600 rounded-xl flex items-center justify-center mb-4">
+                <Settings size={24} />
+              </div>
+              <p className="font-medium">No Tech Skills Needed</p>
+            </motion.div>
+          </div>
+        </motion.div>
+      </section>
+
+      {/* Pricing Section */}
+      <section ref={pricingRef} className="py-20 bg-gradient-to-br from-slate-50 to-blue-50 px-4 relative reveal-on-scroll">
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0wIDBoNDB2NDBIMHoiLz48cGF0aCBkPSJNMTAgMjBhMiAyIDAgMSAwIDAtNCAxIDEgMCAwIDEgMC0yIDQgNCAwIDEgMSAwIDggNCA0IDAgMCAxIDAtOCIgZmlsbD0iI2YwZjRmYSIvPjwvZz48L3N2Zz4=')] opacity-10"></div>
+        
+        <motion.div 
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+          variants={containerVariants}
+          className="container mx-auto max-w-6xl relative z-10"
+        >
+          <motion.h2 
+            variants={itemVariants}
+            className="text-3xl md:text-4xl font-bold mb-12 text-center bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent inline-block"
+          >
+            Simple, Transparent Pricing for Every Stage
+          </motion.h2>
+          
+          <motion.div 
+            variants={itemVariants}
+            className="flex justify-center mb-12"
+          >
+            <div className="bg-white rounded-full p-1 shadow-md inline-flex">
+              <button 
+                className={`px-6 py-2 rounded-full text-sm font-medium transition-all ${!isPriceYearly ? 'bg-gradient-to-r from-blue-500 to-violet-500 text-white shadow-md' : 'text-slate-600'}`}
+                onClick={() => setIsPriceYearly(false)}
+              >
+                Monthly
+              </button>
+              <button 
+                className={`px-6 py-2 rounded-full text-sm font-medium transition-all ${isPriceYearly ? 'bg-gradient-to-r from-blue-500 to-violet-500 text-white shadow-md' : 'text-slate-600'}`}
+                onClick={() => setIsPriceYearly(true)}
+              >
+                Lifetime
+              </button>
+            </div>
+          </motion.div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <motion.div 
+              variants={cardVariants}
+              whileHover="hover"
+              className="bg-white p-8 rounded-2xl shadow-lg border border-blue-100 relative"
+            >
+              <div className="absolute top-0 right-0 bg-blue-100 px-3 py-1 text-blue-600 text-xs font-semibold rounded-bl-lg rounded-tr-lg">
+                Starter
+              </div>
+              <h3 className="text-2xl font-bold mb-2 text-slate-800">Starter</h3>
+              <div className="flex items-end gap-1 mb-6">
+                <span className="text-3xl font-bold text-slate-800">1,200</span>
+                <span className="text-slate-500 mb-1">DZD/mo</span>
+              </div>
+              <ul className="space-y-3 mb-8">
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="text-green-500 shrink-0 mt-0.5" size={18} />
+                  <span className="text-slate-700">100 QR codes/month</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="text-green-500 shrink-0 mt-0.5" size={18} />
+                  <span className="text-slate-700">Basic templates</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="text-green-500 shrink-0 mt-0.5" size={18} />
+                  <span className="text-slate-700">Employee panel</span>
+                </li>
+                <li className="flex items-start gap-2 text-slate-400">
+                  <Lock className="shrink-0 mt-0.5" size={18} />
+                  <span>Full analytics</span>
+                </li>
+                <li className="flex items-start gap-2 text-slate-400">
+                  <Lock className="shrink-0 mt-0.5" size={18} />
+                  <span>Customer reviews</span>
+                </li>
+              </ul>
+              <Button asChild variant="outline" className="w-full rounded-xl">
+                <Link to="/signup">Start Free Trial</Link>
+              </Button>
+            </motion.div>
+            
+            <motion.div 
+              variants={cardVariants}
+              whileHover="hover"
+              className="bg-gradient-to-br from-white to-blue-50 p-8 rounded-2xl shadow-xl border-2 border-blue-200 relative transform scale-105 z-10"
+            >
+              <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-blue-500 to-violet-500 text-white px-4 py-1 rounded-full text-sm font-bold shadow-lg">
+                Most Popular
+              </div>
+              <div className="absolute top-0 right-0 bg-blue-500 px-3 py-1 text-white text-xs font-semibold rounded-bl-lg rounded-tr-lg">
+                Pro
+              </div>
+              <h3 className="text-2xl font-bold mb-2 text-slate-800">Pro</h3>
+              <div className="flex items-end gap-1 mb-6">
+                <span className="text-3xl font-bold text-slate-800">2,500</span>
+                <span className="text-slate-500 mb-1">DZD/mo</span>
+              </div>
+              <ul className="space-y-3 mb-8">
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="text-green-500 shrink-0 mt-0.5" size={18} />
+                  <span className="text-slate-700">500 QR codes/month</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="text-green-500 shrink-0 mt-0.5" size={18} />
+                  <span className="text-slate-700">All templates & custom branding</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="text-green-500 shrink-0 mt-0.5" size={18} />
+                  <span className="text-slate-700">Full analytics dashboard</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="text-green-500 shrink-0 mt-0.5" size={18} />
+                  <span className="text-slate-700">Customer reviews & ratings</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="text-green-500 shrink-0 mt-0.5" size={18} />
+                  <span className="text-slate-700">Priority support</span>
+                </li>
+              </ul>
+              <Button asChild className="w-full bg-gradient-to-r from-blue-500 to-violet-500 shadow-lg hover:shadow-blue-500/25 rounded-xl border-0">
+                <Link to="/signup">Choose Pro</Link>
+              </Button>
+            </motion.div>
+            
+            <motion.div 
+              variants={cardVariants}
+              whileHover="hover"
+              className="bg-gradient-to-br from-white to-violet-50 p-8 rounded-2xl shadow-lg border border-violet-200 relative"
+            >
+              <div className="absolute top-0 right-0 bg-violet-500 px-3 py-1 text-white text-xs font-semibold rounded-bl-lg rounded-tr-lg">
+                Lifetime
+              </div>
+              <h3 className="text-2xl font-bold mb-2 text-slate-800">Lifetime Deal</h3>
+              <div className="flex items-end gap-1 mb-6">
+                <span className="text-3xl font-bold text-slate-800">25,000</span>
+                <span className="text-slate-500 mb-1">DZD</span>
+              </div>
+              <div className="bg-violet-100 text-violet-800 text-xs font-bold uppercase px-2 py-1 rounded mb-6 inline-block">
+                One-time payment
+              </div>
+              <ul className="space-y-3 mb-8">
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="text-green-500 shrink-0 mt-0.5" size={18} />
+                  <span className="text-slate-700">Unlimited QR codes</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="text-green-500 shrink-0 mt-0.5" size={18} />
+                  <span className="text-slate-700">All Pro features included</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="text-green-500 shrink-0 mt-0.5" size={18} />
+                  <span className="text-slate-700">Free updates for life</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="text-green-500 shrink-0 mt-0.5" size={18} />
+                  <span className="text-slate-700">Dedicated account manager</span>
+                </li>
+              </ul>
+              <Button asChild variant="outline" className="w-full border-violet-300 text-violet-600 hover:bg-violet-50 rounded-xl">
+                <Link to="/signup">Buy Lifetime Access</Link>
+              </Button>
+            </motion.div>
+          </div>
+          
+          <motion.div 
+            variants={itemVariants}
+            className="mt-12 text-center"
+          >
+            <p className="text-slate-500">All plans include a 14-day free trial. No credit card required.</p>
+            <p className="text-violet-600 font-medium mt-2">🔥 This month only: Get lifetime for 25,000 DZD!</p>
+          </motion.div>
+        </motion.div>
+      </section>
+
+      {/* Testimonial Section */}
+      <section className="py-20 px-4 relative overflow-hidden reveal-on-scroll">
+        <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-blue-50 to-transparent"></div>
+        
+        <motion.div 
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+          variants={containerVariants}
+          className="container mx-auto max-w-5xl relative z-10"
+        >
+          <motion.h2 
+            variants={itemVariants}
+            className="text-3xl md:text-4xl font-bold mb-12 text-center bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent inline-block"
+          >
+            Merchants Already Trust SeQRity
+          </motion.h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <motion.div 
+              variants={cardVariants}
+              whileHover="hover"
+              className="bg-white p-8 rounded-2xl shadow-lg border border-blue-100"
+            >
+              <div className="flex items-center mb-4">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <Star key={star} size={16} className="text-amber-500 fill-amber-500" />
+                ))}
+              </div>
+              <p className="text-slate-600 mb-6">
+                "We've seen a 35% increase in customer trust since implementing seQRity. Our customers love scanning to verify before purchase."
+              </p>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-blue-100 rounded-full text-blue-600 flex items-center justify-center font-medium">
+                  AM
+                </div>
+                <div>
+                  <p className="font-semibold text-slate-800">Ahmed M.</p>
+                  <p className="text-sm text-slate-500">Electronics Store Owner</p>
+                </div>
+              </div>
+            </motion.div>
+            
+            <motion.div 
+              variants={cardVariants}
+              whileHover="hover"
+              className="bg-white p-8 rounded-2xl shadow-lg border border-blue-100"
+            >
+              <div className="flex items-center mb-4">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <Star key={star} size={16} className="text-amber-500 fill-amber-500" />
+                ))}
+              </div>
+              <p className="text-slate-600 mb-6">
+                "Finally, a solution that's actually built for our market. The Arabic support and local payment options made this an easy choice."
+              </p>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-purple-100 rounded-full text-purple-600 flex items-center justify-center font-medium">
+                  LB
+                </div>
+                <div>
+                  <p className="font-semibold text-slate-800">Leila B.</p>
+                  <p className="text-sm text-slate-500">Fashion Brand Founder</p>
+                </div>
+              </div>
+            </motion.div>
+            
+            <motion.div 
+              variants={cardVariants}
+              whileHover="hover"
+              className="bg-white p-8 rounded-2xl shadow-lg border border-blue-100"
+            >
+              <div className="flex items-center mb-4">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <Star key={star} size={16} className="text-amber-500 fill-amber-500" />
+                ))}
+              </div>
+              <p className="text-slate-600 mb-6">
+                "The customer reviews feature is a game-changer. We're getting valuable feedback directly tied to each product batch."
+              </p>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-green-100 rounded-full text-green-600 flex items-center justify-center font-medium">
+                  SK
+                </div>
+                <div>
+                  <p className="font-semibold text-slate-800">Said K.</p>
+                  <p className="text-sm text-slate-500">Wholesale Distributor</p>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+          
+          <motion.div 
+            variants={itemVariants}
+            className="mt-12 text-center"
+          >
+            <span className="bg-blue-100 text-blue-700 font-medium px-4 py-2 rounded-full">
+              120+ brands protected across Algeria
+            </span>
+          </motion.div>
+        </motion.div>
+      </section>
+
+      {/* Final CTA */}
+      <section className="py-20 px-4 relative overflow-hidden reveal-on-scroll">
+        <div className="absolute inset-0 bg-gradient-to-tr from-blue-50 to-violet-50 opacity-80"></div>
+        <div className="absolute -top-24 -right-24 w-64 h-64 bg-blue-200 rounded-full filter blur-3xl opacity-30"></div>
+        <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-violet-200 rounded-full filter blur-3xl opacity-30"></div>
+        
+        <motion.div 
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+          variants={containerVariants}
+          className="container mx-auto text-center max-w-3xl relative z-10"
+        >
+          <motion.h2 
+            variants={itemVariants}
+            className="text-3xl md:text-4xl font-bold mb-6 bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent inline-block"
+          >
+            Your Products. Verified. Protected. Trusted.
+          </motion.h2>
+          
+          <motion.p 
+            variants={itemVariants}
+            className="text-lg text-slate-600 mb-10"
+          >
+            Start free. Upgrade anytime. Your brand is worth it.
+          </motion.p>
+          
+          <motion.div 
+            variants={itemVariants}
+            className="flex flex-col sm:flex-row gap-4 justify-center"
+          >
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <Button size="lg" asChild className="bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-700 hover:to-violet-700 text-white shadow-lg hover:shadow-blue-500/25 rounded-xl border-0">
+                <Link to="/signup">Create Your Free Account</Link>
+              </Button>
+            </motion.div>
+            
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <Button size="lg" variant="outline" asChild className="border-blue-300 text-blue-700 hover:bg-blue-50 rounded-xl">
+                <a href="https://wa.me/+213555555555" target="_blank" rel="noopener noreferrer">Chat With Us on WhatsApp</a>
+              </Button>
+            </motion.div>
+          </motion.div>
+        </motion.div>
+      </section>
+
+      {/* Footer */}
+      <footer className="bg-white border-t border-gray-100 py-12 px-4 reveal-on-scroll">
+        <div className="container mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div>
+              <h3 className="font-bold text-lg mb-4">
+                <img
+                  src="https://files08.oaiusercontent.com/file-CeRPb526gbX59JCdmrAJuf?se=2025-05-09T19%3A19%3A47Z&sp=r&sv=2024-08-04&sr=b&rscc=max-age%3D299%2C%20immutable%2C%20private&rscd=attachment%3B%20filename%3D1fbd5402-f9f9-49b4-90f0-38d70c7dd216.png"
+                  alt="SeQRity Logo"
+                  className="h-6 w-auto"
+                />
+              </h3>
+              <p className="text-slate-600 text-sm mb-4">
+                Protect your products with smart QR authentication.
+                <span className="ml-2 text-xs px-2 py-0.5 bg-blue-500/20 text-blue-600 rounded-full">BETA</span>
+              </p>
+              <p className="text-slate-500 text-sm">
+                © {new Date().getFullYear()} seQRity Inc.
+              </p>
+            </div>
+            
+            <div>
+              <h4 className="font-semibold mb-4 text-slate-800">Company</h4>
+              <ul className="space-y-2 text-slate-600">
+                <li><Link to="/about" className="hover:text-blue-600 transition-colors">About</Link></li>
+                <li><Link to="/contact" className="hover:text-blue-600 transition-colors">Contact</Link></li>
+                <li><Link to="/blog" className="hover:text-blue-600 transition-colors">Blog</Link></li>
+              </ul>
+            </div>
+            
+            <div>
+              <h4 className="font-semibold mb-4 text-slate-800">Support</h4>
+              <ul className="space-y-2 text-slate-600">
+                <li><Link to="/faq" className="hover:text-blue-600 transition-colors">FAQ</Link></li>
+                <li><Link to="/support" className="hover:text-blue-600 transition-colors">Help Center</Link></li>
+              </ul>
+            </div>
+            
+            <div>
+              <h4 className="font-semibold mb-4 text-slate-800">Legal</h4>
+              <ul className="space-y-2 text-slate-600">
+                <li><Link to="/terms" className="hover:text-blue-600 transition-colors">Terms of Service</Link></li>
+                <li><Link to="/privacy" className="hover:text-blue-600 transition-colors">Privacy Policy</Link></li>
+                <li><Link to="/refund" className="hover:text-blue-600 transition-colors">Refund Policy</Link></li>
+              </ul>
+            </div>
+          </div>
+          
+          <div className="border-t border-gray-200 mt-12 pt-8 text-center">
+            <p className="text-slate-500 text-sm flex items-center justify-center gap-1">
+              Made in Algeria with passion
+              <span className="ml-1 text-lg">🇩🇿</span>
+            </p>
+            <div className="mt-4 flex justify-center space-x-4">
+              <a href="https://instagram.com/seqritydz" target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-blue-600">
+                Instagram
+              </a>
+              <a href="#" className="text-slate-400 hover:text-blue-600">
+                Twitter
+              </a>
+              <a href="#" className="text-slate-400 hover:text-blue-600">
+                LinkedIn
+              </a>
+            </div>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };
