@@ -31,7 +31,7 @@ const QRCodeManager = ({ qrCodes, onUpdateQRCode, onRefresh, onDeleteQRCode }: Q
   const itemsPerPage = 10;
   
   const filteredQRCodes = qrCodes.filter((qrCode) => 
-    qrCode.sequentialNumber.includes(searchTerm)
+    qrCode.sequentialNumber.toString().includes(searchTerm)
   );
   
   const totalPages = Math.ceil(filteredQRCodes.length / itemsPerPage);

@@ -63,7 +63,7 @@ const QRCodeDisplay = ({ qrCodes }: QRCodeDisplayProps) => {
       qrCodes.forEach((qrCode, index) => {
         // Stagger downloads slightly to prevent browser overload
         setTimeout(() => {
-          downloadQRCode(index, qrCode.sequentialNumber);
+          downloadQRCode(index, qrCode.sequentialNumber.toString());
         }, index * 500); // Increased delay between downloads
       });
     }, 500);

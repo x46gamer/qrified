@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -155,7 +154,7 @@ const QRCodeGenerator = ({ onQRCodesGenerated, lastSequentialNumber }: QRCodeGen
         const qrCodeDataUrl = await generateQRCode(url);
         
         // Use the selected template settings for all QR codes
-        const qrCode = {
+        const qrCode: QRCode = {
           id: uniqueId,
           sequentialNumber,
           encryptedData,
@@ -163,6 +162,7 @@ const QRCodeGenerator = ({ onQRCodesGenerated, lastSequentialNumber }: QRCodeGen
           isScanned: false,
           isEnabled: true,
           createdAt: new Date().toISOString(),
+          scannedAt: null,
           dataUrl: qrCodeDataUrl,
           template: selectedTemplate,
           headerText,

@@ -3,7 +3,7 @@ import { TemplateType } from '@/components/QRCodeTemplates';
 
 export interface QRCode {
   id: string;
-  sequentialNumber: number | string;
+  sequentialNumber: string;
   encryptedData: string;
   url: string;
   isScanned: boolean;
