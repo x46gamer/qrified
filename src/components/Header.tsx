@@ -3,30 +3,14 @@ import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { useAuth } from '../contexts/AuthContext';
 import { MenuIcon, X } from 'lucide-react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { SidebarTrigger, useSidebar } from './ui/sidebar';
+import { SidebarTrigger } from './ui/sidebar';
 
 const Header: React.FC = () => {
   const { user } = useAuth();
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const location = useLocation();
-  
-  // Check if we're in a route that has the sidebar
-  const hasSidebar = location.pathname.includes('/dashboard') || location.pathname === '/settings';
-  
-  // Use useSidebar conditionally
-  let sidebarControls = null;
-  try {
-    // Only try to use useSidebar if we're in a route with a sidebar
-    if (hasSidebar) {
-      sidebarControls = useSidebar();
-    }
-  } catch (error) {
-    // Silently ignore errors - the hook will throw if used outside of provider
-    // which is fine in this case as we're conditionally using it
-  }
   
   // Handle scroll events for header
   useEffect(() => {
@@ -52,7 +36,7 @@ const Header: React.FC = () => {
         : "bg-white/80 backdrop-blur-sm border-b border-gray-100 py-4"
     )}>
       <div className="container mx-auto flex items-center px-4">
-        {user && hasSidebar && (
+        {user && (
           <div className="flex md:hidden">
             <SidebarTrigger />
           </div>

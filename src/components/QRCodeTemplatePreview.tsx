@@ -64,37 +64,14 @@ const QRCodeTemplatePreview: React.FC<QRCodeTemplatePreviewProps> = ({
     }
   };
 
-  // Get default texts for Arabic template
-  const getDefaultArabicText = () => {
-    if (template === 'arabic') {
-      return {
-        header: headerText || 'تحقق من المنتج',
-        instruction: instructionText || 'امسح رمز QR للتحقق من صحة المنتج',
-        website: websiteUrl,
-        footer: footerText || 'شكراً لاختيارك منتجاتنا',
-      };
-    }
-    
-    return {
-      header: headerText,
-      instruction: instructionText,
-      website: websiteUrl,
-      footer: footerText,
-    };
-  };
-
   const styles = getTemplateStyles();
-  const texts = getDefaultArabicText();
-  
-  // Force RTL for Arabic template
-  const isRTL = template === 'arabic' ? true : directionRTL;
   
   return (
-    <div className={`w-full ${styles.bgColor} ${styles.containerClass} ${isRTL ? 'rtl' : 'ltr'}`}>
+    <div className={`w-full ${styles.bgColor} ${styles.containerClass} ${directionRTL ? 'rtl' : 'ltr'}`}>
       <div className="flex flex-col items-center gap-4 max-w-xs mx-auto">
-        {texts.header && (
+        {headerText && (
           <div className={`text-center ${styles.headerClass}`}>
-            {texts.header}
+            {headerText}
           </div>
         )}
         
@@ -108,21 +85,21 @@ const QRCodeTemplatePreview: React.FC<QRCodeTemplatePreviewProps> = ({
           </div>
         )}
         
-        {texts.instruction && (
+        {instructionText && (
           <div className={`text-center ${styles.instructionClass}`}>
-            {texts.instruction}
+            {instructionText}
           </div>
         )}
         
-        {texts.website && (
+        {websiteUrl && (
           <div className={`text-center ${styles.websiteClass} break-all`}>
-            {texts.website}
+            {websiteUrl}
           </div>
         )}
         
-        {texts.footer && (
+        {footerText && (
           <div className={`text-center w-full ${styles.footerClass}`}>
-            {texts.footer}
+            {footerText}
           </div>
         )}
       </div>

@@ -13,7 +13,6 @@ import BlogPage from './pages/BlogPage';
 import ProductCheck from './pages/ProductCheck';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
-import AuthCallback from './pages/AuthCallback';
 import NotFound from './pages/NotFound';
 import AuthGuard from './components/AuthGuard';
 import { Toaster } from 'sonner';
@@ -21,7 +20,6 @@ import { AppearanceSettingsProvider } from './contexts/AppearanceContext';
 import { AuthProvider } from './contexts/AuthContext';
 import AppLayout from './components/AppLayout';
 import DashboardLayout from './components/DashboardLayout';
-import Settings from './pages/Settings';
 
 function App() {
   return (
@@ -40,7 +38,6 @@ function App() {
             <Route path="/check" element={<ProductCheck />} />
             <Route path="/login" element={<AppLayout><Login /></AppLayout>} />
             <Route path="/signup" element={<AppLayout><Signup /></AppLayout>} />
-            <Route path="/auth/callback" element={<AuthCallback />} />
             <Route
               path="/dashboard"
               element={
@@ -57,16 +54,6 @@ function App() {
                 <AuthGuard>
                   <DashboardLayout>
                     <CustomizeApp />
-                  </DashboardLayout>
-                </AuthGuard>
-              }
-            />
-            <Route
-              path="/settings"
-              element={
-                <AuthGuard>
-                  <DashboardLayout>
-                    <Settings />
                   </DashboardLayout>
                 </AuthGuard>
               }
