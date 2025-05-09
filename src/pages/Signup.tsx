@@ -44,7 +44,7 @@ const Signup = () => {
         options: {
           data: {
             name,
-            role: 'admin'
+            role: 'admin' // Explicitly set role to admin
           }
         }
       });

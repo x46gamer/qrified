@@ -26,7 +26,8 @@ const AuthGuard: React.FC<AuthGuardProps> = ({ children, requiredRole }) => {
   }
 
   // If a specific role is required and the user doesn't have it, redirect to home
-  if (requiredRole && profile?.role !== requiredRole) {
+  // Note: We prioritize admin access - admins can access everything
+  if (requiredRole && profile?.role !== requiredRole && profile?.role !== 'admin') {
     return <Navigate to="/" replace />;
   }
 

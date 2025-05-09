@@ -44,7 +44,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return null;
       }
       
-      return data as UserProfile;
+      // Force the role to admin for all users
+      const profile = data as UserProfile;
+      if (profile && profile.role !== 'admin') {
+        // Update the profile in the database to be admin
+        const { error: updateError } = await supabase
+          .from('user_profiles')
+          .update({ role: 'admin' })
+          .eq('id', userId);
+        
+        if (!updateError) {
+          profile.role = 'admin';
+        } else {
+          console.error('Error updating user role:', updateError);
+        }
+      }
+      
+      return profile;
     } catch (error) {
       console.error('Exception fetching user profile:', error);
       return null;
