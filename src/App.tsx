@@ -21,6 +21,7 @@ import { AppearanceSettingsProvider } from './contexts/AppearanceContext';
 import { AuthProvider } from './contexts/AuthContext';
 import AppLayout from './components/AppLayout';
 import DashboardLayout from './components/DashboardLayout';
+import { SidebarProvider } from './components/ui/sidebar';
 
 function App() {
   return (
@@ -28,7 +29,7 @@ function App() {
       <AppearanceSettingsProvider>
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<AppLayout><LandingPage /></AppLayout>} />
+            <Route path="/" element={<LandingPage />} />
             <Route path="/about" element={<AppLayout><AboutPage /></AppLayout>} />
             <Route path="/faq" element={<AppLayout><FAQPage /></AppLayout>} />
             <Route path="/privacy" element={<AppLayout><PrivacyPolicyPage /></AppLayout>} />
@@ -44,9 +45,11 @@ function App() {
               path="/dashboard"
               element={
                 <AuthGuard>
-                  <DashboardLayout>
-                    <Index />
-                  </DashboardLayout>
+                  <SidebarProvider>
+                    <DashboardLayout>
+                      <Index />
+                    </DashboardLayout>
+                  </SidebarProvider>
                 </AuthGuard>
               }
             />
@@ -54,9 +57,11 @@ function App() {
               path="/customize"
               element={
                 <AuthGuard>
-                  <DashboardLayout>
-                    <CustomizeApp />
-                  </DashboardLayout>
+                  <SidebarProvider>
+                    <DashboardLayout>
+                      <CustomizeApp />
+                    </DashboardLayout>
+                  </SidebarProvider>
                 </AuthGuard>
               }
             />
