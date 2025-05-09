@@ -23,7 +23,15 @@ export const domainService = {
       throw error;
     }
     
-    return data || [];
+    return (data || []).map(item => ({
+      id: item.id,
+      user_id: item.user_id,
+      domain: item.domain,
+      status: item.status as 'pending' | 'verified' | 'failed',
+      verification_token: item.verification_token,
+      created_at: item.created_at,
+      verified_at: item.verified_at
+    }));
   },
   
   // Add a new domain
@@ -31,10 +39,17 @@ export const domainService = {
     // Generate verification token (in a real app you'd use crypto.randomUUID() or similar)
     const verificationToken = Math.random().toString(36).substring(2, 15);
     
+    // Get current user to add user_id to the domain
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      throw new Error("User not authenticated");
+    }
+    
     const { data, error } = await supabase
       .from('custom_domains')
       .insert({
         domain,
+        user_id: user.id,
         verification_token: verificationToken
       })
       .select()
@@ -44,7 +59,15 @@ export const domainService = {
       throw error;
     }
     
-    return data;
+    return {
+      id: data.id,
+      user_id: data.user_id,
+      domain: data.domain,
+      status: data.status as 'pending' | 'verified' | 'failed',
+      verification_token: data.verification_token,
+      created_at: data.created_at,
+      verified_at: data.verified_at
+    };
   },
   
   // Verify a domain

@@ -7,35 +7,11 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { Loader2, Mail, Check, X, UserX, UserCog } from "lucide-react";
+import { Loader2, Mail, UserX, UserCog } from "lucide-react";
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { v4 as uuidv4 } from 'uuid';
-
-interface UserProfile {
-  id: string;
-  display_name: string;
-  role: 'admin' | 'employee';
-  created_at: string;
-  updated_at: string;
-}
-
-interface UserInvite {
-  id: string;
-  email: string;
-  token: string;
-  role: 'admin' | 'employee';
-  permissions: {
-    generate: boolean;
-    manage: boolean;
-    analytics: boolean;
-  };
-  invited_by: string;
-  created_at: string;
-  expires_at: string;
-  accepted: boolean;
-}
+import { UserProfile, UserInvite, teamService } from '@/services/teamService';
 
 const TeamManagement = () => {
   const { user } = useAuth();
@@ -70,29 +46,12 @@ const TeamManagement = () => {
       setIsLoading(true);
       
       // Load user profiles
-      const { data: profilesData, error: profilesError } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .order('created_at', { ascending: false });
-      
-      if (profilesError) {
-        throw profilesError;
-      }
-      
-      setUsers(profilesData || []);
+      const profiles = await teamService.getTeamMembers();
+      setUsers(profiles);
       
       // Load pending invites
-      const { data: invitesData, error: invitesError } = await supabase
-        .from('user_invites')
-        .select('*')
-        .eq('accepted', false)
-        .order('created_at', { ascending: false });
-      
-      if (invitesError) {
-        throw invitesError;
-      }
-      
-      setInvites(invitesData || []);
+      const pendingInvites = await teamService.getPendingInvites();
+      setInvites(pendingInvites);
     } catch (error) {
       console.error('Error loading team data:', error);
       toast.error('Failed to load team data');
@@ -108,49 +67,33 @@ const TeamManagement = () => {
       toast.error('Please enter an email address');
       return;
     }
+
+    if (!user?.id) {
+      toast.error('You must be logged in to send invites');
+      return;
+    }
     
     try {
       setIsSendingInvite(true);
       
-      // Generate invite token
-      const token = uuidv4();
-      
-      // Set default permissions based on role
-      const permissions = {
-        generate: true,
-        manage: newInviteRole === 'admin',
-        analytics: newInviteRole === 'admin'
-      };
-      
-      const { error } = await supabase
-        .from('user_invites')
-        .insert({
-          email: newInviteEmail.trim(),
-          token,
-          role: newInviteRole,
-          permissions,
-          invited_by: user!.id
-        });
-      
-      if (error) {
-        if (error.code === '23505') {
-          toast.error('This email has already been invited');
-        } else {
-          throw error;
-        }
-        return;
-      }
+      await teamService.sendInvite(
+        newInviteEmail.trim(), 
+        newInviteRole, 
+        user.id
+      );
       
       toast.success(`Invite sent to ${newInviteEmail}`);
       setNewInviteEmail('');
       await loadTeamData();
-      
-      // In a real-world scenario, you would send an email to the invited user
-      // with a link containing the token
-      
     } catch (error) {
       console.error('Error sending invite:', error);
-      toast.error('Failed to send invite');
+      
+      // Check for unique constraint violation
+      if (error instanceof Error && error.message.includes('duplicate key')) {
+        toast.error('This email has already been invited');
+      } else {
+        toast.error('Failed to send invite');
+      }
     } finally {
       setIsSendingInvite(false);
     }
@@ -158,15 +101,7 @@ const TeamManagement = () => {
 
   const deleteInvite = async (inviteId: string) => {
     try {
-      const { error } = await supabase
-        .from('user_invites')
-        .delete()
-        .eq('id', inviteId);
-      
-      if (error) {
-        throw error;
-      }
-      
+      await teamService.deleteInvite(inviteId);
       setInvites(invites.filter(invite => invite.id !== inviteId));
       toast.success('Invite deleted');
     } catch (error) {
@@ -179,18 +114,7 @@ const TeamManagement = () => {
     if (!editingUser) return;
     
     try {
-      const { error } = await supabase
-        .from('user_profiles')
-        .update({
-          role: editingUserRole,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', editingUser.id);
-      
-      if (error) {
-        throw error;
-      }
-      
+      await teamService.updateUserRole(editingUser.id, editingUserRole);
       toast.success('User role updated');
       setEditingUser(null);
       await loadTeamData();
@@ -202,19 +126,7 @@ const TeamManagement = () => {
 
   const resendInvite = async (inviteId: string) => {
     try {
-      // In a real app, this would send a new email to the user
-      // For now, we'll just update the expiration date
-      const { error } = await supabase
-        .from('user_invites')
-        .update({
-          expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
-        })
-        .eq('id', inviteId);
-      
-      if (error) {
-        throw error;
-      }
-      
+      await teamService.resendInvite(inviteId);
       toast.success('Invite resent');
       await loadTeamData();
     } catch (error) {

@@ -37,7 +37,13 @@ export const teamService = {
       throw error;
     }
     
-    return data || [];
+    return (data || []).map(item => ({
+      id: item.id,
+      display_name: item.display_name || '',
+      role: item.role as 'admin' | 'employee',
+      created_at: item.created_at,
+      updated_at: item.updated_at
+    }));
   },
   
   // Get all pending invites
@@ -52,11 +58,25 @@ export const teamService = {
       throw error;
     }
     
-    return data || [];
+    return (data || []).map(item => ({
+      id: item.id,
+      email: item.email,
+      token: item.token,
+      role: item.role as 'admin' | 'employee',
+      permissions: item.permissions as {
+        generate: boolean;
+        manage: boolean;
+        analytics: boolean;
+      },
+      invited_by: item.invited_by,
+      created_at: item.created_at,
+      expires_at: item.expires_at,
+      accepted: item.accepted
+    }));
   },
   
   // Send a new invite
-  sendInvite: async (email: string, role: 'admin' | 'employee'): Promise<UserInvite> => {
+  sendInvite: async (email: string, role: 'admin' | 'employee', userId: string): Promise<UserInvite> => {
     // Generate token
     const token = Math.random().toString(36).substring(2, 15);
     
@@ -73,7 +93,8 @@ export const teamService = {
         email,
         token,
         role,
-        permissions
+        permissions,
+        invited_by: userId
       })
       .select()
       .single();
@@ -91,7 +112,21 @@ export const teamService = {
       console.error('Error sending invite email:', error);
     }
     
-    return data;
+    return {
+      id: data.id,
+      email: data.email,
+      token: data.token,
+      role: data.role as 'admin' | 'employee',
+      permissions: data.permissions as {
+        generate: boolean;
+        manage: boolean;
+        analytics: boolean;
+      },
+      invited_by: data.invited_by,
+      created_at: data.created_at,
+      expires_at: data.expires_at,
+      accepted: data.accepted
+    };
   },
   
   // Resend an invitation

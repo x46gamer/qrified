@@ -40,7 +40,7 @@ const QRCodeDisplay = ({ qrCodes }: QRCodeDisplayProps) => {
       // Create a download link and trigger the download
       const link = document.createElement('a');
       link.href = dataUrl;
-      link.download = `qrcode-${formatSequentialNumber(sequentialNumber)}.png`;
+      link.download = `qrcode-${formatSequentialNumber(sequentialNumber.toString())}.png`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);

@@ -1,12 +1,12 @@
 
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ChevronRight, Printer, Download, RefreshCw, Plus } from 'lucide-react';
+import { ChevronRight, Download, RefreshCw } from 'lucide-react';
 import { generateQRCode, encryptData } from '@/utils/qrCodeUtils';
 import { QRCode } from '@/types/qrCode';
 import { toast } from 'sonner';
@@ -27,8 +27,7 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ onQRCodesGenerated, l
 
   // Form state
   const [quantity, setQuantity] = useState<string>("1");
-  const [singleProduct, setSingleProduct] = useState<string>("");
-  const [bulkProducts, setBulkProducts] = useState<string[]>([]);
+  const [productIdentifier, setProductIdentifier] = useState<string>("");
   const [template, setTemplate] = useState<TemplateType>("classic");
   const [headerText, setHeaderText] = useState<string>("Scan to Verify Authenticity");
   const [instructionText, setInstructionText] = useState<string>("Scan this QR code to verify that this product is authentic");
@@ -42,30 +41,9 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ onQRCodesGenerated, l
   // Loading state
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
   
-  // Refs for form elements
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  
-  // Handle tab switching
-  const [activeTab, setActiveTab] = useState<string>("single");
-  
   // Handle template preview
   const [previewQrValue] = useState<string>("https://example.com/verify/preview-code");
   
-  // Handle file upload for bulk products
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const text = event.target?.result as string;
-      const lines = text.split(/\r?\n/).filter(line => line.trim() !== '');
-      setBulkProducts(lines);
-      toast.success(`Loaded ${lines.length} product codes`);
-    };
-    reader.readAsText(file);
-  };
-
   // Update text based on selected template
   React.useEffect(() => {
     if (template === 'arabic') {
@@ -79,44 +57,21 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ onQRCodesGenerated, l
       setIsGenerating(true);
       
       // Determine products to generate QR codes for
-      let productsToGenerate: string[];
-      
-      if (activeTab === "single") {
-        // For single mode, product ID is optional now
-        productsToGenerate = [singleProduct.trim() || `product-${Date.now()}`];
-      } else {
-        // Bulk generation
-        if (bulkProducts.length === 0) {
-          toast.error("Please upload a file with product identifiers");
-          return;
-        }
-        productsToGenerate = bulkProducts;
-      }
+      let productToGenerate = productIdentifier.trim() || `product-${Date.now()}`;
       
       // Limit the number of codes that can be generated at once
       const quantityNum = parseInt(quantity);
-      if (isNaN(quantityNum) || quantityNum < 1 || quantityNum > 1000) {
-        toast.error("Quantity must be between 1 and 1000");
+      if (isNaN(quantityNum) || quantityNum < 1 || quantityNum > 100) {
+        toast.error('Quantity must be between 1 and 100');
         return;
-      }
-      
-      // If using bulk mode, ensure the number of codes is limited
-      if (activeTab === "bulk" && productsToGenerate.length > 1000) {
-        toast.error("Maximum 1000 codes can be generated at once");
-        return;
-      }
-      
-      // Repeat single product if quantity > 1
-      if (activeTab === "single" && quantityNum > 1) {
-        productsToGenerate = Array(quantityNum).fill(singleProduct.trim() || `product-${Date.now()}`);
       }
       
       // Start generating QR codes
       const newQRCodes: QRCode[] = [];
       let currentSequentialNumber = lastSequentialNumber;
       
-      // Process each product
-      for (const product of productsToGenerate) {
+      // Generate the requested quantity of codes
+      for (let i = 0; i < quantityNum; i++) {
         // Increment sequential number
         currentSequentialNumber++;
         
@@ -124,7 +79,8 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ onQRCodesGenerated, l
         const id = uuidv4();
         
         // Encrypt the product data
-        const encryptedData = await encryptData(product);
+        const fullProductId = quantityNum > 1 ? `${productToGenerate}-${i+1}` : productToGenerate;
+        const encryptedData = await encryptData(fullProductId);
         
         // Create verification URL
         const url = `${window.location.origin}/check?id=${id}`;
@@ -132,8 +88,8 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ onQRCodesGenerated, l
         // Generate QR code as data URL
         const qrOptions = {
           color: {
-            dark: theme.primaryColor || '#000000',
-            light: theme.secondaryColor || '#ffffff'
+            dark: '#000000',
+            light: '#ffffff'
           }
         };
         const dataUrl = await generateQRCode(url, qrOptions);
@@ -201,10 +157,8 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ onQRCodesGenerated, l
         
         toast.success(`Successfully generated ${newQRCodes.length} QR codes`);
         
-        // Clear form for single product
-        if (activeTab === "single") {
-          setSingleProduct("");
-        }
+        // Clear form
+        setProductIdentifier("");
       }
     } catch (error) {
       console.error("Error generating QR codes:", error);
@@ -218,7 +172,7 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ onQRCodesGenerated, l
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent">Generate QR Codes</h2>
+          <h2 className="text-2xl font-bold">Generate QR Codes</h2>
           <p className="text-muted-foreground">Create secure QR codes for product authentication</p>
         </div>
         
@@ -245,81 +199,33 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ onQRCodesGenerated, l
           <Card>
             <CardHeader className="pb-4">
               <CardTitle>QR Code Generator</CardTitle>
-              <CardDescription>Generate single or multiple QR codes for product verification</CardDescription>
+              <CardDescription>Generate QR codes for product verification</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <Tabs defaultValue="single" value={activeTab} onValueChange={setActiveTab}>
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="single">Single</TabsTrigger>
-                  <TabsTrigger value="bulk">Bulk</TabsTrigger>
-                </TabsList>
-                <TabsContent value="single" className="space-y-4 pt-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="single-product">Product Identifier (Optional)</Label>
-                    <Input 
-                      id="single-product"
-                      placeholder="Enter product ID, serial number, or other identifier"
-                      value={singleProduct}
-                      onChange={(e) => setSingleProduct(e.target.value)}
-                    />
-                    <p className="text-xs text-muted-foreground">If left blank, a unique ID will be generated</p>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="quantity">Quantity</Label>
-                    <Input 
-                      id="quantity" 
-                      type="number" 
-                      min="1" 
-                      max="1000" 
-                      value={quantity}
-                      onChange={(e) => setQuantity(e.target.value)}
-                    />
-                  </div>
-                </TabsContent>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="product-identifier">Product Identifier (Optional)</Label>
+                  <Input 
+                    id="product-identifier"
+                    placeholder="Enter product ID, serial number, or other identifier"
+                    value={productIdentifier}
+                    onChange={(e) => setProductIdentifier(e.target.value)}
+                  />
+                  <p className="text-xs text-muted-foreground">If left blank, a unique ID will be generated</p>
+                </div>
                 
-                <TabsContent value="bulk" className="space-y-4 pt-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="bulk-upload">Upload Product List</Label>
-                    <div className="flex flex-col gap-2">
-                      <Input 
-                        id="bulk-file"
-                        type="file" 
-                        accept=".txt,.csv" 
-                        ref={fileInputRef}
-                        onChange={handleFileUpload}
-                        className="hidden"
-                      />
-                      <div className="grid grid-cols-2 gap-2">
-                        <Button 
-                          variant="outline" 
-                          className="w-full"
-                          onClick={() => fileInputRef.current?.click()}
-                        >
-                          <Plus className="mr-2 h-4 w-4" /> Select File
-                        </Button>
-                        
-                        <Button 
-                          variant="outline" 
-                          className="w-full"
-                          disabled={bulkProducts.length === 0}
-                          onClick={() => {
-                            setBulkProducts([]);
-                            if (fileInputRef.current) fileInputRef.current.value = '';
-                          }}
-                        >
-                          <RefreshCw className="mr-2 h-4 w-4" /> Reset
-                        </Button>
-                      </div>
-                    </div>
-                    {bulkProducts.length > 0 && (
-                      <p className="text-sm text-muted-foreground">
-                        {bulkProducts.length} product identifiers loaded
-                      </p>
-                    )}
-                  </div>
-                </TabsContent>
-              </Tabs>
+                <div className="space-y-2">
+                  <Label htmlFor="quantity">Quantity (1-100)</Label>
+                  <Input 
+                    id="quantity" 
+                    type="number" 
+                    min="1" 
+                    max="100" 
+                    value={quantity}
+                    onChange={(e) => setQuantity(e.target.value)}
+                  />
+                </div>
+              </div>
               
               <div className="pt-2">
                 <details className="text-sm">
@@ -434,7 +340,7 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ onQRCodesGenerated, l
               <Button 
                 onClick={handleGenerate} 
                 disabled={isGenerating}
-                className="w-full bg-gradient-to-r from-blue-500 to-violet-500 hover:from-blue-600 hover:to-violet-600"
+                className="w-full"
               >
                 {isGenerating ? (
                   <>
@@ -444,7 +350,7 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ onQRCodesGenerated, l
                 ) : (
                   <>
                     <ChevronRight className="mr-2 h-4 w-4" />
-                    Generate QR {activeTab === "bulk" ? "Codes" : "Code"}
+                    Generate QR {parseInt(quantity) > 1 ? "Codes" : "Code"}
                   </>
                 )}
               </Button>
@@ -461,14 +367,7 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ onQRCodesGenerated, l
             <CardContent className="flex justify-center pt-4">
               <QRCodeTemplatePreview 
                 template={template}
-                qrCodeDataUrl={theme.primaryColor ? 
-                  generateQRCode(previewQrValue, {
-                    color: {
-                      dark: theme.primaryColor,
-                      light: theme.secondaryColor || "#ffffff"
-                    }
-                  }) : undefined
-                }
+                qrCodeDataUrl=""
                 headerText={template === 'arabic' ? arabicHeaderText : headerText}
                 instructionText={template === 'arabic' ? arabicInstructionText : instructionText}
                 footerText={template === 'arabic' ? arabicFooterText : footerText}
@@ -481,9 +380,6 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ onQRCodesGenerated, l
                 Preview of the {template} template
               </p>
               <div className="flex justify-center gap-2 pt-2">
-                <Button variant="outline" size="sm" className="text-xs">
-                  <Printer className="mr-1 h-3 w-3" /> Print
-                </Button>
                 <Button variant="outline" size="sm" className="text-xs">
                   <Download className="mr-1 h-3 w-3" /> Download
                 </Button>

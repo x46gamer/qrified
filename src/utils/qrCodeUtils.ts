@@ -37,7 +37,7 @@ export const decryptData = (encryptedData: string): string => {
   }
 };
 
-// Generate QR code as data URL
+// Generate QR code as data URL - ALWAYS IN BLACK AND WHITE
 export const generateQRCode = async (data: string, options = {}): Promise<string> => {
   try {
     const defaultOptions = {
@@ -49,7 +49,17 @@ export const generateQRCode = async (data: string, options = {}): Promise<string
       },
     };
     
-    return await QRCode.toDataURL(data, { ...defaultOptions, ...options });
+    // Force black and white colors regardless of passed options
+    const finalOptions = {
+      ...defaultOptions,
+      ...options,
+      color: {
+        dark: '#000000',
+        light: '#ffffff',
+      },
+    };
+    
+    return await QRCode.toDataURL(data, finalOptions);
   } catch (error) {
     console.error('Error generating QR code:', error);
     throw new Error('Failed to generate QR code');
@@ -61,15 +71,16 @@ export const formatSequentialNumber = (number: number | string): string => {
   if (typeof number === 'number') {
     return number.toString().padStart(6, '0');
   }
-  return number;
+  return number.toString().padStart(6, '0');
 };
 
-// Analytics utilities
+// Calculate scan rate for analytics
 export const calculateScanRate = (total: number, scanned: number): number => {
   if (total === 0) return 0;
   return Math.round((scanned / total) * 100);
 };
 
+// Get time ago for display
 export const getTimeAgo = (dateString: string): string => {
   const date = new Date(dateString);
   const now = new Date();
