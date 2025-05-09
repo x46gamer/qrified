@@ -1,5 +1,5 @@
 
-import { BrowserRouter, Route, Routes, Navigate } from 'react-router-dom';
+import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import LandingPage from './pages/LandingPage';
 import Index from './pages/Index';
 import CustomizeApp from './pages/CustomizeApp';
@@ -20,7 +20,6 @@ import { AppearanceSettingsProvider } from './contexts/AppearanceContext';
 import { AuthProvider } from './contexts/AuthContext';
 import AppLayout from './components/AppLayout';
 import DashboardLayout from './components/DashboardLayout';
-import Settings from './pages/Settings';
 
 function App() {
   return (
@@ -50,31 +49,11 @@ function App() {
               }
             />
             <Route
-              path="/dashboard/:tab"
-              element={
-                <AuthGuard>
-                  <DashboardLayout>
-                    <Index />
-                  </DashboardLayout>
-                </AuthGuard>
-              }
-            />
-            <Route
               path="/customize"
               element={
                 <AuthGuard>
                   <DashboardLayout>
                     <CustomizeApp />
-                  </DashboardLayout>
-                </AuthGuard>
-              }
-            />
-            <Route
-              path="/settings"
-              element={
-                <AuthGuard>
-                  <DashboardLayout>
-                    <Settings />
                   </DashboardLayout>
                 </AuthGuard>
               }

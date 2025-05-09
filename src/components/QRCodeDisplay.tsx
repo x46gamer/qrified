@@ -6,7 +6,6 @@ import { QRCode as QRCodeType } from '@/types/qrCode';
 import { toast } from "sonner";
 import QRCodeTemplatePreview from './QRCodeTemplatePreview';
 import html2canvas from 'html2canvas';
-import { formatSequentialNumber } from '@/utils/qrCodeUtils';
 
 interface QRCodeDisplayProps {
   qrCodes: (QRCodeType & { dataUrl: string })[];
@@ -16,7 +15,7 @@ const QRCodeDisplay = ({ qrCodes }: QRCodeDisplayProps) => {
   // Create refs to access the QR code template elements
   const qrCodeRefs = useRef<(HTMLDivElement | null)[]>([]);
 
-  const downloadQRCode = async (index: number, sequentialNumber: string | number) => {
+  const downloadQRCode = async (index: number, sequentialNumber: string) => {
     try {
       const element = qrCodeRefs.current[index];
       if (!element) {
@@ -40,7 +39,7 @@ const QRCodeDisplay = ({ qrCodes }: QRCodeDisplayProps) => {
       // Create a download link and trigger the download
       const link = document.createElement('a');
       link.href = dataUrl;
-      link.download = `qrcode-${formatSequentialNumber(sequentialNumber.toString())}.png`;
+      link.download = `qrcode-${sequentialNumber}.png`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -64,7 +63,7 @@ const QRCodeDisplay = ({ qrCodes }: QRCodeDisplayProps) => {
       qrCodes.forEach((qrCode, index) => {
         // Stagger downloads slightly to prevent browser overload
         setTimeout(() => {
-          downloadQRCode(index, qrCode.sequentialNumber);
+          downloadQRCode(index, qrCode.sequentialNumber.toString());
         }, index * 500); // Increased delay between downloads
       });
     }, 500);
