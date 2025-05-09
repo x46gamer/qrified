@@ -1,3 +1,4 @@
+
 import QRCode from 'qrcode';
 import CryptoJS from 'crypto-js';
 import { v4 as uuidv4 } from 'uuid'; // Using browser-compatible uuid package
@@ -52,30 +53,6 @@ export const generateQRCode = async (data: string): Promise<string> => {
   } catch (error) {
     console.error('Error generating QR code:', error);
     throw new Error('Failed to generate QR code');
-  }
-};
-
-// Generate QR code with template options - This is the missing function that was being imported
-export const generateQRCodeImage = async (data: string, options?: {
-  template?: string;
-  primaryColor?: string;
-  secondaryColor?: string;
-  size?: number;
-}): Promise<string> => {
-  try {
-    // For now, just use the basic QR code generator
-    // Template styling will be applied on the frontend
-    return await QRCode.toDataURL(data, {
-      margin: 1,
-      width: options?.size || 300,
-      color: {
-        dark: options?.primaryColor || '#000000',
-        light: '#ffffff',
-      },
-    });
-  } catch (error) {
-    console.error('Error generating QR code with template:', error);
-    throw new Error('Failed to generate QR code with template');
   }
 };
 
@@ -228,58 +205,5 @@ export const fetchQRCodeById = async (id: string) => {
   } catch (error) {
     console.error('Exception fetching QR code by ID:', error);
     throw error;
-  }
-};
-
-// Function to get next sequential number for QR codes
-export const getNextSequentialNumber = async (): Promise<string> => {
-  try {
-    const { supabase } = await import('@/integrations/supabase/client');
-    
-    // First, check if the counter exists
-    const { data: counter, error: fetchError } = await supabase
-      .from('sequence_counters')
-      .select('current_value')
-      .eq('id', 'qr_code_sequential')
-      .single();
-    
-    if (fetchError && fetchError.code === 'PGRST116') {
-      // Counter does not exist, create it first with value 1
-      console.log('Creating new counter');
-      const { error: insertError } = await supabase
-        .from('sequence_counters')
-        .insert({
-          id: 'qr_code_sequential',
-          current_value: 1
-        });
-      
-      if (insertError) {
-        console.error('Error creating counter:', insertError);
-        return '000001'; // Fallback to 000001 if counter creation fails
-      }
-      
-      return '000001';
-    } else if (fetchError) {
-      console.error('Error fetching counter:', fetchError);
-      return '000001'; // Fallback to 000001 if fetch fails
-    }
-    
-    // Counter exists, increment it
-    const nextValue = (counter?.current_value || 0) + 1;
-    
-    const { error: updateError } = await supabase
-      .from('sequence_counters')
-      .update({ current_value: nextValue })
-      .eq('id', 'qr_code_sequential');
-    
-    if (updateError) {
-      console.error('Error updating counter:', updateError);
-    }
-    
-    // Format as 6-digit number with leading zeros
-    return nextValue.toString().padStart(6, '0');
-  } catch (error) {
-    console.error('Error in getNextSequentialNumber:', error);
-    return '000001'; // Fallback
   }
 };

@@ -15,17 +15,6 @@ serve(async (req) => {
   }
 
   try {
-    // Validate the request body exists
-    if (!req.body) {
-      return new Response(
-        JSON.stringify({ success: false, message: 'Missing request body' }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 400 
-        }
-      );
-    }
-
     const { domain, token } = await req.json();
     
     if (!domain || !token) {

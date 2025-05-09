@@ -1,31 +1,25 @@
 
 import React from 'react';
-import { TemplateType } from '@/types/qrCode';
+import { TemplateType } from './QRCodeTemplates';
 
 interface QRCodeTemplatePreviewProps {
   template: TemplateType | string;
-  primaryColor?: string;  // Added this prop
-  secondaryColor?: string;  // Added this prop
-  size?: number;  // Added this prop
-  qrCodeDataUrl?: string;
-  headerText?: string;
-  instructionText?: string;
-  websiteUrl?: string;
-  footerText?: string;
-  directionRTL?: boolean;
+  qrCodeDataUrl: string;
+  headerText: string;
+  instructionText: string;
+  websiteUrl: string;
+  footerText: string;
+  directionRTL: boolean;
 }
 
 const QRCodeTemplatePreview: React.FC<QRCodeTemplatePreviewProps> = ({
   template,
-  primaryColor,
-  secondaryColor,
-  size,
   qrCodeDataUrl,
   headerText,
   instructionText,
   websiteUrl,
   footerText,
-  directionRTL = false
+  directionRTL
 }) => {
   // Define template-specific styles
   const getTemplateStyles = () => {

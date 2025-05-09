@@ -8,7 +8,6 @@ import { decryptData } from '@/utils/qrCodeUtils';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import ReviewForm from '@/components/ReviewForm';
-import FeedbackForm from '@/components/FeedbackForm';
 import { useAppearanceSettings } from '@/contexts/AppearanceContext';
 import { TemplateType } from '@/types/qrCode';
 
@@ -20,7 +19,6 @@ const ProductCheck = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isVerified, setIsVerified] = useState<boolean | null>(null);
   const [showReviews, setShowReviews] = useState(false);
-  const [showFeedback, setShowFeedback] = useState(false);
   
   // Get appearance settings
   const theme = useAppearanceSettings();
@@ -221,28 +219,14 @@ const ProductCheck = () => {
           
           {isVerified && theme.enableReviews && (
             <div className="pt-4">
-              {!showReviews ? (
-                <Button onClick={() => setShowReviews(true)}>Leave a Review</Button>
-              ) : (
+              {showReviews ? (
                 <ReviewForm 
                   qrId={qrId} 
                   successBackground={theme.successBackground || "#f0fdf4"} 
                   successText={theme.successText || "#16a34a"} 
                 />
-              )}
-            </div>
-          )}
-          
-          {isVerified && theme.enableFeedback && (
-            <div className="pt-2">
-              {!showFeedback ? (
-                <Button variant="outline" onClick={() => setShowFeedback(true)}>Give Feedback</Button>
               ) : (
-                <FeedbackForm 
-                  qrId={qrId}
-                  successBackground={theme.successBackground || "#f0fdf4"} 
-                  successText={theme.successText || "#16a34a"}
-                />
+                <Button onClick={() => setShowReviews(true)}>Leave a Review</Button>
               )}
             </div>
           )}

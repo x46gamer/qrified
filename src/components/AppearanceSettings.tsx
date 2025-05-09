@@ -14,11 +14,11 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import { Link } from 'react-router-dom';
 import { FileText } from "lucide-react";
-import { AppearanceSettings as AppearanceSettingsType, DEFAULT_SETTINGS, useAppearanceSettings } from '@/contexts/AppearanceContext';
+import { ThemeSettings, defaultTheme } from '@/contexts/AppearanceContext';
 
 export const AppearanceSettings = () => {
   const [activeTab, setActiveTab] = useState<"success" | "failure" | "features" | "general">("general");
-  const [theme, setTheme] = useState<AppearanceSettingsType>(DEFAULT_SETTINGS);
+  const [theme, setTheme] = useState<ThemeSettings>(defaultTheme);
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [logoFile, setLogoFile] = useState<File | null>(null);
@@ -40,13 +40,11 @@ export const AppearanceSettings = () => {
         
         if (data && data.settings) {
           // Merge with default theme to ensure we have all required properties
-          // Safely cast the data.settings to AppearanceSettingsType
-          const safeSettings = data.settings as unknown as AppearanceSettingsType;
-          setTheme({...DEFAULT_SETTINGS, ...safeSettings});
+          setTheme({...defaultTheme, ...data.settings as ThemeSettings});
           
           // Set logo preview if exists
-          if (safeSettings.logoUrl) {
-            setLogoPreview(safeSettings.logoUrl);
+          if ((data.settings as ThemeSettings).logoUrl) {
+            setLogoPreview((data.settings as ThemeSettings).logoUrl);
           }
         }
       } catch (error) {
@@ -59,60 +57,6 @@ export const AppearanceSettings = () => {
 
     fetchSettings();
   }, []);
-
-  const handleColorChange = (color: string, property: keyof AppearanceSettingsType) => {
-    setTheme(prev => ({ ...prev, [property]: color }));
-  };
-
-  const handleTextChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, property: keyof AppearanceSettingsType) => {
-    setTheme(prev => ({ ...prev, [property]: e.target.value }));
-  };
-
-  const handleToggleChange = (checked: boolean, property: keyof AppearanceSettingsType) => {
-    setTheme(prev => ({ ...prev, [property]: checked }));
-  };
-
-  const renderColorPicker = (colorKey: keyof AppearanceSettingsType, label: string) => (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between">
-        <Label htmlFor={String(colorKey)}>{label}</Label>
-        <div className="flex items-center space-x-2">
-          <div 
-            className="h-5 w-5 rounded border" 
-            style={{ backgroundColor: theme[colorKey] as string }}
-          />
-          <span className="text-sm text-muted-foreground">{theme[colorKey] as string}</span>
-        </div>
-      </div>
-      <HexColorPicker
-        color={theme[colorKey] as string}
-        onChange={(color) => handleColorChange(color, colorKey)}
-        className="w-full max-w-[240px]"
-      />
-    </div>
-  );
-
-  const renderTextField = (key: keyof AppearanceSettingsType, label: string, placeholder: string, multiline: boolean = false) => (
-    <div className="space-y-2">
-      <Label htmlFor={String(key)}>{label}</Label>
-      {multiline ? (
-        <Textarea
-          id={String(key)}
-          value={theme[key] as string}
-          onChange={(e) => handleTextChange(e, key)}
-          placeholder={placeholder}
-          className="min-h-[80px]"
-        />
-      ) : (
-        <Input
-          id={String(key)}
-          value={theme[key] as string}
-          onChange={(e) => handleTextChange(e, key)}
-          placeholder={placeholder}
-        />
-      )}
-    </div>
-  );
 
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setUploadError(null);
@@ -215,11 +159,65 @@ export const AppearanceSettings = () => {
   };
 
   const handleReset = () => {
-    setTheme(DEFAULT_SETTINGS);
+    setTheme(defaultTheme);
     setLogoPreview(null);
     setLogoFile(null);
     toast.info('Settings reset to default values');
   };
+
+  const handleColorChange = (color: string, property: keyof ThemeSettings) => {
+    setTheme(prev => ({ ...prev, [property]: color }));
+  };
+
+  const handleTextChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, property: keyof ThemeSettings) => {
+    setTheme(prev => ({ ...prev, [property]: e.target.value }));
+  };
+
+  const handleToggleChange = (checked: boolean, property: keyof ThemeSettings) => {
+    setTheme(prev => ({ ...prev, [property]: checked }));
+  };
+
+  const renderColorPicker = (colorKey: keyof ThemeSettings, label: string) => (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <Label htmlFor={colorKey}>{label}</Label>
+        <div className="flex items-center space-x-2">
+          <div 
+            className="h-5 w-5 rounded border" 
+            style={{ backgroundColor: theme[colorKey] as string }}
+          />
+          <span className="text-sm text-muted-foreground">{theme[colorKey] as string}</span>
+        </div>
+      </div>
+      <HexColorPicker
+        color={theme[colorKey] as string}
+        onChange={(color) => handleColorChange(color, colorKey)}
+        className="w-full max-w-[240px]"
+      />
+    </div>
+  );
+
+  const renderTextField = (key: keyof ThemeSettings, label: string, placeholder: string, multiline: boolean = false) => (
+    <div className="space-y-2">
+      <Label htmlFor={key}>{label}</Label>
+      {multiline ? (
+        <Textarea
+          id={key}
+          value={theme[key] as string}
+          onChange={(e) => handleTextChange(e, key)}
+          placeholder={placeholder}
+          className="min-h-[80px]"
+        />
+      ) : (
+        <Input
+          id={key}
+          value={theme[key] as string}
+          onChange={(e) => handleTextChange(e, key)}
+          placeholder={placeholder}
+        />
+      )}
+    </div>
+  );
 
   if (isLoading) {
     return (

@@ -1,227 +1,196 @@
-import React from 'react';
-import { cn } from '@/lib/utils';
-import { useSidebar } from '@/components/ui/sidebar';
-import { NavLink, useLocation } from 'react-router-dom';
-import {
-  LayoutDashboard,
-  QrCode,
-  Brush,
-  Settings,
-  Users,
-  ChevronRight,
-  ChevronLeft,
-  Globe,
-  LineChart,
-  MessageSquare
-} from 'lucide-react';
-import { Button } from './ui/button';
-import { useAuth } from '@/contexts/AuthContext';
 
-interface SidebarProps {
-  className?: string;
+import React, { useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { cn } from "@/lib/utils";
+import { 
+  LayoutDashboard, 
+  Settings, 
+  QrCode, 
+  FileText, 
+  BarChart3, 
+  Palette, 
+  ChevronRight, 
+  ChevronDown,
+  Users,
+  LogOut,
+  Menu
+} from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { Button } from './ui/button';
+import { Sidebar as SidebarComponent, SidebarContent, SidebarTrigger, useSidebar } from './ui/sidebar';
+
+interface SidebarItemProps {
+  icon: React.ElementType;
+  label: string;
+  href: string;
+  active?: boolean;
+  onClick?: () => void;
+  subItems?: Array<{ label: string; href: string }>;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ className }) => {
-  const { isCollapsed, toggleSidebar } = useSidebar();
-  const location = useLocation();
-  const { user } = useAuth();
-  const isAdmin = user?.role === 'admin';
+const SidebarItem: React.FC<SidebarItemProps> = ({ 
+  icon: Icon, 
+  label, 
+  href, 
+  active, 
+  onClick,
+  subItems
+}) => {
+  const [expanded, setExpanded] = useState(false);
+  const { state } = useSidebar();
+  
+  const hasSubItems = subItems && subItems.length > 0;
+  
+  const toggleExpand = (e: React.MouseEvent) => {
+    if (hasSubItems) {
+      e.preventDefault();
+      setExpanded(!expanded);
+    }
+    if (onClick) onClick();
+  };
+
+  const isCollapsed = state === "collapsed";
 
   return (
-    <div className={cn(
-      'flex flex-col h-full bg-white border-r transition-all duration-300',
-      isCollapsed ? 'w-64' : 'w-[70px]',
-      className
-    )}>
-      <div className="flex-1 overflow-y-auto py-6">
-        <div className="flex items-center justify-between px-3 mb-8">
-          <div className="flex items-center">
-            <div className={cn(
-              "w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center text-white font-bold text-xl",
-            )}>
-              S
-            </div>
-            <span className={cn(
-              "ml-3 text-xl font-semibold tracking-tight transition-opacity duration-300",
-              isCollapsed ? "opacity-100" : "opacity-0"
-            )}>
-              SeQRity
-            </span>
-          </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={toggleSidebar}
-            className="rounded-full h-8 w-8"
-          >
-            {isCollapsed ? <ChevronLeft size={18} /> : <ChevronRight size={18} />}
-          </Button>
+    <div className="mb-1">
+      <Link 
+        to={href}
+        className={cn(
+          "flex items-center gap-3 px-3 py-2 rounded-md w-full transition-all",
+          active 
+            ? "bg-gradient-to-r from-blue-500/90 to-violet-500/90 text-white shadow-md" 
+            : "hover:bg-white/60 text-gray-700 hover:text-blue-600",
+        )}
+        onClick={toggleExpand}
+      >
+        <Icon className={cn("h-5 w-5", active ? "text-white" : "text-blue-500")} />
+        {!isCollapsed && <span className="flex-grow font-medium">{label}</span>}
+        {hasSubItems && !isCollapsed && (
+          expanded ? (
+            <ChevronDown className="h-4 w-4" />
+          ) : (
+            <ChevronRight className="h-4 w-4" />
+          )
+        )}
+      </Link>
+      
+      {hasSubItems && expanded && !isCollapsed && (
+        <div className="ml-8 mt-1 space-y-1 border-l-2 border-blue-200 pl-2">
+          {subItems.map((item, i) => (
+            <Link
+              key={i}
+              to={item.href}
+              className="flex items-center py-1.5 px-2 text-sm text-gray-600 hover:text-blue-600 hover:bg-white/60 rounded transition-colors"
+            >
+              {item.label}
+            </Link>
+          ))}
         </div>
-
-        <nav className="px-3 space-y-1">
-          <NavLink
-            to="/dashboard"
-            className={({ isActive }) => cn(
-              "flex items-center py-2 px-3 rounded-lg text-sm",
-              isActive ? "bg-blue-50 text-blue-600" : "text-gray-700 hover:bg-gray-100",
-            )}
-          >
-            <LayoutDashboard size={20} className="shrink-0" />
-            <span className={cn(
-              "ml-3 transition-opacity duration-300",
-              isCollapsed ? "opacity-100" : "opacity-0"
-            )}>
-              Dashboard
-            </span>
-          </NavLink>
-
-          <NavLink
-            to="/dashboard?tab=generate"
-            className={({ isActive }) => cn(
-              "flex items-center py-2 px-3 rounded-lg text-sm",
-              location.pathname === "/dashboard" && !location.search.includes("tab=") ? "bg-blue-50 text-blue-600" : "",
-              location.search.includes("tab=generate") ? "bg-blue-50 text-blue-600" : "",
-              !isActive ? "text-gray-700 hover:bg-gray-100" : "",
-            )}
-          >
-            <QrCode size={20} className="shrink-0" />
-            <span className={cn(
-              "ml-3 transition-opacity duration-300",
-              isCollapsed ? "opacity-100" : "opacity-0"
-            )}>
-              Generate QR
-            </span>
-          </NavLink>
-
-          {isAdmin && (
-            <NavLink
-              to="/dashboard?tab=manage"
-              className={({ isActive }) => cn(
-                "flex items-center py-2 px-3 rounded-lg text-sm",
-                location.search.includes("tab=manage") ? "bg-blue-50 text-blue-600" : "",
-                !isActive || !location.search.includes("tab=manage") ? "text-gray-700 hover:bg-gray-100" : "",
-              )}
-            >
-              <Users size={20} className="shrink-0" />
-              <span className={cn(
-                "ml-3 transition-opacity duration-300",
-                isCollapsed ? "opacity-100" : "opacity-0"
-              )}>
-                Manage QR
-              </span>
-            </NavLink>
-          )}
-
-          {isAdmin && (
-            <NavLink
-              to="/dashboard?tab=analytics"
-              className={({ isActive }) => cn(
-                "flex items-center py-2 px-3 rounded-lg text-sm",
-                location.search.includes("tab=analytics") ? "bg-blue-50 text-blue-600" : "",
-                !isActive || !location.search.includes("tab=analytics") ? "text-gray-700 hover:bg-gray-100" : "",
-              )}
-            >
-              <LineChart size={20} className="shrink-0" />
-              <span className={cn(
-                "ml-3 transition-opacity duration-300",
-                isCollapsed ? "opacity-100" : "opacity-0"
-              )}>
-                Analytics
-              </span>
-            </NavLink>
-          )}
-
-          {isAdmin && (
-            <NavLink
-              to="/dashboard?tab=customize"
-              className={({ isActive }) => cn(
-                "flex items-center py-2 px-3 rounded-lg text-sm",
-                location.search.includes("tab=customize") ? "bg-blue-50 text-blue-600" : "",
-                !isActive || !location.search.includes("tab=customize") ? "text-gray-700 hover:bg-gray-100" : "",
-              )}
-            >
-              <Brush size={20} className="shrink-0" />
-              <span className={cn(
-                "ml-3 transition-opacity duration-300",
-                isCollapsed ? "opacity-100" : "opacity-0"
-              )}>
-                Customize
-              </span>
-            </NavLink>
-          )}
-
-          {isAdmin && (
-            <NavLink
-              to="/domains"
-              className={({ isActive }) => cn(
-                "flex items-center py-2 px-3 rounded-lg text-sm",
-                isActive ? "bg-blue-50 text-blue-600" : "text-gray-700 hover:bg-gray-100",
-              )}
-            >
-              <Globe size={20} className="shrink-0" />
-              <span className={cn(
-                "ml-3 transition-opacity duration-300",
-                isCollapsed ? "opacity-100" : "opacity-0"
-              )}>
-                Domains
-              </span>
-            </NavLink>
-          )}
-
-          {isAdmin && (
-            <NavLink
-              to="/feedback"
-              className={({ isActive }) => cn(
-                "flex items-center py-2 px-3 rounded-lg text-sm",
-                isActive ? "bg-blue-50 text-blue-600" : "text-gray-700 hover:bg-gray-100",
-              )}
-            >
-              <MessageSquare size={20} className="shrink-0" />
-              <span className={cn(
-                "ml-3 transition-opacity duration-300",
-                isCollapsed ? "opacity-100" : "opacity-0"
-              )}>
-                Feedback
-              </span>
-            </NavLink>
-          )}
-
-          <NavLink
-            to="/settings"
-            className={({ isActive }) => cn(
-              "flex items-center py-2 px-3 rounded-lg text-sm",
-              isActive ? "bg-blue-50 text-blue-600" : "text-gray-700 hover:bg-gray-100",
-            )}
-          >
-            <Settings size={20} className="shrink-0" />
-            <span className={cn(
-              "ml-3 transition-opacity duration-300",
-              isCollapsed ? "opacity-100" : "opacity-0"
-            )}>
-              Settings
-            </span>
-          </NavLink>
-        </nav>
-      </div>
-
-      <div className={cn(
-        "border-t p-3",
-        isCollapsed ? "text-left" : "text-center"
-      )}>
-        <div className="flex items-center">
-          <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center uppercase text-gray-600 font-medium">
-            {user?.email?.charAt(0)}
-          </div>
-          <div className={cn(
-            "ml-3 transition-opacity duration-300",
-            isCollapsed ? "opacity-100" : "opacity-0"
-          )}>
-            <p className="text-sm font-medium">{isAdmin ? 'Admin' : 'User'}</p>
-            <p className="text-xs text-gray-500 truncate">{user?.email}</p>
-          </div>
-        </div>
-      </div>
+      )}
     </div>
+  );
+};
+
+const Sidebar: React.FC = () => {
+  const location = useLocation();
+  const { user, logout } = useAuth();
+  const isAdmin = user?.role === 'admin';
+  const { state, toggleSidebar } = useSidebar();
+  
+  const isActive = (path: string) => {
+    return location.pathname === path;
+  };
+
+  const isDashboardTabActive = (tab: string) => {
+    return location.pathname === '/dashboard' && location.search.includes(`tab=${tab}`);
+  };
+
+  return (
+    <SidebarComponent>
+      <SidebarContent className="pt-6 px-2">
+        <Button 
+          variant="ghost" 
+          size="icon"
+          className="mb-4 ml-2"
+          onClick={toggleSidebar}
+        >
+          <Menu className="h-5 w-5" />
+          <span className="sr-only">Toggle sidebar</span>
+        </Button>
+        
+        <div className="space-y-1">
+          <SidebarItem 
+            icon={LayoutDashboard} 
+            label="Dashboard" 
+            href="/dashboard" 
+            active={isActive('/dashboard') && !location.search.includes('tab=')}
+          />
+          
+          <SidebarItem 
+            icon={QrCode} 
+            label="QR Codes" 
+            href="/dashboard?tab=generate" 
+            subItems={[
+              { label: 'Generate', href: '/dashboard?tab=generate' },
+              { label: 'Manage', href: '/dashboard?tab=manage' },
+            ]}
+            active={isDashboardTabActive('generate') || isDashboardTabActive('manage')}
+          />
+          
+          {isAdmin && (
+            <>
+              <SidebarItem 
+                icon={Palette} 
+                label="Appearance" 
+                href="/dashboard?tab=customize" 
+                active={isDashboardTabActive('customize')}
+              />
+            
+              <SidebarItem 
+                icon={BarChart3} 
+                label="Analytics" 
+                href="/dashboard?tab=analytics" 
+                active={isDashboardTabActive('analytics')}
+              />
+
+              <SidebarItem 
+                icon={Users} 
+                label="Team" 
+                href="/dashboard?tab=team" 
+                active={isDashboardTabActive('team')}
+              />
+            </>
+          )}
+          
+          <SidebarItem 
+            icon={Settings} 
+            label="Settings" 
+            href="/dashboard?tab=settings" 
+            subItems={[
+              { label: 'Profile', href: '/dashboard?tab=settings&section=profile' },
+              { label: 'About', href: '/about' },
+              { label: 'FAQ', href: '/faq' },
+              { label: 'Contact', href: '/contact' },
+            ]}
+            active={isDashboardTabActive('settings')}
+          />
+          
+          <div className="mt-auto pt-4">
+            <Button 
+              variant="ghost" 
+              className={cn(
+                "flex w-full items-center gap-3 px-3 py-2 rounded-md transition-all text-gray-700 hover:text-red-600 hover:bg-white/60",
+                state === "collapsed" ? "justify-center" : "justify-start"
+              )}
+              onClick={logout}
+            >
+              <LogOut className="h-5 w-5" />
+              {state !== "collapsed" && <span>Log out</span>}
+            </Button>
+          </div>
+        </div>
+      </SidebarContent>
+    </SidebarComponent>
   );
 };
 
