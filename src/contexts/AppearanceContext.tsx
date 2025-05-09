@@ -3,7 +3,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-interface AppearanceSettings {
+export interface AppearanceSettings {
   successBackground: string;
   successText: string;
   successIcon: string;
@@ -24,7 +24,7 @@ interface AppearanceSettings {
   secondaryColor: string;
 }
 
-const DEFAULT_SETTINGS: AppearanceSettings = {
+export const DEFAULT_SETTINGS: AppearanceSettings = {
   successBackground: '#f0fdf4',
   successText: '#16a34a',
   successIcon: '#22c55e',
@@ -84,7 +84,7 @@ export const AppearanceSettingsProvider: React.FC<{
         if (data?.settings) {
           setSettings({
             ...DEFAULT_SETTINGS,
-            ...data.settings
+            ...(data.settings as AppearanceSettings)
           });
         }
       } catch (err) {

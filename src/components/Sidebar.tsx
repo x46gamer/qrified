@@ -23,7 +23,7 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ className }) => {
-  const { isOpen, toggle } = useSidebar();
+  const { isCollapsed: isOpen, toggleSidebar: toggle } = useSidebar();
   const location = useLocation();
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';

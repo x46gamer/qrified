@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -85,7 +84,7 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
         
         // Generate QR Code
         const dataUrl = await generateQRCodeImage(url, {
-          template: data.template,
+          template: data.template as string,
           primaryColor,
           secondaryColor,
           size: 300,

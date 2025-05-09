@@ -14,11 +14,11 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import { Link } from 'react-router-dom';
 import { FileText } from "lucide-react";
-import { ThemeSettings, defaultTheme } from '@/contexts/AppearanceContext';
+import { AppearanceSettings as AppearanceSettingsType, DEFAULT_SETTINGS } from '@/contexts/AppearanceContext';
 
 export const AppearanceSettings = () => {
   const [activeTab, setActiveTab] = useState<"success" | "failure" | "features" | "general">("general");
-  const [theme, setTheme] = useState<ThemeSettings>(defaultTheme);
+  const [theme, setTheme] = useState<AppearanceSettingsType>(DEFAULT_SETTINGS);
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [logoFile, setLogoFile] = useState<File | null>(null);
@@ -40,11 +40,11 @@ export const AppearanceSettings = () => {
         
         if (data && data.settings) {
           // Merge with default theme to ensure we have all required properties
-          setTheme({...defaultTheme, ...data.settings as ThemeSettings});
+          setTheme({...DEFAULT_SETTINGS, ...data.settings as AppearanceSettingsType});
           
           // Set logo preview if exists
-          if ((data.settings as ThemeSettings).logoUrl) {
-            setLogoPreview((data.settings as ThemeSettings).logoUrl);
+          if ((data.settings as AppearanceSettingsType).logoUrl) {
+            setLogoPreview((data.settings as AppearanceSettingsType).logoUrl);
           }
         }
       } catch (error) {
@@ -159,28 +159,28 @@ export const AppearanceSettings = () => {
   };
 
   const handleReset = () => {
-    setTheme(defaultTheme);
+    setTheme(DEFAULT_SETTINGS);
     setLogoPreview(null);
     setLogoFile(null);
     toast.info('Settings reset to default values');
   };
 
-  const handleColorChange = (color: string, property: keyof ThemeSettings) => {
+  const handleColorChange = (color: string, property: keyof AppearanceSettingsType) => {
     setTheme(prev => ({ ...prev, [property]: color }));
   };
 
-  const handleTextChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, property: keyof ThemeSettings) => {
+  const handleTextChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, property: keyof AppearanceSettingsType) => {
     setTheme(prev => ({ ...prev, [property]: e.target.value }));
   };
 
-  const handleToggleChange = (checked: boolean, property: keyof ThemeSettings) => {
+  const handleToggleChange = (checked: boolean, property: keyof AppearanceSettingsType) => {
     setTheme(prev => ({ ...prev, [property]: checked }));
   };
 
-  const renderColorPicker = (colorKey: keyof ThemeSettings, label: string) => (
+  const renderColorPicker = (colorKey: keyof AppearanceSettingsType, label: string) => (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <Label htmlFor={colorKey}>{label}</Label>
+        <Label htmlFor={String(colorKey)}>{label}</Label>
         <div className="flex items-center space-x-2">
           <div 
             className="h-5 w-5 rounded border" 
@@ -197,12 +197,12 @@ export const AppearanceSettings = () => {
     </div>
   );
 
-  const renderTextField = (key: keyof ThemeSettings, label: string, placeholder: string, multiline: boolean = false) => (
+  const renderTextField = (key: keyof AppearanceSettingsType, label: string, placeholder: string, multiline: boolean = false) => (
     <div className="space-y-2">
-      <Label htmlFor={key}>{label}</Label>
+      <Label htmlFor={String(key)}>{label}</Label>
       {multiline ? (
         <Textarea
-          id={key}
+          id={String(key)}
           value={theme[key] as string}
           onChange={(e) => handleTextChange(e, key)}
           placeholder={placeholder}
@@ -210,7 +210,7 @@ export const AppearanceSettings = () => {
         />
       ) : (
         <Input
-          id={key}
+          id={String(key)}
           value={theme[key] as string}
           onChange={(e) => handleTextChange(e, key)}
           placeholder={placeholder}
