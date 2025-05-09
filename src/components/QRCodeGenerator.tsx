@@ -16,6 +16,7 @@ import { supabase } from '@/integrations/supabase/client';
 import QRCodeTemplates, { TemplateType } from './QRCodeTemplates';
 import QRCodeTemplatePreview from './QRCodeTemplatePreview';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import html2canvas from 'html2canvas';
 
 interface QRCodeGeneratorProps {
   onQRCodesGenerated: (qrCodes: QRCode[]) => void;
@@ -32,6 +33,9 @@ const QRCodeGenerator = ({ onQRCodesGenerated, lastSequentialNumber }: QRCodeGen
   const [footerText, setFooterText] = useState<string>('VOID IF REMOVED');
   const [directionRTL, setDirectionRTL] = useState<boolean>(false);
   const [previewQrCode, setPreviewQrCode] = useState<string>('');
+  
+  // Reference to the preview element for capturing
+  const previewRef = React.useRef<HTMLDivElement>(null);
   
   const baseUrl = window.location.origin;
   
@@ -116,6 +120,28 @@ const QRCodeGenerator = ({ onQRCodesGenerated, lastSequentialNumber }: QRCodeGen
       
       const generatedQRCodes: QRCode[] = [];
       const dbInserts = [];
+      
+      // For capturing the complete QR code template with styling
+      const generateQRTemplateImage = async () => {
+        if (!previewRef.current) {
+          console.error('Preview element not available');
+          return null;
+        }
+        
+        try {
+          const canvas = await html2canvas(previewRef.current, {
+            backgroundColor: null,
+            scale: 2,
+            logging: false,
+            useCORS: true
+          });
+          
+          return canvas.toDataURL('image/png');
+        } catch (error) {
+          console.error('Error capturing QR template:', error);
+          return null;
+        }
+      };
       
       // Generate each QR code with proper template settings
       for (let i = 0; i < quantity; i++) {
@@ -332,7 +358,7 @@ const QRCodeGenerator = ({ onQRCodesGenerated, lastSequentialNumber }: QRCodeGen
               
               <div className="border rounded-lg p-4">
                 <h3 className="text-sm font-medium text-gray-700 mb-2">Preview</h3>
-                <div className="bg-white p-4 rounded">
+                <div className="bg-white p-4 rounded" ref={previewRef}>
                   <QRCodeTemplatePreview
                     template={selectedTemplate}
                     qrCodeDataUrl={previewQrCode}
