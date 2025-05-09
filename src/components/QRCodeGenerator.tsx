@@ -1,5 +1,5 @@
 
-import React, { useState, useRef, useEffect, ChangeEvent } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Card, CardContent } from './ui/card';
 import { Button } from './ui/button';
 import { Label } from './ui/label';
@@ -14,9 +14,29 @@ import { LoaderCircle, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import { QRCode, QRCodeData, TemplateType } from '@/types/qrCode';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { generateQRCodeData } from '@/utils/qrCodeUtils';
+import { generateUniqueId } from '@/utils/qrCodeUtils';
 import { supabase } from '@/integrations/supabase/client';
 import { v4 as uuidv4 } from 'uuid';
+
+// Helper function to create QRCodeData objects
+const generateQRCodeData = (options: {
+  productName?: string;
+  productId?: string;
+  description?: string;
+  template: TemplateType;
+  uniqueId: string;
+}): QRCodeData => {
+  const { productName, productId, description, template, uniqueId } = options;
+  
+  return {
+    text: `https://seqrity.com/check?id=${uniqueId}`,
+    template,
+    productName,
+    productId,
+    description,
+    uniqueId
+  };
+};
 
 interface GeneratorProps {
   onQRCodesGenerated?: (newQRCodes: QRCode[]) => Promise<void>;
@@ -49,11 +69,6 @@ export const QRCodeGenerator = ({ onQRCodesGenerated, lastSequentialNumber = 0 }
   }, [generatedQRCodes]);
 
   const generateQRCodes = async () => {
-    if (!productIdentifier && !productName) {
-      toast.error('Product identifier or name is required');
-      return;
-    }
-
     setGenerateLoading(true);
     const codes: QRCodeData[] = [];
 
@@ -81,12 +96,17 @@ export const QRCodeGenerator = ({ onQRCodesGenerated, lastSequentialNumber = 0 }
 
       if (onQRCodesGenerated && user) {
         // Convert to QRCode format for saving to the database
-        const qrCodes = codes.map(code => ({
+        const qrCodes: QRCode[] = codes.map(code => ({
           id: uuidv4(),
-          userId: user.id,
-          data: code,
+          sequentialNumber: code.uniqueId,
+          encryptedData: code.text,
+          url: code.text,
+          isScanned: false,
+          isEnabled: true,
           createdAt: new Date().toISOString(),
-          scans: 0
+          dataUrl: '',
+          template: code.template,
+          data: code
         }));
 
         await onQRCodesGenerated(qrCodes);
@@ -216,7 +236,7 @@ export const QRCodeGenerator = ({ onQRCodesGenerated, lastSequentialNumber = 0 }
               {/* Template Selection */}
               <div>
                 <Label htmlFor="template">Template</Label>
-                <QRCodeTemplates selectedTemplate={template} onSelectTemplate={setTemplate} />
+                <QRCodeTemplates selectedTemplate={template} onSelectTemplate={setTemplate as (t: any) => void} />
               </div>
               
               <Button 
@@ -236,7 +256,7 @@ export const QRCodeGenerator = ({ onQRCodesGenerated, lastSequentialNumber = 0 }
             </TabsContent>
             
             <TabsContent value="templates" className="p-6">
-              <QRCodeTemplates selectedTemplate={template} onSelectTemplate={setTemplate} />
+              <QRCodeTemplates selectedTemplate={template} onSelectTemplate={setTemplate as (t: any) => void} />
             </TabsContent>
           </Tabs>
         </CardContent>

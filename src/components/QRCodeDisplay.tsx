@@ -5,7 +5,7 @@ import { Button } from './ui/button';
 import { Download } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { QRCodeSVG } from 'qrcode.react';
-import { QRCodeData } from '@/types/qrCode';
+import { QRCodeData, TemplateType } from '@/types/qrCode';
 import html2canvas from 'html2canvas';
 
 interface QRCodeDisplayProps {
@@ -21,7 +21,7 @@ export const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
   className,
   style,
 }) => {
-  const { productName, productId, description, template, uniqueId } = data;
+  const { productName, productId, description, template, uniqueId, text } = data;
   const qrCodeRef = React.useRef<HTMLDivElement>(null);
   
   const downloadQRCode = async () => {
@@ -45,12 +45,14 @@ export const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
   };
 
   const getTemplate = () => {
+    const qrValue = text || `https://seqrity.com/check?id=${uniqueId}`;
+
     switch (template) {
       case 'classic':
         return (
           <div className="flex flex-col items-center p-4 bg-white rounded-lg shadow">
             <QRCodeSVG 
-              value={`https://seqrity.com/check?id=${uniqueId}`}
+              value={qrValue}
               size={150}
               level="H"
               includeMargin={true}
@@ -66,7 +68,7 @@ export const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
           <div className="flex flex-col items-center p-5 bg-gradient-to-br from-blue-50 to-white rounded-xl shadow-md">
             <div className="bg-white p-3 rounded-lg shadow-sm">
               <QRCodeSVG 
-                value={`https://seqrity.com/check?id=${uniqueId}`}
+                value={qrValue}
                 size={150}
                 level="H"
                 includeMargin={true}
@@ -81,7 +83,7 @@ export const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
         return (
           <div className="flex flex-col items-center p-4">
             <QRCodeSVG 
-              value={`https://seqrity.com/check?id=${uniqueId}`}
+              value={qrValue}
               size={150}
               level="H"
               includeMargin={true}
@@ -98,7 +100,7 @@ export const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
               <img src="/placeholder.svg" alt="Logo" className="h-8" />
             </div>
             <QRCodeSVG 
-              value={`https://seqrity.com/check?id=${uniqueId}`}
+              value={qrValue}
               size={150}
               level="H"
               includeMargin={true}
@@ -116,8 +118,8 @@ export const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
               <img src="/placeholder.svg" alt="Logo" className="h-8" />
             </div>
             <QRCodeSVG 
-              value={`https://seqrity.com/check?id=${uniqueId}`}
-              size={150}
+              value={qrValue}
+              size={170} 
               level="H"
               includeMargin={true}
             />
@@ -128,11 +130,13 @@ export const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
           </div>
         );
       
+      case 'modern-blue':
+      case 'modern-beige':
       default:
         return (
           <div className="flex flex-col items-center p-4">
             <QRCodeSVG 
-              value={`https://seqrity.com/check?id=${uniqueId}`}
+              value={qrValue}
               size={150}
               level="H"
               includeMargin={true}
@@ -145,7 +149,7 @@ export const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
   };
 
   return (
-    <Card className={cn("flex flex-col overflow-hidden", className)} style={style}>
+    <Card className={cn("flex flex-col overflow-hidden w-full", className)} style={style}>
       <CardContent className="flex-1 p-4 flex items-center justify-center" ref={qrCodeRef}>
         {getTemplate()}
       </CardContent>

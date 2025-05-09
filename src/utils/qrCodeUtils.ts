@@ -2,6 +2,7 @@
 import QRCode from 'qrcode';
 import CryptoJS from 'crypto-js';
 import { v4 as uuidv4 } from 'uuid'; // Using browser-compatible uuid package
+import { QRCodeData, TemplateType } from '@/types/qrCode';
 
 // Secret key for encryption
 const SECRET_KEY = 'qrcode-secret-key';
@@ -9,6 +10,26 @@ const SECRET_KEY = 'qrcode-secret-key';
 // Generate a proper UUID for QR code
 export const generateUniqueId = (): string => {
   return uuidv4();
+};
+
+// Generate QRCodeData object based on inputs
+export const generateQRCodeData = (options: {
+  productName?: string;
+  productId?: string;
+  description?: string;
+  template: TemplateType;
+  uniqueId: string;
+}): QRCodeData => {
+  const { productName, productId, description, template, uniqueId } = options;
+  
+  return {
+    text: `https://seqrity.com/check?id=${uniqueId}`,
+    template,
+    productName,
+    productId,
+    description,
+    uniqueId
+  };
 };
 
 // Encrypt the QR code data
