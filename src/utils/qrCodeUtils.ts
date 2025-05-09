@@ -1,10 +1,9 @@
-
 import QRCode from 'qrcode';
 import CryptoJS from 'crypto-js';
 import { v4 as uuidv4 } from 'uuid';
 
 // Secret key for encryption - in a real app, this would be stored securely
-const SECRET_KEY = 'qrcode-secret-key';
+const SECRET_KEY = 'qrcode-secret-key-improved';
 
 // Generate a proper UUID for QR code
 export const generateUniqueId = (): string => {
@@ -13,15 +12,20 @@ export const generateUniqueId = (): string => {
 
 // Encrypt the QR code data with improved approach
 export const encryptData = (data: string): string => {
-  console.log('Encrypting data:', data);
   try {
+    if (!data || typeof data !== 'string') {
+      console.error('Invalid data provided for encryption:', data);
+      throw new Error('Invalid data provided for encryption');
+    }
+
+    console.log('Encrypting data:', data);
+    
     // Using AES encryption with a consistent padding and mode
     const encrypted = CryptoJS.AES.encrypt(data, SECRET_KEY, {
       mode: CryptoJS.mode.CBC,
       padding: CryptoJS.pad.Pkcs7
     }).toString();
     
-    // Return raw encrypted string - no URL encoding
     console.log('Encrypted data length:', encrypted.length);
     return encrypted;
   } catch (error) {
@@ -33,9 +37,19 @@ export const encryptData = (data: string): string => {
 // Decrypt the QR code data
 export const decryptData = (encryptedData: string): string => {
   try {
+    if (!encryptedData || typeof encryptedData !== 'string') {
+      console.error('Invalid encrypted data provided for decryption');
+      throw new Error('Invalid encrypted data provided');
+    }
+
     console.log('Decrypting data of length:', encryptedData.length);
     
     const decrypted = CryptoJS.AES.decrypt(encryptedData, SECRET_KEY).toString(CryptoJS.enc.Utf8);
+    
+    if (!decrypted) {
+      throw new Error('Decryption resulted in empty data');
+    }
+    
     console.log('Decrypted data:', decrypted);
     return decrypted;
   } catch (error) {
@@ -47,8 +61,15 @@ export const decryptData = (encryptedData: string): string => {
 // Generate QR code as data URL with improved options
 export const generateQRCode = async (data: string): Promise<string> => {
   try {
+    if (!data || typeof data !== 'string') {
+      console.error('Invalid data provided for QR generation:', data);
+      throw new Error('Invalid data provided for QR generation');
+    }
+
+    console.log('Generating QR code for data:', data);
+    
     // More robust QR code generation with error correction
-    return await QRCode.toDataURL(data, {
+    const qrCodeDataUrl = await QRCode.toDataURL(data, {
       margin: 1,
       width: 300,
       errorCorrectionLevel: 'H', // High error correction level
@@ -57,6 +78,13 @@ export const generateQRCode = async (data: string): Promise<string> => {
         light: '#ffffff',
       },
     });
+    
+    if (!qrCodeDataUrl || !qrCodeDataUrl.startsWith('data:image/png;base64,')) {
+      console.error('Generated QR code is invalid');
+      throw new Error('Generated QR code is invalid');
+    }
+    
+    return qrCodeDataUrl;
   } catch (error) {
     console.error('Error generating QR code:', error);
     throw new Error('Failed to generate QR code');
@@ -71,8 +99,15 @@ export const generateQRCodeImage = async (data: string, options?: {
   size?: number;
 }): Promise<string> => {
   try {
+    if (!data || typeof data !== 'string') {
+      console.error('Invalid data provided for QR generation with template:', data);
+      throw new Error('Invalid data provided for QR generation');
+    }
+
+    console.log('Generating QR code with template for data:', data);
+    
     // Using higher error correction for better scanning reliability
-    return await QRCode.toDataURL(data, {
+    const qrCodeDataUrl = await QRCode.toDataURL(data, {
       margin: 1,
       width: options?.size || 300,
       errorCorrectionLevel: 'H', // High error correction level
@@ -81,6 +116,13 @@ export const generateQRCodeImage = async (data: string, options?: {
         light: '#ffffff',
       },
     });
+    
+    if (!qrCodeDataUrl || !qrCodeDataUrl.startsWith('data:image/png;base64,')) {
+      console.error('Generated QR code with template is invalid');
+      throw new Error('Generated QR code with template is invalid');
+    }
+    
+    return qrCodeDataUrl;
   } catch (error) {
     console.error('Error generating QR code with template:', error);
     throw new Error('Failed to generate QR code with template');

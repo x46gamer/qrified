@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowDownload, Printer, Copy } from "lucide-react";
+import { ArrowDown, Printer, Copy } from "lucide-react";
 import { toast } from "sonner";
 import { QRCodeTemplatePreview } from './QRCodeTemplatePreview';
 import html2canvas from 'html2canvas';
@@ -28,6 +28,11 @@ const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({ qrCodes }) => {
   const [selectedTemplate, setSelectedTemplate] = useState<'qr-only' | 'with-template'>('with-template');
   
   const handleDownload = (dataUrl: string, id: string, sequentialNumber: string | number) => {
+    if (!dataUrl) {
+      toast.error('QR code image is not available');
+      return;
+    }
+    
     const link = document.createElement('a');
     link.href = dataUrl;
     link.download = `QR-${formatSequentialNumber(Number(sequentialNumber))}-${id}.png`;
@@ -38,6 +43,11 @@ const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({ qrCodes }) => {
   };
   
   const handleCopy = (dataUrl: string) => {
+    if (!dataUrl) {
+      toast.error('QR code data URL is not available');
+      return;
+    }
+    
     navigator.clipboard.writeText(dataUrl)
       .then(() => toast.success('QR Code data URL copied to clipboard'))
       .catch(() => toast.error('Failed to copy QR Code data URL'));
@@ -46,7 +56,10 @@ const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({ qrCodes }) => {
   const handlePrint = async (id: string) => {
     try {
       const element = document.getElementById(`qr-template-${id}`);
-      if (!element) return;
+      if (!element) {
+        toast.error('QR code element not found');
+        return;
+      }
       
       const canvas = await html2canvas(element, {
         scale: 2, // Higher resolution
@@ -156,7 +169,7 @@ const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({ qrCodes }) => {
                   size="sm"
                   onClick={() => handleDownload(qrCode.dataUrl, qrCode.id, qrCode.sequentialNumber)}
                 >
-                  <ArrowDownload className="h-4 w-4 mr-1" /> Download
+                  <ArrowDown className="h-4 w-4 mr-1" /> Download
                 </Button>
                 <Button 
                   variant="outline" 

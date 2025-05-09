@@ -55,6 +55,7 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
   const [primaryColor, setPrimaryColor] = useState<string>('#3b82f6'); // blue-500
   const [secondaryColor, setSecondaryColor] = useState<string>('#8b5cf6'); // purple-500
+  const [previewQRCode, setPreviewQRCode] = useState<string | null>(null);
   
   const template = watch('template');
   const quantity = watch('quantity');
@@ -65,12 +66,38 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
     setValue('baseUrl', window.location.origin);
   }, [setValue]);
   
+  // Generate a preview QR code whenever template or colors change
+  useEffect(() => {
+    const generatePreview = async () => {
+      try {
+        const previewUrl = `${window.location.origin}/check?id=preview`;
+        const dataUrl = await generateQRCodeImage(previewUrl, {
+          template,
+          primaryColor,
+          secondaryColor,
+          size: 256
+        });
+        setPreviewQRCode(dataUrl);
+      } catch (error) {
+        console.error('Error generating preview QR code:', error);
+      }
+    };
+    
+    generatePreview();
+  }, [template, primaryColor, secondaryColor]);
+  
   const onSubmit = async (data: FormValues) => {
     if (isGenerating) return;
     
     try {
       setIsGenerating(true);
       console.log('Generating QR codes with data:', data);
+      
+      if (!data.productData || data.productData.trim() === '') {
+        toast.error('Please enter valid product data');
+        setIsGenerating(false);
+        return;
+      }
       
       // Create an array of QR codes based on quantity
       const qrCodes = [];
@@ -86,7 +113,11 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
         
         // Encrypt product data
         const encryptedData = await encryptData(data.productData);
-        console.log('Encrypted result:', encryptedData);
+        console.log('Encrypted result:', encryptedData, 'length:', encryptedData.length);
+        
+        if (!encryptedData || encryptedData.length < 10) {
+          throw new Error('Encryption failed or produced invalid output');
+        }
         
         // Generate QR Code with the URL that contains the ID
         const dataUrl = await generateQRCodeImage(url, {
@@ -95,6 +126,12 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
           secondaryColor,
           size: 300,
         });
+        
+        if (!dataUrl || !dataUrl.startsWith('data:image/png;base64,')) {
+          throw new Error('QR code generation failed or produced invalid data URL');
+        }
+        
+        console.log('Generated QR code data URL length:', dataUrl.length);
         
         qrCodes.push({
           id,
@@ -105,17 +142,17 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
           is_enabled: true,
           data_url: dataUrl,
           template: data.template,
-          header_text: data.headerText,
-          instruction_text: data.instructionText,
+          header_text: data.headerText || 'Product Authentication',
+          instruction_text: data.instructionText || 'Scan this QR code to verify the authenticity of your product',
           website_url: data.websiteUrl || null,
-          footer_text: data.footerText,
+          footer_text: data.footerText || 'Thank you for choosing our product',
           direction_rtl: data.isRTL
         });
       }
       
       // Save to database
       try {
-        console.log('Saving QR codes to database:', qrCodes);
+        console.log('Saving QR codes to database:', qrCodes.length, 'codes');
         
         // Insert into database
         const { error } = await supabase
@@ -124,7 +161,7 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
 
         if (error) {
           console.error('Error saving QR codes:', error);
-          toast.error('Failed to save QR codes to database');
+          toast.error(`Failed to save QR codes to database: ${error.message}`);
           return;
         }
 
@@ -137,13 +174,26 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
         
         if (counterError) {
           console.error('Error updating counter:', counterError);
-          // Continue anyway as QR codes were created
+          toast.warning('QR codes created but counter update failed');
         } else {
           console.log('Updated counter to:', counterData);
         }
         
+        // Map QR codes to match the expected format for the display component
+        const mappedQrCodes = qrCodes.map(qr => ({
+          id: qr.id,
+          sequentialNumber: qr.sequential_number,
+          dataUrl: qr.data_url,
+          template: qr.template,
+          headerText: qr.header_text,
+          instructionText: qr.instruction_text,
+          websiteUrl: qr.website_url,
+          footerText: qr.footer_text,
+          directionRTL: qr.direction_rtl
+        }));
+        
         toast.success(`Successfully generated ${data.quantity} QR code(s)`);
-        onQRCodesGenerated(qrCodes);
+        onQRCodesGenerated(mappedQrCodes);
         
       } catch (err) {
         console.error('Error in QR code generation process:', err);
@@ -152,7 +202,7 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
       
     } catch (err) {
       console.error('Error generating QR codes:', err);
-      toast.error('Failed to generate QR codes');
+      toast.error(`Failed to generate QR codes: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setIsGenerating(false);
     }
@@ -345,6 +395,7 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
                         primaryColor={primaryColor}
                         secondaryColor={secondaryColor}
                         size={256}
+                        qrCodeDataUrl={previewQRCode || undefined}
                       />
                     </div>
                   </div>

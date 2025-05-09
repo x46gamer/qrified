@@ -82,11 +82,15 @@ export const QRCodeTemplatePreview: React.FC<QRCodeTemplatePreviewProps> = ({
         )}
         
         {qrCodeDataUrl && (
-          <div className="w-full mb-3">
+          <div className="w-full mb-3 flex justify-center">
             <img 
               src={qrCodeDataUrl} 
               alt="QR Code" 
-              className="w-full max-w-[200px] mx-auto"
+              className="w-full max-w-[200px] mx-auto object-contain"
+              onError={(e) => {
+                console.error("Error loading QR code image");
+                (e.target as HTMLImageElement).src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2YwZjBmMCIgLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1zaXplPSIxNiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iIGZpbGw9IiM5OTkiPlFSIENvZGUgRXJyb3I8L3RleHQ+PC9zdmc+';
+              }}
             />
           </div>
         )}
