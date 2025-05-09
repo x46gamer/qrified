@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -8,7 +9,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import ReviewForm from '@/components/ReviewForm';
 import { useAppearanceSettings } from '@/contexts/AppearanceContext';
-import type { ThemeSettings } from '@/contexts/AppearanceContext';
 import { TemplateType } from '@/types/qrCode';
 
 const ProductCheck = () => {
@@ -102,6 +102,7 @@ const ProductCheck = () => {
     fetchQRCode();
   }, [qrId]);
   
+  // Helper functions
   const getBgColor = () => {
     if (isVerified === true) {
       return theme.successBackground || "#f0fdf4"; // green-50
