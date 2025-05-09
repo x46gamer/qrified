@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -123,21 +122,17 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ onQRCodesGenerated, l
         const url = `${window.location.origin}/check?id=${id}`;
         
         // Generate QR code as data URL
-        const dataUrl = await generateQRCode(url, {
-          primaryColor: theme.primaryColor,
-          secondaryColor: theme.secondaryColor
-        });
+        const dataUrl = await generateQRCode(url);
         
         // Create QR code object
         const qrCode: QRCode = {
           id,
-          sequentialNumber: currentSequentialNumber,
+          sequentialNumber: currentSequentialNumber.toString(), // Convert to string to match the new schema
           encryptedData,
           url,
           isScanned: false,
           isEnabled: true,
           createdAt: new Date().toISOString(),
-          scannedAt: null,
           dataUrl,
           template,
           headerText,
@@ -171,6 +166,7 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ onQRCodesGenerated, l
         );
         
         if (error) {
+          console.error('Error saving QR codes:', error);
           throw error;
         }
         

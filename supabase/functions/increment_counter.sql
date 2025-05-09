@@ -8,9 +8,11 @@ AS $$
 DECLARE
   new_value INTEGER;
 BEGIN
-  UPDATE sequence_counters
-  SET current_value = current_value + increment_by
-  WHERE id = counter_id
+  -- Update the counter value or insert if it doesn't exist
+  INSERT INTO sequence_counters (id, current_value)
+  VALUES (counter_id, increment_by)
+  ON CONFLICT (id) DO UPDATE
+  SET current_value = sequence_counters.current_value + increment_by
   RETURNING current_value INTO new_value;
   
   RETURN new_value;

@@ -12,7 +12,7 @@ export type TemplateType = 'classic' | 'modern-blue' | 'modern-beige' | 'arabic'
 
 export interface QRCode {
   id: string;
-  sequentialNumber: string | number;
+  sequentialNumber: string;
   encryptedData: string;
   url: string;
   isScanned: boolean;
@@ -20,7 +20,7 @@ export interface QRCode {
   createdAt: string;
   scannedAt?: string;
   dataUrl: string;
-  template: TemplateType;
+  template?: TemplateType;
   headerText?: string;
   instructionText?: string;
   websiteUrl?: string;

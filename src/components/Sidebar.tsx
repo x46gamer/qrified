@@ -1,196 +1,119 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { cn } from "@/lib/utils";
-import { 
-  LayoutDashboard, 
-  Settings, 
-  QrCode, 
-  FileText, 
-  BarChart3, 
-  Palette, 
-  ChevronRight, 
-  ChevronDown,
+import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+  LayoutGrid,
+  Settings,
   Users,
-  LogOut,
-  Menu
+  Palette,
+  BarChart3,
+  Menu,
+  Package,
+  LogOut
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { useSidebar } from '@/components/ui/sidebar';
 import { useAuth } from '@/contexts/AuthContext';
-import { Button } from './ui/button';
-import { Sidebar as SidebarComponent, SidebarContent, SidebarTrigger, useSidebar } from './ui/sidebar';
 
-interface SidebarItemProps {
-  icon: React.ElementType;
-  label: string;
-  href: string;
-  active?: boolean;
-  onClick?: () => void;
-  subItems?: Array<{ label: string; href: string }>;
-}
-
-const SidebarItem: React.FC<SidebarItemProps> = ({ 
-  icon: Icon, 
-  label, 
-  href, 
-  active, 
-  onClick,
-  subItems
-}) => {
-  const [expanded, setExpanded] = useState(false);
-  const { state } = useSidebar();
+const Sidebar = () => {
+  const location = useLocation();
+  const { isCollapsed, toggleCollapse } = useSidebar();
+  const { user, logout } = useAuth();
   
-  const hasSubItems = subItems && subItems.length > 0;
+  const isAdmin = user?.role === 'admin';
   
-  const toggleExpand = (e: React.MouseEvent) => {
-    if (hasSubItems) {
-      e.preventDefault();
-      setExpanded(!expanded);
-    }
-    if (onClick) onClick();
-  };
-
-  const isCollapsed = state === "collapsed";
+  const navigation = [
+    {
+      name: 'Dashboard',
+      href: '/dashboard',
+      icon: LayoutGrid,
+      current: location.pathname === '/dashboard'
+    },
+    {
+      name: 'Generate QR',
+      href: '/dashboard?tab=generate',
+      icon: Package,
+      current: location.pathname === '/dashboard' && (!location.search || location.search.includes('tab=generate'))
+    },
+    ...(isAdmin ? [
+      {
+        name: 'Manage QR',
+        href: '/dashboard?tab=manage',
+        icon: Settings,
+        current: location.pathname === '/dashboard' && location.search.includes('tab=manage')
+      },
+      {
+        name: 'Analytics',
+        href: '/dashboard?tab=analytics',
+        icon: BarChart3,
+        current: location.pathname === '/dashboard' && location.search.includes('tab=analytics')
+      },
+      {
+        name: 'Team',
+        href: '/dashboard?tab=team',
+        icon: Users,
+        current: location.pathname === '/dashboard' && location.search.includes('tab=team')
+      },
+      {
+        name: 'Customize',
+        href: '/customize',
+        icon: Palette,
+        current: location.pathname === '/customize'
+      }
+    ] : [])
+  ];
 
   return (
-    <div className="mb-1">
-      <Link 
-        to={href}
-        className={cn(
-          "flex items-center gap-3 px-3 py-2 rounded-md w-full transition-all",
-          active 
-            ? "bg-gradient-to-r from-blue-500/90 to-violet-500/90 text-white shadow-md" 
-            : "hover:bg-white/60 text-gray-700 hover:text-blue-600",
+    <div className={cn(
+      "flex flex-col border-r bg-background transition-all duration-300 ease-in-out",
+      isCollapsed ? "w-16" : "w-64"
+    )}>
+      <div className="flex items-center justify-between p-4 h-16">
+        {!isCollapsed && (
+          <span className="text-xl font-semibold bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent">
+            seQRity
+          </span>
         )}
-        onClick={toggleExpand}
-      >
-        <Icon className={cn("h-5 w-5", active ? "text-white" : "text-blue-500")} />
-        {!isCollapsed && <span className="flex-grow font-medium">{label}</span>}
-        {hasSubItems && !isCollapsed && (
-          expanded ? (
-            <ChevronDown className="h-4 w-4" />
-          ) : (
-            <ChevronRight className="h-4 w-4" />
-          )
-        )}
-      </Link>
+        <Button variant="ghost" size="icon" onClick={toggleCollapse} className="ml-auto">
+          <Menu className="h-5 w-5" />
+        </Button>
+      </div>
       
-      {hasSubItems && expanded && !isCollapsed && (
-        <div className="ml-8 mt-1 space-y-1 border-l-2 border-blue-200 pl-2">
-          {subItems.map((item, i) => (
+      <ScrollArea className="flex-1">
+        <nav className="flex flex-col gap-1 p-2">
+          {navigation.map((item) => (
             <Link
-              key={i}
+              key={item.name}
               to={item.href}
-              className="flex items-center py-1.5 px-2 text-sm text-gray-600 hover:text-blue-600 hover:bg-white/60 rounded transition-colors"
+              className={cn(
+                "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-all hover:bg-accent",
+                item.current ? "bg-accent text-accent-foreground" : "text-muted-foreground",
+                isCollapsed ? "justify-center" : ""
+              )}
             >
-              {item.label}
+              <item.icon className={cn("h-5 w-5", item.current && "text-blue-600")} />
+              {!isCollapsed && <span>{item.name}</span>}
             </Link>
           ))}
-        </div>
-      )}
-    </div>
-  );
-};
-
-const Sidebar: React.FC = () => {
-  const location = useLocation();
-  const { user, logout } = useAuth();
-  const isAdmin = user?.role === 'admin';
-  const { state, toggleSidebar } = useSidebar();
-  
-  const isActive = (path: string) => {
-    return location.pathname === path;
-  };
-
-  const isDashboardTabActive = (tab: string) => {
-    return location.pathname === '/dashboard' && location.search.includes(`tab=${tab}`);
-  };
-
-  return (
-    <SidebarComponent>
-      <SidebarContent className="pt-6 px-2">
+        </nav>
+      </ScrollArea>
+      
+      <div className="border-t p-4">
         <Button 
           variant="ghost" 
-          size="icon"
-          className="mb-4 ml-2"
-          onClick={toggleSidebar}
-        >
-          <Menu className="h-5 w-5" />
-          <span className="sr-only">Toggle sidebar</span>
-        </Button>
-        
-        <div className="space-y-1">
-          <SidebarItem 
-            icon={LayoutDashboard} 
-            label="Dashboard" 
-            href="/dashboard" 
-            active={isActive('/dashboard') && !location.search.includes('tab=')}
-          />
-          
-          <SidebarItem 
-            icon={QrCode} 
-            label="QR Codes" 
-            href="/dashboard?tab=generate" 
-            subItems={[
-              { label: 'Generate', href: '/dashboard?tab=generate' },
-              { label: 'Manage', href: '/dashboard?tab=manage' },
-            ]}
-            active={isDashboardTabActive('generate') || isDashboardTabActive('manage')}
-          />
-          
-          {isAdmin && (
-            <>
-              <SidebarItem 
-                icon={Palette} 
-                label="Appearance" 
-                href="/dashboard?tab=customize" 
-                active={isDashboardTabActive('customize')}
-              />
-            
-              <SidebarItem 
-                icon={BarChart3} 
-                label="Analytics" 
-                href="/dashboard?tab=analytics" 
-                active={isDashboardTabActive('analytics')}
-              />
-
-              <SidebarItem 
-                icon={Users} 
-                label="Team" 
-                href="/dashboard?tab=team" 
-                active={isDashboardTabActive('team')}
-              />
-            </>
+          onClick={logout}
+          className={cn(
+            "flex items-center gap-2 w-full", 
+            isCollapsed ? "justify-center" : "justify-start"
           )}
-          
-          <SidebarItem 
-            icon={Settings} 
-            label="Settings" 
-            href="/dashboard?tab=settings" 
-            subItems={[
-              { label: 'Profile', href: '/dashboard?tab=settings&section=profile' },
-              { label: 'About', href: '/about' },
-              { label: 'FAQ', href: '/faq' },
-              { label: 'Contact', href: '/contact' },
-            ]}
-            active={isDashboardTabActive('settings')}
-          />
-          
-          <div className="mt-auto pt-4">
-            <Button 
-              variant="ghost" 
-              className={cn(
-                "flex w-full items-center gap-3 px-3 py-2 rounded-md transition-all text-gray-700 hover:text-red-600 hover:bg-white/60",
-                state === "collapsed" ? "justify-center" : "justify-start"
-              )}
-              onClick={logout}
-            >
-              <LogOut className="h-5 w-5" />
-              {state !== "collapsed" && <span>Log out</span>}
-            </Button>
-          </div>
-        </div>
-      </SidebarContent>
-    </SidebarComponent>
+        >
+          <LogOut className="h-4 w-4" />
+          {!isCollapsed && <span>Logout</span>}
+        </Button>
+      </div>
+    </div>
   );
 };
 
