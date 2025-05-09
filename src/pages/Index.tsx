@@ -11,7 +11,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from "sonner";
 import { TemplateType } from '@/components/QRCodeTemplates';
 import { useAuth } from '@/contexts/AuthContext';
-import { Link } from 'react-router-dom';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 
 const Index = () => {
   const [qrCodes, setQRCodes] = useState<QRCode[]>([]);
@@ -144,9 +147,7 @@ const Index = () => {
           <TabsTrigger value="manage">Manage</TabsTrigger>
           <TabsTrigger value="customize">Customize</TabsTrigger>
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
-          <Link to="/settings" className="flex items-center justify-center text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 rounded-md">
-            Settings
-          </Link>
+          <TabsTrigger value="settings">Settings</TabsTrigger>
         </TabsList>
       );
     } else {
@@ -196,6 +197,69 @@ const Index = () => {
             
             <TabsContent value="analytics">
               <QRCodeAnalytics qrCodes={qrCodes} />
+            </TabsContent>
+            
+            <TabsContent value="settings">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Admin Settings</CardTitle>
+                  <CardDescription>Manage your team and system settings</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-4">
+                    <div className="border rounded-lg p-4">
+                      <div className="flex justify-between items-center mb-2">
+                        <div>
+                          <h3 className="font-medium">Team Management</h3>
+                          <p className="text-sm text-gray-500">Add, edit or remove team members</p>
+                        </div>
+                      </div>
+                      <div className="mt-4 border-t pt-4">
+                        <div className="flex justify-between items-center mb-3">
+                          <div>
+                            <h4 className="font-medium">Employee User</h4>
+                            <p className="text-sm text-gray-500">employee@example.com</p>
+                          </div>
+                          <Button variant="outline" size="sm">Manage</Button>
+                        </div>
+                        
+                        <div className="mt-4">
+                          <Label htmlFor="new-member">Add Team Member</Label>
+                          <div className="flex gap-2 mt-1">
+                            <Input id="new-member" placeholder="Email address" />
+                            <Button>Add</Button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="border rounded-lg p-4">
+                      <h3 className="font-medium mb-2">System Settings</h3>
+                      <div className="space-y-4">
+                        <div>
+                          <Label htmlFor="company-name">Company Name</Label>
+                          <Input id="company-name" defaultValue="My Company" className="mt-1" />
+                        </div>
+                        
+                        <div>
+                          <Label htmlFor="default-template">Default QR Template</Label>
+                          <select 
+                            id="default-template"
+                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 mt-1"
+                          >
+                            <option value="classic">Classic</option>
+                            <option value="modern-blue">Modern Blue</option>
+                            <option value="modern-beige">Modern Beige</option>
+                            <option value="arabic">Arabic</option>
+                          </select>
+                        </div>
+                        
+                        <Button>Save Settings</Button>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </TabsContent>
           </>
         )}

@@ -28,6 +28,14 @@ const App = () => (
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
             
+            {/* Allow product-check without login */}
+            <Route path="/product-check" element={
+              <>
+                <Header />
+                <ProductCheck />
+              </>
+            } />
+            
             <Route path="/" element={
               <AuthGuard>
                 <>
@@ -37,29 +45,11 @@ const App = () => (
               </AuthGuard>
             } />
             
-            <Route path="/product-check" element={
-              <AuthGuard>
-                <>
-                  <Header />
-                  <ProductCheck />
-                </>
-              </AuthGuard>
-            } />
-            
             <Route path="/admin/feedback" element={
               <AuthGuard requiredRole="admin">
                 <>
                   <Header />
                   <AdminFeedback />
-                </>
-              </AuthGuard>
-            } />
-            
-            <Route path="/settings" element={
-              <AuthGuard requiredRole="admin">
-                <>
-                  <Header />
-                  <Settings />
                 </>
               </AuthGuard>
             } />

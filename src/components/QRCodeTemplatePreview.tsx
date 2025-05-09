@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { TemplateType } from './QRCodeTemplates';
 
@@ -26,38 +27,38 @@ const QRCodeTemplatePreview: React.FC<QRCodeTemplatePreviewProps> = ({
       case 'modern-blue':
         return {
           bgColor: 'bg-blue-100',
-          headerClass: 'text-3xl font-bold uppercase',
-          instructionClass: 'text-xl',
-          websiteClass: 'font-medium',
-          footerClass: 'bg-black text-white font-medium py-2 px-4 rounded-md',
+          headerClass: 'text-3xl font-bold uppercase mb-2',
+          instructionClass: 'text-xl mb-1',
+          websiteClass: 'font-medium mb-2',
+          footerClass: 'bg-black text-white font-medium py-2 px-4 rounded-md mt-2',
           containerClass: 'p-6 rounded-lg'
         };
       case 'modern-beige':
         return {
           bgColor: 'bg-amber-50',
-          headerClass: 'text-3xl font-bold uppercase',
-          instructionClass: 'text-xl',
-          websiteClass: 'font-medium',
-          footerClass: 'bg-black text-white font-medium py-2 px-4 rounded-md',
+          headerClass: 'text-3xl font-bold uppercase mb-2',
+          instructionClass: 'text-xl mb-1',
+          websiteClass: 'font-medium mb-2',
+          footerClass: 'bg-black text-white font-medium py-2 px-4 rounded-md mt-2',
           containerClass: 'p-6 rounded-lg'
         };
       case 'arabic':
         return {
           bgColor: 'bg-amber-50',
-          headerClass: 'text-3xl font-bold',
-          instructionClass: 'text-xl',
-          websiteClass: 'font-medium',
-          footerClass: 'bg-green-800 text-white font-medium py-2 px-4 rounded-md',
+          headerClass: 'text-3xl font-bold mb-2',
+          instructionClass: 'text-xl mb-1',
+          websiteClass: 'font-medium mb-2',
+          footerClass: 'bg-green-800 text-white font-medium py-2 px-4 rounded-md mt-2',
           containerClass: 'p-6 rounded-lg border-4 border-brown-600 rounded-xl'
         };
       case 'classic':
       default:
         return {
           bgColor: 'bg-white',
-          headerClass: 'text-2xl font-bold',
-          instructionClass: 'text-lg',
-          websiteClass: 'font-normal',
-          footerClass: 'bg-gray-800 text-white py-2 px-4',
+          headerClass: 'text-2xl font-bold mb-2',
+          instructionClass: 'text-lg mb-1',
+          websiteClass: 'font-normal mb-2',
+          footerClass: 'bg-gray-800 text-white py-2 px-4 mt-2',
           containerClass: 'p-4'
         };
     }
@@ -67,7 +68,7 @@ const QRCodeTemplatePreview: React.FC<QRCodeTemplatePreviewProps> = ({
   
   return (
     <div className={`w-full ${styles.bgColor} ${styles.containerClass} ${directionRTL ? 'rtl' : 'ltr'}`}>
-      <div className="flex flex-col items-center gap-4 max-w-xs mx-auto">
+      <div className="flex flex-col items-center gap-3 max-w-xs mx-auto">
         {headerText && (
           <div className={`text-center ${styles.headerClass}`}>
             {headerText}
@@ -75,7 +76,7 @@ const QRCodeTemplatePreview: React.FC<QRCodeTemplatePreviewProps> = ({
         )}
         
         {qrCodeDataUrl && (
-          <div className="w-full">
+          <div className="w-full mb-2">
             <img 
               src={qrCodeDataUrl} 
               alt="QR Code" 
