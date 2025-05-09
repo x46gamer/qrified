@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -19,7 +18,7 @@ const Settings = () => {
   const isAdmin = profile?.role === 'admin';
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = searchParams.get('section') || 'general';
-  const { primaryColor, secondaryColor, updateSettings } = useAppearanceSettings();
+  const { primaryColor, secondaryColor, setTheme } = useAppearanceSettings();
   
   const [companyName, setCompanyName] = useState('My Company');
   const [defaultTemplate, setDefaultTemplate] = useState('classic');
@@ -61,6 +60,12 @@ const Settings = () => {
       if (error) {
         throw error;
       }
+      
+      // Update the theme
+      setTheme({
+        primaryColor,
+        secondaryColor
+      });
       
       toast.success('Settings saved successfully');
     } catch (error) {
@@ -124,7 +129,7 @@ const Settings = () => {
                     id="primary-color" 
                     type="color" 
                     value={primaryColor || '#000000'} 
-                    onChange={(e) => updateSettings({ primaryColor: e.target.value })}
+                    onChange={(e) => setTheme({ primaryColor: e.target.value, secondaryColor })}
                     className="h-10 p-1"
                   />
                 </div>
@@ -135,7 +140,7 @@ const Settings = () => {
                     id="secondary-color" 
                     type="color" 
                     value={secondaryColor || '#FFFFFF'} 
-                    onChange={(e) => updateSettings({ secondaryColor: e.target.value })}
+                    onChange={(e) => setTheme({ primaryColor, secondaryColor: e.target.value })}
                     className="h-10 p-1"
                   />
                 </div>

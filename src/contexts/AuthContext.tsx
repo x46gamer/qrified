@@ -44,7 +44,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return null;
       }
       
-      return data as UserProfile;
+      // Make sure to cast the role to UserRole type
+      return {
+        ...data,
+        role: data.role as UserRole
+      } as UserProfile;
     } catch (error) {
       console.error('Exception fetching user profile:', error);
       return null;

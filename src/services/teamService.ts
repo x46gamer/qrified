@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 export interface UserProfile {
   id: string;
-  display_name: string;
+  display_name: string | null;
   role: 'admin' | 'employee';
   created_at: string;
   updated_at: string;
@@ -37,7 +37,11 @@ export const teamService = {
       throw error;
     }
     
-    return data || [];
+    // Cast the data to ensure it matches our UserProfile interface
+    return (data || []).map(item => ({
+      ...item,
+      role: item.role as 'admin' | 'employee'
+    }));
   },
   
   // Get all pending invites
@@ -52,7 +56,12 @@ export const teamService = {
       throw error;
     }
     
-    return data || [];
+    // Cast the data to ensure it matches our UserInvite interface
+    return (data || []).map(item => ({
+      ...item,
+      role: item.role as 'admin' | 'employee',
+      permissions: item.permissions as UserInvite['permissions']
+    }));
   },
   
   // Send a new invite
@@ -67,13 +76,20 @@ export const teamService = {
       analytics: role === 'admin'
     };
     
+    // Get current user ID
+    const { data: userData } = await supabase.auth.getUser();
+    if (!userData.user) {
+      throw new Error('User not authenticated');
+    }
+    
     const { data, error } = await supabase
       .from('user_invites')
       .insert({
         email,
         token,
         role,
-        permissions
+        permissions,
+        invited_by: userData.user.id
       })
       .select()
       .single();
@@ -91,7 +107,12 @@ export const teamService = {
       console.error('Error sending invite email:', error);
     }
     
-    return data;
+    // Cast the data to ensure it matches our UserInvite interface
+    return {
+      ...data,
+      role: data.role as 'admin' | 'employee',
+      permissions: data.permissions as UserInvite['permissions']
+    };
   },
   
   // Resend an invitation
