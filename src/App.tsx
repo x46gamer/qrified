@@ -13,6 +13,7 @@ import BlogPage from './pages/BlogPage';
 import ProductCheck from './pages/ProductCheck';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
+import ForgotPassword from './pages/ForgotPassword';
 import NotFound from './pages/NotFound';
 import AuthGuard from './components/AuthGuard';
 import { Toaster } from 'sonner';
@@ -38,6 +39,7 @@ function App() {
             <Route path="/check" element={<ProductCheck />} />
             <Route path="/login" element={<AppLayout><Login /></AppLayout>} />
             <Route path="/signup" element={<AppLayout><Signup /></AppLayout>} />
+            <Route path="/forgot-password" element={<AppLayout><ForgotPassword /></AppLayout>} />
             <Route
               path="/dashboard"
               element={
