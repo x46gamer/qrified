@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { useAuth } from '../contexts/AuthContext';
 import { MenuIcon, X, ChevronLeft, ChevronRight, LogOut } from 'lucide-react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { SidebarTrigger, useSidebar } from './ui/sidebar';
 import { toast } from 'sonner';
@@ -12,17 +12,15 @@ const Header: React.FC = () => {
   const { user, logout } = useAuth();
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const location = useLocation();
-  const isAdminPage = location.pathname.startsWith('/admin');
   
-  // Only use sidebar context when not on admin pages
-  const sidebarContext = !isAdminPage ? React.useContext(
+  // Conditionally use useSidebar hook only when it's wrapped in SidebarProvider
+  // This prevents errors when Header is used outside of a SidebarProvider context
+  const sidebarContext = React.useContext(
     // @ts-ignore - This is just to check if the context exists
     React.createContext(null, () => {
       throw new Error("useSidebar must be used within a SidebarProvider.");
     })
-  ) : null;
-  
+  );
   const sidebar = sidebarContext ? useSidebar() : { state: null, toggleSidebar: () => {} };
   const { state, toggleSidebar } = sidebar;
   const isExpanded = state === 'expanded';
@@ -60,7 +58,7 @@ const Header: React.FC = () => {
         : "bg-white/80 backdrop-blur-sm border-b border-gray-100 py-4"
     )}>
       <div className="container mx-auto flex items-center px-4">
-        {user && state !== null && !isAdminPage && (
+        {user && state !== null && (
           <Button 
             variant="ghost" 
             size="icon" 
@@ -84,8 +82,7 @@ const Header: React.FC = () => {
         </div>
         
         <div className="md:flex items-center gap-3 hidden">
-          {/* Only show auth buttons on non-admin pages */}
-          {!user && !isAdminPage && (
+          {!user && (
             <>
               <Button variant="ghost" size="sm" asChild>
                 <Link to="/login">Login</Link>
@@ -95,7 +92,7 @@ const Header: React.FC = () => {
               </Button>
             </>
           )}
-          {user && !isAdminPage && (
+          {user && (
             <Button 
               variant="ghost" 
               size="sm"
@@ -108,16 +105,16 @@ const Header: React.FC = () => {
           )}
         </div>
         
-        {/* Mobile menu button - only show for non-logged in users on non-admin pages */}
-        {!user && !isAdminPage && (
+        {/* Mobile menu button - only show for non-logged in users */}
+        {!user && (
           <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
             {mobileMenuOpen ? <X size={20} /> : <MenuIcon size={20} />}
           </Button>
         )}
       </div>
       
-      {/* Mobile menu - only for non-logged in users on non-admin pages */}
-      {mobileMenuOpen && !user && !isAdminPage && (
+      {/* Mobile menu - only for non-logged in users */}
+      {mobileMenuOpen && !user && (
         <div className="md:hidden bg-white border-b border-gray-100 shadow-lg animate-fade-in">
           <div className="container mx-auto py-4 px-4 space-y-3">
             <Button variant="ghost" size="sm" className="w-full justify-start" asChild>

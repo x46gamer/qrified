@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, UserRole } from '../types/auth';
 import { supabase } from '../integrations/supabase/client';
@@ -46,44 +45,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         setSession(session);
         if (session?.user) {
-          try {
-            // Fetch user role from profile
-            const { data: profileData, error: profileError } = await supabase
-              .from('user_profiles')
-              .select('role')
-              .eq('id', session.user.id)
-              .maybeSingle();
-              
-            // Convert string role to UserRole type
-            let userRole: UserRole = null;
-            if (profileData?.role === 'admin' || profileData?.role === 'employee') {
-              userRole = profileData.role;
-            }
-              
-            const userData: User = {
-              id: session.user.id,
-              role: userRole,
-              name: session.user.user_metadata.name || session.user.email?.split('@')[0] || 'User',
-              email: session.user.email || '',
-            };
-            
-            setUser(userData);
-            localStorage.setItem('qrauth_user', JSON.stringify(userData));
-          } catch (error) {
-            console.error('Error fetching user profile:', error);
-            // Set basic user info if profile fetch fails
-            const userData: User = {
-              id: session.user.id,
-              role: 'employee', // Default role if we can't determine it
-              name: session.user.user_metadata.name || session.user.email?.split('@')[0] || 'User',
-              email: session.user.email || '',
-            };
-            setUser(userData);
-            localStorage.setItem('qrauth_user', JSON.stringify(userData));
-          }
+          const userData: User = {
+            id: session.user.id,
+            role: 'admin', // Default role, should be fetched from profiles
+            name: session.user.user_metadata.name || session.user.email?.split('@')[0] || 'User',
+            email: session.user.email || '',
+          };
+          setUser(userData);
+          localStorage.setItem('qrauth_user', JSON.stringify(userData));
         } else {
           setUser(null);
           localStorage.removeItem('qrauth_user');
@@ -98,41 +70,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setSession(session);
         
         if (session?.user) {
-          try {
-            // Fetch user role from profile
-            const { data: profileData, error: profileError } = await supabase
-              .from('user_profiles')
-              .select('role')
-              .eq('id', session.user.id)
-              .maybeSingle();
-              
-            // Convert string role to UserRole type
-            let userRole: UserRole = null;
-            if (profileData?.role === 'admin' || profileData?.role === 'employee') {
-              userRole = profileData.role;
-            }
-            
-            const userData: User = {
-              id: session.user.id,
-              role: userRole,
-              name: session.user.user_metadata.name || session.user.email?.split('@')[0] || 'User',
-              email: session.user.email || '',
-            };
-            
-            setUser(userData);
-            localStorage.setItem('qrauth_user', JSON.stringify(userData));
-          } catch (error) {
-            console.error('Error fetching user profile:', error);
-            // Set basic user info if profile fetch fails
-            const userData: User = {
-              id: session.user.id,
-              role: 'employee', // Default role if we can't determine it
-              name: session.user.user_metadata.name || session.user.email?.split('@')[0] || 'User',
-              email: session.user.email || '',
-            };
-            setUser(userData);
-            localStorage.setItem('qrauth_user', JSON.stringify(userData));
-          }
+          const userData: User = {
+            id: session.user.id,
+            role: 'admin', // Default role, should be fetched from profiles
+            name: session.user.user_metadata.name || session.user.email?.split('@')[0] || 'User',
+            email: session.user.email || '',
+          };
+          setUser(userData);
+          localStorage.setItem('qrauth_user', JSON.stringify(userData));
         } else {
           // Check if user is already logged in from localStorage (for demo login)
           const storedUser = localStorage.getItem('qrauth_user');

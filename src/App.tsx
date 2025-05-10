@@ -1,5 +1,5 @@
 
-import { BrowserRouter, Route, Routes, Navigate } from 'react-router-dom';
+import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import LandingPage from './pages/LandingPage';
 import Index from './pages/Index';
 import CustomizeApp from './pages/CustomizeApp';
@@ -47,30 +47,9 @@ function App() {
             <Route path="/check" element={<ProductCheck />} />
             
             {/* Authentication routes - only for non-authenticated users */}
-            <Route 
-              path="/login" 
-              element={
-                <AuthGuard allowPublic={true} redirectTo="/dashboard">
-                  <AppLayout><Login /></AppLayout>
-                </AuthGuard>
-              } 
-            />
-            <Route 
-              path="/signup" 
-              element={
-                <AuthGuard allowPublic={true} redirectTo="/dashboard">
-                  <AppLayout><Signup /></AppLayout>
-                </AuthGuard>
-              } 
-            />
-            <Route 
-              path="/forgot-password" 
-              element={
-                <AuthGuard allowPublic={true} redirectTo="/dashboard">
-                  <AppLayout><ForgotPassword /></AppLayout>
-                </AuthGuard>
-              } 
-            />
+            <Route path="/login" element={<AppLayout><Login /></AppLayout>} />
+            <Route path="/signup" element={<AppLayout><Signup /></AppLayout>} />
+            <Route path="/forgot-password" element={<AppLayout><ForgotPassword /></AppLayout>} />
             
             {/* Admin routes - completely separated auth system */}
             <Route path="/admin" element={<AdminLogin />} />
