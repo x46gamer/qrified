@@ -7,9 +7,10 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from '@/contexts/AuthContext';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 const AdminLogin = () => {
-  const { signIn, isAuthenticated, user } = useAuth();
+  const { login, isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState('soufian3hm@gmail.com');
   const [password, setPassword] = useState('');
@@ -50,7 +51,7 @@ const AdminLogin = () => {
     setLoading(true);
     
     try {
-      const { error } = await signIn(email, password);
+      const { error } = await login(email, password);
       
       if (error) {
         toast.error("Login failed. Please check your credentials.");
