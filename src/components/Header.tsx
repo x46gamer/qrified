@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { useAuth } from '../contexts/AuthContext';
-import { MenuIcon, X, PanelLeft, PanelRight } from 'lucide-react';
+import { MenuIcon, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { SidebarTrigger, useSidebar } from './ui/sidebar';
@@ -54,9 +54,10 @@ const Header: React.FC = () => {
             size="icon" 
             onClick={toggleSidebar} 
             className="mr-2"
+            title={isExpanded ? "Collapse sidebar" : "Expand sidebar"}
           >
-            {isExpanded ? <PanelLeft size={20} /> : <PanelRight size={20} />}
-            <span className="sr-only">Toggle Sidebar</span>
+            {isExpanded ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
+            <span className="sr-only">{isExpanded ? "Collapse Sidebar" : "Expand Sidebar"}</span>
           </Button>
         )}
         

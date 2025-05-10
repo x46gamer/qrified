@@ -229,6 +229,33 @@ export type Database = {
         }
         Relationships: []
       }
+      user_limits: {
+        Row: {
+          created_at: string
+          id: string
+          qr_created: number
+          qr_limit: number
+          qr_successful: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id: string
+          qr_created?: number
+          qr_limit?: number
+          qr_successful?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          qr_created?: number
+          qr_limit?: number
+          qr_successful?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_profiles: {
         Row: {
           created_at: string

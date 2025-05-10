@@ -1,14 +1,23 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { useSidebar } from '@/components/ui/sidebar';
 import { NavLink, useLocation } from 'react-router-dom';
-import { LayoutDashboard, QrCode, Brush, Settings, Users, Globe, LineChart, MessageSquare } from 'lucide-react';
+import { LayoutDashboard, QrCode, Brush, Settings, Users, Globe, LineChart, MessageSquare, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from './ui/button';
+import { Progress } from './ui/progress';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface SidebarProps {
   className?: string;
+}
+
+interface UserLimits {
+  qr_limit: number;
+  qr_created: number;
+  qr_successful: number;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
@@ -23,6 +32,35 @@ const Sidebar: React.FC<SidebarProps> = ({
   const location = useLocation();
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
+  const [userLimits, setUserLimits] = useState<UserLimits | null>(null);
+  
+  useEffect(() => {
+    if (user?.id) {
+      fetchUserLimits();
+    }
+  }, [user?.id]);
+  
+  const fetchUserLimits = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('user_limits')
+        .select('qr_limit, qr_created, qr_successful')
+        .eq('id', user?.id)
+        .single();
+        
+      if (error) {
+        console.error('Error fetching user limits:', error);
+        return;
+      }
+      
+      setUserLimits(data);
+    } catch (err) {
+      console.error('Error in fetch user limits:', err);
+    }
+  };
+  
+  const remainingQrCodes = userLimits ? userLimits.qr_limit - userLimits.qr_created : 0;
+  const qrCodePercentage = userLimits ? (userLimits.qr_created / userLimits.qr_limit) * 100 : 0;
   
   return (
     <div className={cn('flex flex-col h-full bg-white border-r transition-all duration-300', isOpen ? 'w-64' : 'w-[70px]', className)}>
@@ -111,6 +149,15 @@ const Sidebar: React.FC<SidebarProps> = ({
             </span>
           </NavLink>}
 
+          {isAdmin && <NavLink to="/admin" className={({
+            isActive
+          }) => cn("flex items-center py-2 px-3 rounded-lg text-sm", isActive ? "bg-blue-50 text-blue-600" : "text-gray-700 hover:bg-gray-100")}>
+            <Settings size={20} className="shrink-0" />
+            <span className={cn("ml-3 transition-opacity duration-300", isOpen ? "opacity-100" : "opacity-0")}>
+              Admin
+            </span>
+          </NavLink>}
+
           <NavLink to="/settings" className={({
             isActive
           }) => cn("flex items-center py-2 px-3 rounded-lg text-sm", isActive ? "bg-blue-50 text-blue-600" : "text-gray-700 hover:bg-gray-100")}>
@@ -121,6 +168,20 @@ const Sidebar: React.FC<SidebarProps> = ({
           </NavLink>
         </nav>
       </div>
+      
+      {/* QR Code Limits */}
+      {user && userLimits && (
+        <div className={cn("px-3 py-4 border-t", isOpen ? "" : "px-2")}>
+          <div className={cn("transition-opacity duration-300", isOpen ? "opacity-100" : "opacity-0")}>
+            <div className="flex justify-between items-center mb-1">
+              <span className="text-xs font-medium text-gray-600">QR Codes Monthly</span>
+              <span className="text-xs font-medium text-gray-600">{remainingQrCodes}/{userLimits.qr_limit}</span>
+            </div>
+          </div>
+          <Progress value={qrCodePercentage} className={cn("h-2", qrCodePercentage > 80 ? "bg-red-100" : "bg-blue-100")} />
+        </div>
+      )}
+      
       <div className={cn("border-t p-3", isOpen ? "text-left" : "text-center")}>
         <div className="flex items-center">
           <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center uppercase text-gray-600 font-medium">
