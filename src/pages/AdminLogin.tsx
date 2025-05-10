@@ -58,6 +58,21 @@ const AdminLogin = () => {
         return;
       }
       
+      // Sign out any existing user first
+      try {
+        await supabase.auth.signOut({ scope: 'global' });
+      } catch (err) {
+        // Continue even if this fails
+      }
+      
+      // Clear any existing auth state
+      localStorage.removeItem('qrauth_user');
+      Object.keys(localStorage).forEach((key) => {
+        if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+          localStorage.removeItem(key);
+        }
+      });
+      
       // Direct Supabase login instead of using auth context
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -84,6 +99,15 @@ const AdminLogin = () => {
         setLoading(false);
         return;
       }
+      
+      // Store admin user info
+      const adminUser = {
+        id: data.user.id,
+        role: 'admin',
+        name: 'Admin User',
+        email: data.user.email,
+      };
+      localStorage.setItem('qrauth_user', JSON.stringify(adminUser));
       
       toast.success("Welcome back, Admin!");
       navigate('/admin/dashboard');
@@ -115,6 +139,7 @@ const AdminLogin = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                readOnly
               />
             </div>
             <div className="space-y-2">
