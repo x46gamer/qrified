@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 
 const AdminLogin = () => {
-  const { login, isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState('soufian3hm@gmail.com');
   const [password, setPassword] = useState('');
@@ -51,10 +51,22 @@ const AdminLogin = () => {
     setLoading(true);
     
     try {
-      const { error } = await login(email, password);
+      // Only allow the specific admin email
+      if (email !== 'soufian3hm@gmail.com') {
+        toast.error("Access denied. Admin privileges required.");
+        setLoading(false);
+        return;
+      }
+      
+      // Direct Supabase login instead of using auth context
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
       
       if (error) {
         toast.error("Login failed. Please check your credentials.");
+        setLoading(false);
         return;
       }
       
@@ -62,13 +74,14 @@ const AdminLogin = () => {
       const { data: userProfile, error: profileError } = await supabase
         .from('user_profiles')
         .select('role')
-        .eq('id', (await supabase.auth.getUser()).data.user?.id)
+        .eq('id', data.user.id)
         .single();
       
       if (profileError || userProfile?.role !== 'admin') {
         toast.error("Access denied. Admin privileges required.");
         // Sign out the user since they're not an admin
         await supabase.auth.signOut();
+        setLoading(false);
         return;
       }
       

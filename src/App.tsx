@@ -35,6 +35,7 @@ function App() {
       <AppearanceSettingsProvider>
         <BrowserRouter>
           <Routes>
+            {/* Public routes - accessible to all users */}
             <Route path="/" element={<LandingPage />} />
             <Route path="/about" element={<AppLayout><AboutPage /></AppLayout>} />
             <Route path="/faq" element={<AppLayout><FAQPage /></AppLayout>} />
@@ -44,11 +45,13 @@ function App() {
             <Route path="/contact" element={<AppLayout><ContactPage /></AppLayout>} />
             <Route path="/blog" element={<AppLayout><BlogPage /></AppLayout>} />
             <Route path="/check" element={<ProductCheck />} />
+            
+            {/* Authentication routes - only for non-authenticated users */}
             <Route path="/login" element={<AppLayout><Login /></AppLayout>} />
             <Route path="/signup" element={<AppLayout><Signup /></AppLayout>} />
             <Route path="/forgot-password" element={<AppLayout><ForgotPassword /></AppLayout>} />
             
-            {/* Admin Routes */}
+            {/* Admin routes - completely separated auth system */}
             <Route path="/admin" element={<AdminLogin />} />
             <Route
               path="/admin/dashboard"
@@ -61,7 +64,7 @@ function App() {
               }
             />
             
-            {/* Dashboard Routes */}
+            {/* Dashboard routes - for authenticated users */}
             <Route
               path="/dashboard"
               element={

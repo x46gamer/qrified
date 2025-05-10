@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { useSidebar } from '@/components/ui/sidebar';
 import { NavLink, useLocation } from 'react-router-dom';
-import { LayoutDashboard, QrCode, Brush, Settings, Users, Globe, LineChart, MessageSquare, ChevronLeft, ChevronRight } from 'lucide-react';
+import { LayoutDashboard, QrCode, Brush, Settings, Users, Globe, LineChart, MessageSquare, ChevronLeft, ChevronRight, LogOut } from 'lucide-react';
 import { Button } from './ui/button';
 import { Progress } from './ui/progress';
 import { useAuth } from '@/contexts/AuthContext';
@@ -30,7 +30,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   
   const isOpen = state === 'expanded';
   const location = useLocation();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const isAdmin = user?.role === 'admin';
   const [userLimits, setUserLimits] = useState<UserLimits | null>(null);
   
@@ -56,6 +56,15 @@ const Sidebar: React.FC<SidebarProps> = ({
       setUserLimits(data);
     } catch (err) {
       console.error('Error in fetch user limits:', err);
+    }
+  };
+  
+  const handleLogout = async () => {
+    try {
+      await logout();
+      toast.success('Logged out successfully');
+    } catch (error) {
+      toast.error('Failed to log out');
     }
   };
   
@@ -149,15 +158,6 @@ const Sidebar: React.FC<SidebarProps> = ({
             </span>
           </NavLink>}
 
-          {isAdmin && <NavLink to="/admin" className={({
-            isActive
-          }) => cn("flex items-center py-2 px-3 rounded-lg text-sm", isActive ? "bg-blue-50 text-blue-600" : "text-gray-700 hover:bg-gray-100")}>
-            <Settings size={20} className="shrink-0" />
-            <span className={cn("ml-3 transition-opacity duration-300", isOpen ? "opacity-100" : "opacity-0")}>
-              Admin
-            </span>
-          </NavLink>}
-
           <NavLink to="/settings" className={({
             isActive
           }) => cn("flex items-center py-2 px-3 rounded-lg text-sm", isActive ? "bg-blue-50 text-blue-600" : "text-gray-700 hover:bg-gray-100")}>
@@ -166,6 +166,16 @@ const Sidebar: React.FC<SidebarProps> = ({
               Settings
             </span>
           </NavLink>
+
+          <button
+            onClick={handleLogout}
+            className={cn("flex w-full items-center py-2 px-3 rounded-lg text-sm text-gray-700 hover:bg-gray-100")}
+          >
+            <LogOut size={20} className="shrink-0" />
+            <span className={cn("ml-3 transition-opacity duration-300", isOpen ? "opacity-100" : "opacity-0")}>
+              Logout
+            </span>
+          </button>
         </nav>
       </div>
       

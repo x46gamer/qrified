@@ -2,13 +2,14 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { useAuth } from '../contexts/AuthContext';
-import { MenuIcon, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { MenuIcon, X, ChevronLeft, ChevronRight, LogOut } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { SidebarTrigger, useSidebar } from './ui/sidebar';
+import { toast } from 'sonner';
 
 const Header: React.FC = () => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
@@ -39,6 +40,15 @@ const Header: React.FC = () => {
       window.removeEventListener('scroll', handleScroll);
     };
   }, [scrolled]);
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      toast.success("Logged out successfully");
+    } catch (error) {
+      toast.error("Failed to log out");
+    }
+  };
 
   return (
     <header className={cn(
@@ -81,6 +91,17 @@ const Header: React.FC = () => {
                 <Link to="/signup">Sign Up</Link>
               </Button>
             </>
+          )}
+          {user && (
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={handleLogout}
+              className="flex items-center gap-2"
+            >
+              <LogOut size={16} />
+              Logout
+            </Button>
           )}
         </div>
         
