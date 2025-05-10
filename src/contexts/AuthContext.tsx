@@ -57,9 +57,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               .eq('id', session.user.id)
               .maybeSingle();
               
+            // Convert string role to UserRole type
+            let userRole: UserRole = null;
+            if (profileData?.role === 'admin' || profileData?.role === 'employee') {
+              userRole = profileData.role;
+            }
+              
             const userData: User = {
               id: session.user.id,
-              role: profileData?.role || 'employee', 
+              role: userRole,
               name: session.user.user_metadata.name || session.user.email?.split('@')[0] || 'User',
               email: session.user.email || '',
             };
@@ -100,9 +106,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               .eq('id', session.user.id)
               .maybeSingle();
               
+            // Convert string role to UserRole type
+            let userRole: UserRole = null;
+            if (profileData?.role === 'admin' || profileData?.role === 'employee') {
+              userRole = profileData.role;
+            }
+            
             const userData: User = {
               id: session.user.id,
-              role: profileData?.role || 'employee', 
+              role: userRole,
               name: session.user.user_metadata.name || session.user.email?.split('@')[0] || 'User',
               email: session.user.email || '',
             };
