@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import Sidebar from './Sidebar';
 import Header from './Header';
 import { SidebarProvider } from './ui/sidebar';
@@ -11,11 +11,11 @@ interface DashboardLayoutProps {
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   return (
     <SidebarProvider>
-      <div className="min-h-screen w-full bg-gradient-to-br from-gray-50 to-blue-50">
+      <div className="min-h-screen flex w-full bg-gradient-to-br from-gray-50 to-blue-50">
         <Header />
-        <div className="flex min-h-[calc(100vh-64px)] w-full">
+        <div className="flex min-h-[calc(100vh-64px)] w-full pt-16">
           <Sidebar />
-          <main className="flex-1 overflow-x-hidden p-4">
+          <main className="flex-1 overflow-x-hidden p-4 md:ml-[70px] transition-all duration-300">
             {children}
           </main>
         </div>
