@@ -20,8 +20,8 @@ const Settings = () => {
         <p className="text-lg text-muted-foreground">Manage your team and system settings</p>
       </header>
       
-      <Tabs defaultValue="team" className="space-y-8">
-        <TabsList className="grid w-full max-w-md grid-cols-4">
+      <Tabs defaultValue="team" className="space-y-8" >
+        <TabsList className="grid w-full max-w-md grid-cols-4 [display:contents]">
           <TabsTrigger value="team">Team Management</TabsTrigger>
           <TabsTrigger value="system">System Settings</TabsTrigger>
           <TabsTrigger value="domains">Domains</TabsTrigger>
