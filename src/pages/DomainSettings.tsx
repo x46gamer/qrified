@@ -7,13 +7,14 @@ import { toast } from "sonner";
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Info, Check, Copy, Shield } from "lucide-react";
+import { Info, Check, Copy, Shield, Loader2 } from "lucide-react";
 
 interface Domain {
   id: string;
   domain: string;
   verification_token: string;
   status: string;
+  ssl_status?: string;
   verified_at: string | null;
   created_at: string;
 }
@@ -24,6 +25,7 @@ const DomainSettings = () => {
   const [newDomain, setNewDomain] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [verificationLoading, setVerificationLoading] = useState<Record<string, boolean>>({});
+  const [sslCheckLoading, setSslCheckLoading] = useState<Record<string, boolean>>({});
 
   // Fetch user's domains
   const fetchDomains = async () => {
@@ -49,6 +51,16 @@ const DomainSettings = () => {
   useEffect(() => {
     fetchDomains();
   }, [user]);
+  
+  // Effect to check SSL status for verified domains on load
+  useEffect(() => {
+    const verifiedDomains = domains.filter(domain => domain.status === 'verified');
+    verifiedDomains.forEach(domain => {
+      if (!domain.ssl_status || domain.ssl_status === 'pending') {
+        checkSSLStatus(domain.id, domain.domain);
+      }
+    });
+  }, [domains]);
 
   const addDomain = async () => {
     if (!user) {
@@ -78,6 +90,7 @@ const DomainSettings = () => {
             user_id: user.id,
             domain: newDomain,
             verification_token: "not_used_anymore", // We don't use tokens with CNAME/A verification
+            ssl_status: "pending" // Default SSL status is pending
           }
         ])
         .select();
@@ -113,7 +126,7 @@ const DomainSettings = () => {
       if (error) throw error;
       
       if (data.verified) {
-        toast.success('Domain verified successfully!');
+        toast.success('Domain verified successfully! SSL provisioning has started.');
         fetchDomains();
       } else {
         toast.error(data.message || 'Verification failed. DNS records not found or not propagated yet.');
@@ -122,6 +135,40 @@ const DomainSettings = () => {
       toast.error('Verification error: ' + error.message);
     } finally {
       setVerificationLoading(prev => ({ ...prev, [domainId]: false }));
+    }
+  };
+  
+  const checkSSLStatus = async (domainId: string, domain: string) => {
+    setSslCheckLoading(prev => ({ ...prev, [domainId]: true }));
+    
+    try {
+      // Call the verify-domain edge function with check_ssl action
+      const { data, error } = await supabase.functions.invoke('verify-domain', {
+        body: { domain, action: 'check_ssl' }
+      });
+      
+      if (error) throw error;
+      
+      if (data.ssl.isValid) {
+        toast.success(`SSL certificate is ${data.ssl.status} for ${domain}`);
+        // Update local state to reflect the new SSL status
+        setDomains(domains.map(d => {
+          if (d.id === domainId) {
+            return { ...d, ssl_status: data.ssl.status };
+          }
+          return d;
+        }));
+      } else {
+        if (data.ssl.status === 'pending') {
+          toast.info(`SSL certificate is still provisioning for ${domain}. This can take up to 10 minutes.`);
+        } else {
+          toast.error(`SSL certificate failed for ${domain}. Please check your DNS settings.`);
+        }
+      }
+    } catch (error: any) {
+      toast.error('SSL check error: ' + error.message);
+    } finally {
+      setSslCheckLoading(prev => ({ ...prev, [domainId]: false }));
     }
   };
 
@@ -243,23 +290,60 @@ const DomainSettings = () => {
                           </span>
                           
                           {domain.status === 'verified' && (
-                            <span className="inline-flex items-center px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">
+                            <span className={`inline-flex items-center px-2 py-1 text-xs rounded-full ${
+                              domain.ssl_status === 'active'
+                                ? 'bg-green-100 text-green-800'
+                                : domain.ssl_status === 'pending'
+                                  ? 'bg-blue-100 text-blue-800'
+                                  : 'bg-red-100 text-red-800'
+                            }`}>
                               <Shield className="w-3 h-3 mr-1" />
-                              SSL Active
+                              {domain.ssl_status === 'active' 
+                                ? 'SSL Active'
+                                : domain.ssl_status === 'pending'
+                                  ? 'SSL Provisioning'
+                                  : 'SSL Failed'}
                             </span>
                           )}
                         </div>
                       </div>
                       <div className="flex gap-2">
+                        {domain.status === 'verified' && (
+                          <Button 
+                            variant="outline"
+                            onClick={() => checkSSLStatus(domain.id, domain.domain)}
+                            disabled={!!sslCheckLoading[domain.id]}
+                            size="sm"
+                          >
+                            {sslCheckLoading[domain.id] ? (
+                              <>
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                Checking...
+                              </>
+                            ) : (
+                              <>
+                                <Shield className="h-4 w-4 mr-2" />
+                                Check SSL
+                              </>
+                            )}
+                          </Button>
+                        )}
+                        
                         {domain.status !== 'verified' && (
                           <Button 
                             variant="outline"
                             onClick={() => verifyDomain(domain.id, domain.domain)}
-                            disabled={verificationLoading[domain.id]}
+                            disabled={!!verificationLoading[domain.id]}
                           >
-                            {verificationLoading[domain.id] ? 'Verifying...' : 'Verify'}
+                            {verificationLoading[domain.id] ? (
+                              <>
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                Verifying...
+                              </>
+                            ) : 'Verify'}
                           </Button>
                         )}
+                        
                         <Button 
                           variant="destructive"
                           onClick={() => deleteDomain(domain.id)}
@@ -332,7 +416,7 @@ const DomainSettings = () => {
                             <div>
                               <p className="font-medium text-blue-800">SSL Certificate (HTTPS)</p>
                               <p className="text-sm text-blue-700 mt-1">
-                                SSL certificates are generated automatically once your domain is verified. This ensures your custom domain uses secure HTTPS connections. No additional setup is needed.
+                                SSL certificates are generated automatically once your domain is verified. This ensures your custom domain uses secure HTTPS connections. The process can take up to 10 minutes after verification.
                               </p>
                             </div>
                           </div>
@@ -350,17 +434,43 @@ const DomainSettings = () => {
                           Verified on: {new Date(domain.verified_at!).toLocaleDateString()}
                         </div>
                         
-                        <Alert className="bg-green-50 border border-green-100">
-                          <div className="flex items-start">
-                            <Shield className="h-5 w-5 text-green-600 mr-2" />
-                            <div>
-                              <AlertTitle className="text-green-800">SSL Certificate Active</AlertTitle>
-                              <AlertDescription className="text-green-700">
-                                Your domain is secured with SSL and can be accessed via https://{domain.domain}. SSL certificates are automatically renewed.
-                              </AlertDescription>
+                        {domain.ssl_status === 'active' ? (
+                          <Alert className="bg-green-50 border border-green-100">
+                            <div className="flex items-start">
+                              <Shield className="h-5 w-5 text-green-600 mr-2" />
+                              <div>
+                                <AlertTitle className="text-green-800">SSL Certificate Active</AlertTitle>
+                                <AlertDescription className="text-green-700">
+                                  Your domain is secured with SSL and can be accessed via https://{domain.domain}. SSL certificates are automatically renewed.
+                                </AlertDescription>
+                              </div>
                             </div>
-                          </div>
-                        </Alert>
+                          </Alert>
+                        ) : domain.ssl_status === 'pending' ? (
+                          <Alert className="bg-blue-50 border border-blue-100">
+                            <div className="flex items-start">
+                              <Loader2 className="h-5 w-5 text-blue-600 mr-2 animate-spin" />
+                              <div>
+                                <AlertTitle className="text-blue-800">SSL Certificate Provisioning</AlertTitle>
+                                <AlertDescription className="text-blue-700">
+                                  SSL certificate is being provisioned for your domain. This process can take up to 10 minutes. You can check the status by clicking "Check SSL" button.
+                                </AlertDescription>
+                              </div>
+                            </div>
+                          </Alert>
+                        ) : (
+                          <Alert className="bg-red-50 border border-red-100">
+                            <div className="flex items-start">
+                              <Shield className="h-5 w-5 text-red-600 mr-2" />
+                              <div>
+                                <AlertTitle className="text-red-800">SSL Certificate Failed</AlertTitle>
+                                <AlertDescription className="text-red-700">
+                                  There was an issue provisioning the SSL certificate for your domain. Please check your DNS settings and try again.
+                                </AlertDescription>
+                              </div>
+                            </div>
+                          </Alert>
+                        )}
                       </div>
                     )}
                   </div>

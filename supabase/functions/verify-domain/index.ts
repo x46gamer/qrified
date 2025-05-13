@@ -63,27 +63,49 @@ async function checkARecords(domain: string): Promise<string[]> {
 }
 
 // Function to check if SSL is provisioned and valid
-async function checkSSLCertificate(domain: string): Promise<boolean> {
+async function checkSSLCertificate(domain: string): Promise<{isValid: boolean; status: string}> {
   try {
-    // We'll just check if HTTPS is responding correctly as a proxy for SSL validation
-    // In a production environment, you might want more robust checking
+    // We'll check if HTTPS is responding correctly as a proxy for SSL validation
     const url = `https://${domain}`;
     
     try {
       const response = await fetch(url, { 
         method: 'HEAD',
-        // Very short timeout since we just need to check if SSL is working
+        // Short timeout since we just need to check if SSL is working
         signal: AbortSignal.timeout(10000) 
       });
       
       // If we get any response at all over HTTPS, it means SSL is working
-      return response.status < 500; // Any response that's not a server error
+      if (response.status < 500) {
+        return { isValid: true, status: 'active' };
+      } else {
+        return { isValid: false, status: 'failed' };
+      }
     } catch (e) {
       console.log(`SSL check failed for ${domain}:`, e);
-      return false;
+      // If it's a TLS error, the certificate might be provisioning
+      if (e.message.includes('TLS') || e.message.includes('certificate')) {
+        return { isValid: false, status: 'pending' };
+      }
+      return { isValid: false, status: 'failed' };
     }
   } catch (error) {
     console.error("Error checking SSL:", error);
+    return { isValid: false, status: 'failed' };
+  }
+}
+
+// Initiate SSL provisioning
+async function initiateSSLProvisioning(domain: string): Promise<boolean> {
+  try {
+    // In a real-world scenario, you might call an API to explicitly request SSL
+    // For this implementation, we're relying on the platform's automatic SSL provisioning
+    // after DNS records are correctly set up.
+    
+    console.log(`Initiated SSL provisioning for ${domain}`);
+    return true;
+  } catch (error) {
+    console.error("Error initiating SSL provisioning:", error);
     return false;
   }
 }
@@ -100,7 +122,7 @@ serve(async (req) => {
   }
 
   try {
-    const { domain } = await req.json();
+    const { domain, action } = await req.json();
     
     if (!domain) {
       return new Response(
@@ -112,101 +134,152 @@ serve(async (req) => {
       );
     }
     
-    console.log(`Verifying domain ${domain}`);
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
+    const supabase = createClient(supabaseUrl, supabaseKey);
     
-    try {
-      // First, check if 'www' subdomain is correctly set up with CNAME
-      let verified = false;
-      
-      // Depending on whether we're checking www subdomain or root domain
-      if (domain.startsWith('www.')) {
-        // For www subdomain, check CNAME
-        const cnameRecords = await checkCnameRecords(domain);
-        console.log(`CNAME records for ${domain}:`, cnameRecords);
+    // Handle different actions
+    if (action === 'check_ssl') {
+      // Check SSL status for an already verified domain
+      try {
+        const sslStatus = await checkSSLCertificate(domain);
         
-        // Check if any CNAME record points to our app domain
-        for (const record of cnameRecords) {
-          if (record.includes(APP_CNAME_TARGET)) {
-            verified = true;
-            break;
+        // Update the SSL status in the database
+        if (sslStatus.isValid) {
+          const { error } = await supabase
+            .from('custom_domains')
+            .update({
+              ssl_status: sslStatus.status
+            })
+            .eq('domain', domain);
+          
+          if (error) {
+            console.error('Error updating SSL status:', error);
           }
-        }
-      } else {
-        // For root domain, check A record
-        const aRecords = await checkARecords(domain);
-        console.log(`A records for ${domain}:`, aRecords);
-        
-        // Check if any A record points to our app IP
-        for (const record of aRecords) {
-          if (record === APP_IP_ADDRESS) {
-            verified = true;
-            break;
-          }
-        }
-      }
-      
-      // Also check 'qr' subdomain points to our app
-      const qrSubdomain = domain.startsWith('www.') 
-        ? `qr.${domain.substring(4)}` 
-        : `qr.${domain}`;
-      
-      const qrCnameRecords = await checkCnameRecords(qrSubdomain);
-      console.log(`CNAME records for ${qrSubdomain}:`, qrCnameRecords);
-      
-      // Both checks must pass - domain and qr subdomain
-      let qrVerified = false;
-      for (const record of qrCnameRecords) {
-        if (record.includes(APP_CNAME_TARGET)) {
-          qrVerified = true;
-          break;
-        }
-      }
-      
-      if (verified && qrVerified) {
-        // Update the domain status in the database
-        const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
-        const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
-        const supabase = createClient(supabaseUrl, supabaseKey);
-        
-        const { error } = await supabase
-          .from('custom_domains')
-          .update({
-            status: 'verified',
-            verified_at: new Date().toISOString()
-          })
-          .eq('domain', domain);
-        
-        if (error) {
-          console.error('Error updating domain:', error);
-          throw error;
         }
         
         return new Response(
-          JSON.stringify({ success: true, verified: true }),
+          JSON.stringify({ success: true, ssl: sslStatus }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
-      } else {
+      } catch (error) {
+        console.error('SSL check error:', error);
         return new Response(
           JSON.stringify({ 
-            success: true, 
-            verified: false, 
-            message: 'Verification failed: DNS records not correctly configured' 
+            success: false, 
+            message: `SSL check error: ${error.message}` 
           }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 500 
+          }
         );
       }
-    } catch (error) {
-      console.error('DNS resolution error:', error);
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          message: `DNS resolution error: ${error.message}` 
-        }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 500 
+    } else {
+      // Default action: verify domain
+      console.log(`Verifying domain ${domain}`);
+      
+      try {
+        // First, check if 'www' subdomain is correctly set up with CNAME
+        let verified = false;
+        
+        // Depending on whether we're checking www subdomain or root domain
+        if (domain.startsWith('www.')) {
+          // For www subdomain, check CNAME
+          const cnameRecords = await checkCnameRecords(domain);
+          console.log(`CNAME records for ${domain}:`, cnameRecords);
+          
+          // Check if any CNAME record points to our app domain
+          for (const record of cnameRecords) {
+            if (record.includes(APP_CNAME_TARGET)) {
+              verified = true;
+              break;
+            }
+          }
+        } else {
+          // For root domain, check A record
+          const aRecords = await checkARecords(domain);
+          console.log(`A records for ${domain}:`, aRecords);
+          
+          // Check if any A record points to our app IP
+          for (const record of aRecords) {
+            if (record === APP_IP_ADDRESS) {
+              verified = true;
+              break;
+            }
+          }
         }
-      );
+        
+        // Also check 'qr' subdomain points to our app
+        const qrSubdomain = domain.startsWith('www.') 
+          ? `qr.${domain.substring(4)}` 
+          : `qr.${domain}`;
+        
+        const qrCnameRecords = await checkCnameRecords(qrSubdomain);
+        console.log(`CNAME records for ${qrSubdomain}:`, qrCnameRecords);
+        
+        // Both checks must pass - domain and qr subdomain
+        let qrVerified = false;
+        for (const record of qrCnameRecords) {
+          if (record.includes(APP_CNAME_TARGET)) {
+            qrVerified = true;
+            break;
+          }
+        }
+        
+        if (verified && qrVerified) {
+          // Initiate SSL provisioning
+          const sslInitiated = await initiateSSLProvisioning(domain);
+          
+          // Initial SSL check 
+          const sslStatus = await checkSSLCertificate(domain);
+          
+          // Update the domain status in the database
+          const { error } = await supabase
+            .from('custom_domains')
+            .update({
+              status: 'verified',
+              verified_at: new Date().toISOString(),
+              ssl_status: sslStatus.status
+            })
+            .eq('domain', domain);
+          
+          if (error) {
+            console.error('Error updating domain:', error);
+            throw error;
+          }
+          
+          return new Response(
+            JSON.stringify({ 
+              success: true, 
+              verified: true,
+              ssl: { initiated: sslInitiated, status: sslStatus.status }
+            }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        } else {
+          return new Response(
+            JSON.stringify({ 
+              success: true, 
+              verified: false, 
+              message: 'Verification failed: DNS records not correctly configured' 
+            }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+      } catch (error) {
+        console.error('DNS resolution error:', error);
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            message: `DNS resolution error: ${error.message}` 
+          }),
+          { 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 500 
+          }
+        );
+      }
     }
   } catch (error) {
     console.error('Unexpected error:', error);
