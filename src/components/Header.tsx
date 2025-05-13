@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { useAuth } from '../contexts/AuthContext';
@@ -75,7 +74,7 @@ const Header: React.FC = () => {
             title={isMobile ? (openMobile ? "Close sidebar" : "Open sidebar") : (isExpanded ? "Collapse sidebar" : "Expand sidebar")}
           >
             {isMobile ? (
-              <MenuIcon size={20} />
+              openMobile ? <X size={20} /> : <MenuIcon size={20} />
             ) : (
               isExpanded ? <ChevronLeft size={20} /> : <ChevronRight size={20} />
             )}
