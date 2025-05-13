@@ -1,12 +1,42 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.7';
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
-import { resolveTxt } from 'https://deno.land/x/dns@v1.0.1/mod.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// Function to check DNS TXT records using public DNS API
+async function checkTxtRecords(domain: string): Promise<string[]> {
+  try {
+    // Use Google's DNS API to lookup TXT records
+    const response = await fetch(`https://dns.google/resolve?name=${domain}&type=TXT`);
+    
+    if (!response.ok) {
+      throw new Error(`DNS API error: ${response.status} ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    
+    if (!data.Answer) {
+      return [];
+    }
+    
+    // Extract the TXT record values
+    return data.Answer.map((record: any) => {
+      // TXT records in the response are quoted strings, so remove the quotes
+      let value = record.data;
+      if (value.startsWith('"') && value.endsWith('"')) {
+        value = value.substring(1, value.length - 1);
+      }
+      return value;
+    });
+  } catch (error) {
+    console.error("Error checking TXT records:", error);
+    throw error;
+  }
+}
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -30,21 +60,18 @@ serve(async (req) => {
     console.log(`Verifying domain ${domain} with token ${token}`);
     
     try {
-      // Check TXT record
+      // Check TXT record using our new function
       const expected = `qrified-verify=${token}`;
-      const records = await resolveTxt(domain);
+      const records = await checkTxtRecords(domain);
       
       let verified = false;
       
-      for (const record of records) {
-        for (const value of record) {
-          console.log(`Checking record: ${value}`);
-          if (value === expected) {
-            verified = true;
-            break;
-          }
+      for (const value of records) {
+        console.log(`Checking record: ${value}`);
+        if (value === expected) {
+          verified = true;
+          break;
         }
-        if (verified) break;
       }
       
       if (verified) {
