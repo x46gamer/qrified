@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import type { Json } from '@/integrations/supabase/types';
 
 export interface AppearanceSettings {
   successBackground: string;
@@ -99,7 +100,7 @@ export const AppearanceSettingsProvider: React.FC<{
             .from('app_settings')
             .upsert({
               id: 'theme',
-              settings: DEFAULT_SETTINGS
+              settings: DEFAULT_SETTINGS as unknown as Json
             }, {
               onConflict: 'id'
             });
@@ -133,7 +134,7 @@ export const AppearanceSettingsProvider: React.FC<{
         .from('app_settings')
         .upsert({
           id: 'theme',
-          settings: updatedSettings
+          settings: updatedSettings as unknown as Json
         }, {
           onConflict: 'id'
         });
