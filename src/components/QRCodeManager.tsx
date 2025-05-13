@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/table";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { Trash2, RefreshCw, Eye, EyeOff, Search, X } from "lucide-react";
+import { Trash2, RefreshCw, Eye, EyeOff, Search, X, CheckCircle2, XCircle } from "lucide-react";
 import { supabase } from '@/integrations/supabase/client';
 import { QRCodeTemplatePreview } from './QRCodeTemplatePreview';
 import { QRCode } from '@/types/qrCode';
@@ -147,13 +147,14 @@ const QRCodeManager: React.FC<QRCodeManagerProps> = ({ qrCodes, onUpdateQRCode, 
                   <TableHead>Sequence</TableHead>
                   <TableHead>Created</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>Scanned</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredQRCodes.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center">
+                    <TableCell colSpan={6} className="text-center">
                       {searchTerm ? 'No QR codes match your search' : 'No QR codes available'}
                     </TableCell>
                   </TableRow>
@@ -165,7 +166,7 @@ const QRCodeManager: React.FC<QRCodeManagerProps> = ({ qrCodes, onUpdateQRCode, 
                     </TableCell>
                     <TableCell>{formatSequentialNumber(Number(qrCode.sequentialNumber))}</TableCell>
                     <TableCell>
-                      {new Date(qrCode.createdAt).toLocaleDateString()}
+                      {qrCode.createdAt ? new Date(qrCode.createdAt).toLocaleDateString() : 'N/A'}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center space-x-2">
@@ -176,6 +177,26 @@ const QRCodeManager: React.FC<QRCodeManagerProps> = ({ qrCodes, onUpdateQRCode, 
                         <span className={qrCode.isEnabled ? 'text-green-600' : 'text-red-600'}>
                           {qrCode.isEnabled ? 'Enabled' : 'Disabled'}
                         </span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center space-x-2">
+                        {qrCode.isScanned ? (
+                          <span className="flex items-center text-green-600">
+                            <CheckCircle2 className="h-4 w-4 mr-1" />
+                            <span>Yes</span>
+                            {qrCode.scannedAt && (
+                              <span className="ml-1 text-xs text-muted-foreground">
+                                ({new Date(qrCode.scannedAt).toLocaleDateString()})
+                              </span>
+                            )}
+                          </span>
+                        ) : (
+                          <span className="flex items-center text-amber-600">
+                            <XCircle className="h-4 w-4 mr-1" />
+                            <span>No</span>
+                          </span>
+                        )}
                       </div>
                     </TableCell>
                     <TableCell>
@@ -228,7 +249,7 @@ const QRCodeManager: React.FC<QRCodeManagerProps> = ({ qrCodes, onUpdateQRCode, 
               <div className="w-full space-y-2 text-sm">
                 <p><strong>ID:</strong> {previewQRCode.id}</p>
                 <p><strong>Sequence Number:</strong> {formatSequentialNumber(Number(previewQRCode.sequentialNumber))}</p>
-                <p><strong>Created:</strong> {new Date(previewQRCode.createdAt).toLocaleString()}</p>
+                <p><strong>Created:</strong> {previewQRCode.createdAt ? new Date(previewQRCode.createdAt).toLocaleString() : 'N/A'}</p>
                 <p><strong>Status:</strong> {previewQRCode.isEnabled ? 'Enabled' : 'Disabled'}</p>
                 <p><strong>Scanned:</strong> {previewQRCode.isScanned ? 'Yes' : 'No'}</p>
                 {previewQRCode.isScanned && previewQRCode.scannedAt && (

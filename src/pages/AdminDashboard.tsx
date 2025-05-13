@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import {
   Card,
@@ -18,7 +17,7 @@ import {
   TableRow 
 } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/use-toast";
 import { Progress } from "@/components/ui/progress";
 
 interface UserWithLimits {
@@ -95,7 +94,11 @@ const AdminDashboard = () => {
       setUsers(combinedUsers);
     } catch (error) {
       console.error("Error fetching users:", error);
-      toast.error("Failed to fetch users");
+      toast({
+        title: "Error",
+        description: "Failed to fetch users",
+        variant: "destructive"
+      });
     } finally {
       setLoading(false);
     }
@@ -138,12 +141,19 @@ const AdminDashboard = () => {
         
       if (error) throw error;
       
-      toast.success("User limit updated successfully");
+      toast({
+        title: "Success",
+        description: "User limit updated successfully"
+      });
       setEditingUser(null);
       fetchUsers();
     } catch (error) {
       console.error("Error updating user limit:", error);
-      toast.error("Failed to update user limit");
+      toast({
+        title: "Error",
+        description: "Failed to update user limit",
+        variant: "destructive"
+      });
     }
   };
 

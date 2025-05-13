@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import QRCodeGenerator from '@/components/QRCodeGenerator';
@@ -8,7 +7,7 @@ import QRCodeAnalytics from '@/components/QRCodeAnalytics';
 import { AppearanceSettings } from '@/components/AppearanceSettings';
 import { QRCode } from '@/types/qrCode';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from "sonner";
+import { toast } from "@/components/ui/use-toast";
 import { TemplateType } from '@/components/QRCodeTemplates';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -46,7 +45,11 @@ const Index = () => {
       
       if (error) {
         console.error('Error fetching QR codes:', error);
-        toast.error('Failed to fetch QR codes');
+        toast({
+          title: "Error",
+          description: "Failed to fetch QR codes",
+          variant: "destructive"
+        });
         return;
       }
       
@@ -75,7 +78,11 @@ const Index = () => {
       }
     } catch (error) {
       console.error('Error loading QR codes:', error);
-      toast.error('An error occurred while loading QR codes');
+      toast({
+        title: "Error",
+        description: "An error occurred while loading QR codes",
+        variant: "destructive"
+      });
     } finally {
       setIsLoading(false);
     }
@@ -105,7 +112,7 @@ const Index = () => {
   
   const handleQRCodesGenerated = async (newQRCodes: QRCode[]) => {
     // Update the state with the new QR codes
-    setQRCodes([...newQRCodes, ...qrCodes]);
+    setQRCodes(prevQrCodes => [...newQRCodes, ...prevQrCodes]);
     
     // Update the last sequential number
     if (newQRCodes.length > 0) {
