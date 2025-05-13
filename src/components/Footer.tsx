@@ -9,7 +9,7 @@ const Footer: React.FC = () => {
         <div className="flex flex-col md:flex-row justify-between items-center">
           <div className="mb-4 md:mb-0">
             <p className="text-sm text-gray-600">
-              © {new Date().getFullYear()} SeQRity. All rights reserved.
+              © {new Date().getFullYear()} QRified. All rights reserved.
             </p>
           </div>
           <div className="flex space-x-6">

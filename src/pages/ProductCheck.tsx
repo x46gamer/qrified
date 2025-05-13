@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -30,6 +29,7 @@ const ProductCheck = () => {
   useEffect(() => {
     const loadDirectSettings = async () => {
       try {
+        // Load settings directly from Supabase (for all users)
         const { data, error } = await supabase
           .from('app_settings')
           .select('*')

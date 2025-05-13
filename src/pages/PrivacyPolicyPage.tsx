@@ -22,7 +22,7 @@ const PrivacyPolicyPage = () => {
             <p>Last Updated: May 9, 2025</p>
             
             <h2>Introduction</h2>
-            <p>seQRity ("we", "our", or "us") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our QR code authentication service.</p>
+            <p>QRified ("we", "our", or "us") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our QR code authentication service.</p>
             
             <h2>Information We Collect</h2>
             <p>We collect information that you provide directly to us, including:</p>
@@ -71,14 +71,14 @@ const PrivacyPolicyPage = () => {
               <li>Objection to processing</li>
             </ul>
             
-            <p>To exercise these rights, please contact us at privacy@seqrity.dz.</p>
+            <p>To exercise these rights, please contact us at privacy@qrified.dz.</p>
             
             <h2>Changes to This Privacy Policy</h2>
             <p>We may update this Privacy Policy from time to time to reflect changes in our practices or for other operational, legal, or regulatory reasons. We will notify you of any material changes by posting the new Privacy Policy on this page and updating the "Last Updated" date.</p>
             
             <h2>Contact Us</h2>
             <p>If you have any questions about this Privacy Policy, please contact us at:</p>
-            <p>seQRity<br/>123 Digital Avenue<br/>Tech Hub, Algiers 16000<br/>Algeria<br/>privacy@seqrity.dz</p>
+            <p>QRified<br/>123 Digital Avenue<br/>Tech Hub, Algiers 16000<br/>Algeria<br/>privacy@qrified.dz</p>
           </div>
         </div>
       </div>

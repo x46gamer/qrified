@@ -9,7 +9,7 @@ const ForgotPassword: React.FC = () => {
       <div className="absolute top-0 left-0 w-full">
         <div className="container mx-auto py-5">
           <Link to="/" className="text-xl font-bold block">
-            <span className="bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent">seQRity</span>
+            <span className="bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent">QRified</span>
           </Link>
         </div>
       </div>

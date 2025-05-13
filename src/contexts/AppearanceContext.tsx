@@ -71,17 +71,7 @@ export const AppearanceSettingsProvider: React.FC<{
       try {
         setIsLoading(true);
         
-        // Get the session to ensure we're authenticated
-        const { data: { session } } = await supabase.auth.getSession();
-
-        // If not authenticated, use default settings
-        if (!session) {
-          console.log('No active session, using default settings');
-          setSettings(DEFAULT_SETTINGS);
-          setIsLoading(false);
-          return;
-        }
-
+        // Load settings for everyone, regardless of authentication status
         const { data, error } = await supabase
           .from('app_settings')
           .select('*')
@@ -91,6 +81,7 @@ export const AppearanceSettingsProvider: React.FC<{
         if (error && error.code !== 'PGRST116') { // PGRST116 is the "no rows" error
           console.error('Error fetching appearance settings:', error);
           toast.error('Failed to load appearance settings');
+          setIsLoading(false);
           return;
         }
 
@@ -106,19 +97,22 @@ export const AppearanceSettingsProvider: React.FC<{
             ...typedSettings
           });
         } else {
-          // If no settings exist yet, create the default settings
-          console.log('No existing settings found, creating defaults');
-          const { error: insertError } = await supabase
-            .from('app_settings')
-            .upsert({
-              id: 'theme',
-              settings: DEFAULT_SETTINGS as unknown as Json
-            }, {
-              onConflict: 'id'
-            });
-            
-          if (insertError) {
-            console.error('Error creating default settings:', insertError);
+          // If no settings exist yet, create the default settings (only if authenticated)
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session) {
+            console.log('No existing settings found, creating defaults');
+            const { error: insertError } = await supabase
+              .from('app_settings')
+              .upsert({
+                id: 'theme',
+                settings: DEFAULT_SETTINGS as unknown as Json
+              }, {
+                onConflict: 'id'
+              });
+              
+            if (insertError) {
+              console.error('Error creating default settings:', insertError);
+            }
           }
         }
       } catch (err) {
@@ -135,7 +129,7 @@ export const AppearanceSettingsProvider: React.FC<{
     try {
       setIsSaving(true);
       
-      // Check if user is authenticated
+      // Check if user is authenticated for saving settings (editing still requires auth)
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         toast.error('You must be logged in to save settings');

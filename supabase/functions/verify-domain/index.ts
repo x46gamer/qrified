@@ -31,7 +31,7 @@ serve(async (req) => {
     
     try {
       // Check TXT record
-      const expected = `seqrity-verify=${token}`;
+      const expected = `qrified-verify=${token}`;
       const records = await resolveTxt(domain);
       
       let verified = false;
