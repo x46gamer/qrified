@@ -16,6 +16,7 @@ import { Separator } from "@/components/ui/separator";
 import { Link } from 'react-router-dom';
 import { FileText } from "lucide-react";
 import { AppearanceSettings as AppearanceSettingsType, DEFAULT_SETTINGS } from '@/contexts/AppearanceContext';
+import type { Json } from '@/integrations/supabase/types';
 
 export const AppearanceSettings = () => {
   const [activeTab, setActiveTab] = useState<"success" | "failure" | "features" | "general">("general");
@@ -94,6 +95,23 @@ export const AppearanceSettings = () => {
     if (!logoFile) return null;
     
     try {
+      // Check if the app-assets bucket exists, if not create it
+      const { data: bucketExists } = await supabase
+        .storage
+        .getBucket('app-assets');
+      
+      if (!bucketExists) {
+        // Create the bucket if it doesn't exist
+        const { error: createBucketError } = await supabase
+          .storage
+          .createBucket('app-assets', {
+            public: true,
+            fileSizeLimit: 2097152 // 2MB
+          });
+          
+        if (createBucketError) throw createBucketError;
+      }
+      
       // Generate a unique file path
       const fileExt = logoFile.name.split('.').pop();
       const fileName = `logo-${Date.now()}.${fileExt}`;
@@ -141,12 +159,15 @@ export const AppearanceSettings = () => {
         .from('app_settings')
         .upsert({ 
           id: 'theme', 
-          settings: updatedTheme 
+          settings: updatedTheme as unknown as Json
         }, { 
           onConflict: 'id' 
         });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error saving theme settings:', error);
+        throw error;
+      }
       
       // Update local state with the new logo URL
       setTheme(updatedTheme);

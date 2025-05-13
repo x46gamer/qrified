@@ -70,6 +70,18 @@ export const AppearanceSettingsProvider: React.FC<{
     async function loadSettings() {
       try {
         setIsLoading(true);
+        
+        // Get the session to ensure we're authenticated
+        const { data: { session } } = await supabase.auth.getSession();
+
+        // If not authenticated, use default settings
+        if (!session) {
+          console.log('No active session, using default settings');
+          setSettings(DEFAULT_SETTINGS);
+          setIsLoading(false);
+          return;
+        }
+
         const { data, error } = await supabase
           .from('app_settings')
           .select('*')
@@ -122,6 +134,13 @@ export const AppearanceSettingsProvider: React.FC<{
   const updateSettings = async (newSettings: Partial<AppearanceSettings>) => {
     try {
       setIsSaving(true);
+      
+      // Check if user is authenticated
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error('You must be logged in to save settings');
+        return;
+      }
       
       const updatedSettings = {
         ...settings,
