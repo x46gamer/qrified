@@ -53,8 +53,8 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
   });
   
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
-  const [primaryColor, setPrimaryColor] = useState<string>('#ffffff'); // blue-500
-  const [secondaryColor, setSecondaryColor] = useState<string>('#000000'); // purple-500
+  const [primaryColor, setPrimaryColor] = useState<string>('#000000'); // blue-500
+  const [secondaryColor, setSecondaryColor] = useState<string>('#ffffff'); // purple-500
   const [previewQRCode, setPreviewQRCode] = useState<string | null>(null);
   
   const template = watch('template');
