@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Info, Check } from "lucide-react";
+import { Info, Check, Copy } from "lucide-react";
 
 interface Domain {
   id: string;
@@ -71,17 +71,13 @@ const DomainSettings = () => {
     setIsLoading(true);
     
     try {
-      // Generate a verification token
-      const verificationToken = Math.random().toString(36).substring(2, 15) + 
-                              Math.random().toString(36).substring(2, 15);
-      
       const { data, error } = await supabase
         .from('custom_domains')
         .insert([
           {
             user_id: user.id,
             domain: newDomain,
-            verification_token: verificationToken,
+            verification_token: "not_used_anymore", // We don't use tokens with CNAME/A verification
           }
         ])
         .select();
@@ -105,13 +101,13 @@ const DomainSettings = () => {
     }
   };
 
-  const verifyDomain = async (domainId: string, domain: string, token: string) => {
+  const verifyDomain = async (domainId: string, domain: string) => {
     setVerificationLoading(prev => ({ ...prev, [domainId]: true }));
     
     try {
       // Call the verify-domain edge function to check DNS records
       const { data, error } = await supabase.functions.invoke('verify-domain', {
-        body: { domain, token }
+        body: { domain }
       });
       
       if (error) throw error;
@@ -120,7 +116,7 @@ const DomainSettings = () => {
         toast.success('Domain verified successfully!');
         fetchDomains();
       } else {
-        toast.error(data.message || 'Verification failed. DNS record not found or not propagated yet.');
+        toast.error(data.message || 'Verification failed. DNS records not found or not propagated yet.');
       }
     } catch (error: any) {
       toast.error('Verification error: ' + error.message);
@@ -150,6 +146,11 @@ const DomainSettings = () => {
     toast.success('Copied to clipboard');
   };
 
+  // Get root domain (for www. domains)
+  const getRootDomain = (domain: string) => {
+    return domain.startsWith('www.') ? domain.substring(4) : domain;
+  };
+
   if (!user) {
     return (
       <div className="container mx-auto py-8">
@@ -167,7 +168,7 @@ const DomainSettings = () => {
     <div className="container mx-auto py-8">
       <header className="mb-8">
         <h1 className="text-4xl font-bold mb-2">Domain Settings</h1>
-        <p className="text-lg text-muted-foreground">Connect your custom domain to SeQRity</p>
+        <p className="text-lg text-muted-foreground">Connect your custom domain to QRified</p>
       </header>
       
       <div className="space-y-8">
@@ -175,7 +176,7 @@ const DomainSettings = () => {
           <CardHeader>
             <CardTitle>Add New Domain</CardTitle>
             <CardDescription>
-              Connect your own domain to SeQRity for a white-labeled experience
+              Connect your own domain to QRified for a white-labeled experience
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -200,7 +201,7 @@ const DomainSettings = () => {
                 <Info className="h-4 w-4 text-blue-600" />
                 <AlertTitle className="text-blue-800">How white-labeling works</AlertTitle>
                 <AlertDescription className="text-blue-700">
-                  After adding your domain, you'll need to create a TXT record at your domain provider pointing to SeQRity's servers. 
+                  After adding your domain, you'll need to create DNS records at your domain provider pointing to QRified's servers. 
                   This allows us to verify that you own the domain and properly serve your content.
                 </AlertDescription>
               </Alert>
@@ -244,7 +245,7 @@ const DomainSettings = () => {
                         {domain.status !== 'verified' && (
                           <Button 
                             variant="outline"
-                            onClick={() => verifyDomain(domain.id, domain.domain, domain.verification_token)}
+                            onClick={() => verifyDomain(domain.id, domain.domain)}
                             disabled={verificationLoading[domain.id]}
                           >
                             {verificationLoading[domain.id] ? 'Verifying...' : 'Verify'}
@@ -263,24 +264,59 @@ const DomainSettings = () => {
                       <div className="mt-4 bg-amber-50 p-3 rounded-md">
                         <p className="font-medium text-amber-900 mb-2">Verification Required</p>
                         <p className="text-sm text-amber-800 mb-2">
-                          Create a TXT record with your DNS provider using these values:
+                          Create the following DNS records with your domain provider:
                         </p>
-                        <div className="flex justify-between items-center bg-white p-2 rounded border border-amber-200 mb-2">
-                          <span className="font-mono text-sm">Host/Name: @</span>
-                          <Button variant="ghost" size="sm" onClick={() => copyToClipboard('@')}>
-                            Copy
-                          </Button>
-                        </div>
-                        <div className="flex justify-between items-center bg-white p-2 rounded border border-amber-200">
-                          <span className="font-mono text-sm truncate">Value: seqrity-verify={domain.verification_token}</span>
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            onClick={() => copyToClipboard(`seqrity-verify=${domain.verification_token}`)}
-                          >
-                            Copy
-                          </Button>
-                        </div>
+                        
+                        {domain.domain.startsWith('www.') ? (
+                          <div className="space-y-2">
+                            <div className="flex justify-between items-center bg-white p-2 rounded border border-amber-200">
+                              <div className="font-mono text-sm">
+                                <span className="font-medium">Type:</span> CNAME<br/>
+                                <span className="font-medium">Name:</span> www<br/>
+                                <span className="font-medium">Value:</span> qrified.app
+                              </div>
+                              <Button variant="ghost" size="sm" onClick={() => copyToClipboard('qrified.app')}>
+                                <Copy className="h-4 w-4 mr-1" /> Copy
+                              </Button>
+                            </div>
+                            
+                            <div className="flex justify-between items-center bg-white p-2 rounded border border-amber-200">
+                              <div className="font-mono text-sm">
+                                <span className="font-medium">Type:</span> CNAME<br/>
+                                <span className="font-medium">Name:</span> qr<br/>
+                                <span className="font-medium">Value:</span> qrified.app
+                              </div>
+                              <Button variant="ghost" size="sm" onClick={() => copyToClipboard('qrified.app')}>
+                                <Copy className="h-4 w-4 mr-1" /> Copy
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="space-y-2">
+                            <div className="flex justify-between items-center bg-white p-2 rounded border border-amber-200">
+                              <div className="font-mono text-sm">
+                                <span className="font-medium">Type:</span> A<br/>
+                                <span className="font-medium">Name:</span> @<br/>
+                                <span className="font-medium">Value:</span> 76.76.21.21
+                              </div>
+                              <Button variant="ghost" size="sm" onClick={() => copyToClipboard('76.76.21.21')}>
+                                <Copy className="h-4 w-4 mr-1" /> Copy
+                              </Button>
+                            </div>
+                            
+                            <div className="flex justify-between items-center bg-white p-2 rounded border border-amber-200">
+                              <div className="font-mono text-sm">
+                                <span className="font-medium">Type:</span> CNAME<br/>
+                                <span className="font-medium">Name:</span> qr<br/>
+                                <span className="font-medium">Value:</span> qrified.app
+                              </div>
+                              <Button variant="ghost" size="sm" onClick={() => copyToClipboard('qrified.app')}>
+                                <Copy className="h-4 w-4 mr-1" /> Copy
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                        
                         <p className="text-xs text-amber-700 mt-2">
                           DNS changes may take up to 24-48 hours to propagate. Check back later if verification fails.
                         </p>

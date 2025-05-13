@@ -7,11 +7,11 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Function to check DNS TXT records using public DNS API
-async function checkTxtRecords(domain: string): Promise<string[]> {
+// Function to check DNS CNAME records using public DNS API
+async function checkCnameRecords(domain: string): Promise<string[]> {
   try {
-    // Use Google's DNS API to lookup TXT records
-    const response = await fetch(`https://dns.google/resolve?name=${domain}&type=TXT`);
+    // Use Google's DNS API to lookup CNAME records
+    const response = await fetch(`https://dns.google/resolve?name=${domain}&type=CNAME`);
     
     if (!response.ok) {
       throw new Error(`DNS API error: ${response.status} ${response.statusText}`);
@@ -23,20 +23,49 @@ async function checkTxtRecords(domain: string): Promise<string[]> {
       return [];
     }
     
-    // Extract the TXT record values
+    // Extract the CNAME record values
     return data.Answer.map((record: any) => {
-      // TXT records in the response are quoted strings, so remove the quotes
+      // Make sure the value doesn't end with a dot
       let value = record.data;
-      if (value.startsWith('"') && value.endsWith('"')) {
-        value = value.substring(1, value.length - 1);
+      if (value.endsWith('.')) {
+        value = value.substring(0, value.length - 1);
       }
       return value;
     });
   } catch (error) {
-    console.error("Error checking TXT records:", error);
+    console.error("Error checking CNAME records:", error);
     throw error;
   }
 }
+
+// Function to check DNS A records using public DNS API
+async function checkARecords(domain: string): Promise<string[]> {
+  try {
+    // Use Google's DNS API to lookup A records
+    const response = await fetch(`https://dns.google/resolve?name=${domain}&type=A`);
+    
+    if (!response.ok) {
+      throw new Error(`DNS API error: ${response.status} ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    
+    if (!data.Answer) {
+      return [];
+    }
+    
+    // Extract the A record values
+    return data.Answer.map((record: any) => record.data);
+  } catch (error) {
+    console.error("Error checking A records:", error);
+    throw error;
+  }
+}
+
+// Central IP address for your application
+const APP_IP_ADDRESS = "76.76.21.21"; // Replace with your actual server IP
+// CNAME target for your application
+const APP_CNAME_TARGET = "qrified.app"; // Replace with your actual domain
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -47,9 +76,9 @@ serve(async (req) => {
   try {
     const { domain, token } = await req.json();
     
-    if (!domain || !token) {
+    if (!domain) {
       return new Response(
-        JSON.stringify({ success: false, message: 'Missing domain or token' }),
+        JSON.stringify({ success: false, message: 'Missing domain' }),
         { 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 400 
@@ -57,24 +86,57 @@ serve(async (req) => {
       );
     }
     
-    console.log(`Verifying domain ${domain} with token ${token}`);
+    console.log(`Verifying domain ${domain}`);
     
     try {
-      // Check TXT record using our new function
-      const expected = `qrified-verify=${token}`;
-      const records = await checkTxtRecords(domain);
-      
+      // First, check if 'www' subdomain is correctly set up with CNAME
       let verified = false;
       
-      for (const value of records) {
-        console.log(`Checking record: ${value}`);
-        if (value === expected) {
-          verified = true;
+      // Depending on whether we're checking www subdomain or root domain
+      if (domain.startsWith('www.')) {
+        // For www subdomain, check CNAME
+        const cnameRecords = await checkCnameRecords(domain);
+        console.log(`CNAME records for ${domain}:`, cnameRecords);
+        
+        // Check if any CNAME record points to our app domain
+        for (const record of cnameRecords) {
+          if (record.includes(APP_CNAME_TARGET)) {
+            verified = true;
+            break;
+          }
+        }
+      } else {
+        // For root domain, check A record
+        const aRecords = await checkARecords(domain);
+        console.log(`A records for ${domain}:`, aRecords);
+        
+        // Check if any A record points to our app IP
+        for (const record of aRecords) {
+          if (record === APP_IP_ADDRESS) {
+            verified = true;
+            break;
+          }
+        }
+      }
+      
+      // Also check 'qr' subdomain points to our app
+      const qrSubdomain = domain.startsWith('www.') 
+        ? `qr.${domain.substring(4)}` 
+        : `qr.${domain}`;
+      
+      const qrCnameRecords = await checkCnameRecords(qrSubdomain);
+      console.log(`CNAME records for ${qrSubdomain}:`, qrCnameRecords);
+      
+      // Both checks must pass - domain and qr subdomain
+      let qrVerified = false;
+      for (const record of qrCnameRecords) {
+        if (record.includes(APP_CNAME_TARGET)) {
+          qrVerified = true;
           break;
         }
       }
       
-      if (verified) {
+      if (verified && qrVerified) {
         // Update the domain status in the database
         const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
         const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
@@ -86,8 +148,7 @@ serve(async (req) => {
             status: 'verified',
             verified_at: new Date().toISOString()
           })
-          .eq('domain', domain)
-          .eq('verification_token', token);
+          .eq('domain', domain);
         
         if (error) {
           console.error('Error updating domain:', error);
@@ -103,7 +164,7 @@ serve(async (req) => {
           JSON.stringify({ 
             success: true, 
             verified: false, 
-            message: 'Verification failed: TXT record not found or incorrect' 
+            message: 'Verification failed: DNS records not correctly configured' 
           }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
