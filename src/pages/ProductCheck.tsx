@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import ReviewForm from '@/components/ReviewForm';
 import FeedbackForm from '@/components/FeedbackForm';
-import { useAppearanceSettings } from '@/contexts/AppearanceContext';
+import { useAppearanceSettings, AppearanceSettings, DEFAULT_SETTINGS } from '@/contexts/AppearanceContext';
 import { TemplateType } from '@/types/qrCode';
 
 const ProductCheck = () => {
@@ -21,9 +21,64 @@ const ProductCheck = () => {
   const [isVerified, setIsVerified] = useState<boolean | null>(null);
   const [showReviews, setShowReviews] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
+  const [localSettings, setLocalSettings] = useState<AppearanceSettings>(DEFAULT_SETTINGS);
   
   // Get appearance settings
-  const theme = useAppearanceSettings();
+  const themeContext = useAppearanceSettings();
+
+  // Load appearance settings from context or directly from Supabase if needed
+  useEffect(() => {
+    const loadDirectSettings = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('app_settings')
+          .select('*')
+          .eq('id', 'theme')
+          .single();
+        
+        if (error && error.code !== 'PGRST116') {
+          console.error('Direct settings load error:', error);
+          return;
+        }
+        
+        if (data?.settings) {
+          const loadedSettings = data.settings as unknown as AppearanceSettings;
+          console.log('Direct loaded settings:', loadedSettings);
+          setLocalSettings(prev => ({
+            ...prev,
+            ...loadedSettings
+          }));
+        }
+      } catch (err) {
+        console.error('Error loading direct settings:', err);
+      }
+    };
+    
+    // First try to use context settings
+    if (!themeContext.isLoading) {
+      console.log('Using context settings:', themeContext);
+      setLocalSettings({
+        ...DEFAULT_SETTINGS,
+        ...themeContext
+      });
+    } else {
+      // If context is loading, try direct load
+      loadDirectSettings();
+    }
+    
+    // Listen for settings updates from other tabs
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'appearance_updated') {
+        loadDirectSettings();
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, [themeContext]);
   
   useEffect(() => {
     const fetchQRCode = async () => {
@@ -103,6 +158,9 @@ const ProductCheck = () => {
     
     fetchQRCode();
   }, [qrId]);
+  
+  // Get the active settings to use
+  const theme = localSettings;
   
   // Helper functions
   const getBgColor = () => {
@@ -184,9 +242,19 @@ const ProductCheck = () => {
   
   return (
     <div 
-      className={`min-h-screen flex flex-col items-center justify-center p-4`}
-      style={{ backgroundColor: getBgColor(), color: getTextColor(), direction: qrCode?.directionRTL ? 'rtl' : 'ltr' }}
+      className="min-h-screen flex flex-col items-center justify-center p-4"
+      style={{ 
+        backgroundColor: getBgColor(), 
+        color: getTextColor(), 
+        direction: theme.isRtl || (qrCode?.directionRTL) ? 'rtl' : 'ltr' 
+      }}
     >
+      {theme.logoUrl && (
+        <div className="mb-4 max-w-[200px]">
+          <img src={theme.logoUrl} alt="Brand Logo" className="w-full object-contain" />
+        </div>
+      )}
+      
       <Card className="w-full max-w-md bg-white/80 backdrop-blur-sm border shadow-lg">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl" style={{ color: getTextColor() }}>
@@ -214,6 +282,10 @@ const ProductCheck = () => {
               variant="outline" 
               className="mt-4 w-full" 
               onClick={() => window.open(qrCode.websiteUrl, '_blank')}
+              style={{ 
+                borderColor: theme.primaryColor,
+                color: theme.primaryColor 
+              }}
             >
               Visit Website
             </Button>
@@ -222,7 +294,15 @@ const ProductCheck = () => {
           {isVerified && theme.enableReviews && (
             <div className="pt-4">
               {!showReviews ? (
-                <Button onClick={() => setShowReviews(true)}>Leave a Review</Button>
+                <Button 
+                  onClick={() => setShowReviews(true)}
+                  style={{ 
+                    backgroundColor: theme.primaryColor,
+                    color: '#ffffff' 
+                  }}
+                >
+                  Leave a Review
+                </Button>
               ) : (
                 <ReviewForm 
                   qrId={qrId} 
@@ -236,7 +316,16 @@ const ProductCheck = () => {
           {isVerified && theme.enableFeedback && (
             <div className="pt-2">
               {!showFeedback ? (
-                <Button variant="outline" onClick={() => setShowFeedback(true)}>Give Feedback</Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowFeedback(true)}
+                  style={{ 
+                    borderColor: theme.secondaryColor,
+                    color: theme.secondaryColor 
+                  }}
+                >
+                  Give Feedback
+                </Button>
               ) : (
                 <FeedbackForm 
                   qrId={qrId}

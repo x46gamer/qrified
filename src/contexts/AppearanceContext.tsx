@@ -84,10 +84,29 @@ export const AppearanceSettingsProvider: React.FC<{
         if (data?.settings) {
           // Add proper type assertion to handle the conversion safely
           const storedSettings = data.settings as unknown;
+          const typedSettings = storedSettings as AppearanceSettings;
+          
+          console.log('Loaded appearance settings:', typedSettings);
+          
           setSettings({
             ...DEFAULT_SETTINGS,
-            ...(storedSettings as AppearanceSettings)
+            ...typedSettings
           });
+        } else {
+          // If no settings exist yet, create the default settings
+          console.log('No existing settings found, creating defaults');
+          const { error: insertError } = await supabase
+            .from('app_settings')
+            .upsert({
+              id: 'theme',
+              settings: DEFAULT_SETTINGS
+            }, {
+              onConflict: 'id'
+            });
+            
+          if (insertError) {
+            console.error('Error creating default settings:', insertError);
+          }
         }
       } catch (err) {
         console.error('Error in loading settings:', err);
@@ -108,6 +127,8 @@ export const AppearanceSettingsProvider: React.FC<{
         ...newSettings
       };
 
+      console.log('Saving updated settings:', updatedSettings);
+
       const { error } = await supabase
         .from('app_settings')
         .upsert({
@@ -125,6 +146,9 @@ export const AppearanceSettingsProvider: React.FC<{
 
       setSettings(updatedSettings);
       toast.success('Appearance settings saved successfully');
+      
+      // Force refresh product check page if it's open in another tab
+      localStorage.setItem('appearance_updated', Date.now().toString());
     } catch (err) {
       console.error('Error in updating settings:', err);
       toast.error('Failed to save settings');

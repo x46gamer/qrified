@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -7,8 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { useAppearanceSettings } from '@/contexts/AppearanceContext';
-import { Loader2, Save } from 'lucide-react';
+import { Loader2, QrCode, Save, Settings, Palette } from 'lucide-react';
 import QRCodeTemplatePreview from '@/components/QRCodeTemplatePreview';
+import { toast } from 'sonner';
+import { Link } from 'react-router-dom';
+import { AspectRatio } from '@/components/ui/aspect-ratio';
 
 const CustomizeApp = () => {
   const {
@@ -27,46 +30,144 @@ const CustomizeApp = () => {
     isRtl,
     enableReviews,
     enableFeedback,
+    logoUrl,
     primaryColor,
     secondaryColor,
     updateSettings,
     isSaving
   } = useAppearanceSettings();
+  
+  const [localSettings, setLocalSettings] = useState({
+    successBackground,
+    successText,
+    successIcon,
+    failureBackground,
+    failureText,
+    failureIcon,
+    successTitle,
+    successDescription,
+    successFooterText,
+    failureTitle,
+    failureDescription,
+    failureFooterText,
+    isRtl,
+    enableReviews,
+    enableFeedback,
+    logoUrl,
+    primaryColor,
+    secondaryColor,
+  });
+  
+  // Update local state when context settings change
+  useEffect(() => {
+    setLocalSettings({
+      successBackground,
+      successText,
+      successIcon,
+      failureBackground,
+      failureText,
+      failureIcon,
+      successTitle,
+      successDescription,
+      successFooterText,
+      failureTitle,
+      failureDescription,
+      failureFooterText,
+      isRtl,
+      enableReviews,
+      enableFeedback,
+      logoUrl,
+      primaryColor,
+      secondaryColor,
+    });
+  }, [
+    successBackground,
+    successText,
+    successIcon,
+    failureBackground,
+    failureText,
+    failureIcon,
+    successTitle,
+    successDescription,
+    successFooterText,
+    failureTitle,
+    failureDescription,
+    failureFooterText,
+    isRtl,
+    enableReviews,
+    enableFeedback,
+    logoUrl,
+    primaryColor,
+    secondaryColor,
+  ]);
+  
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value, type, checked } = e.target;
+    
+    setLocalSettings(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
+  };
+
+  const handleSwitchChange = (checked: boolean, name: string) => {
+    setLocalSettings(prev => ({
+      ...prev,
+      [name]: checked
+    }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    await updateSettings(localSettings);
     
-    const form = e.target as HTMLFormElement;
-    const formData = new FormData(form);
-    
-    const settings = {
-      successBackground: formData.get('successBackground') as string,
-      successText: formData.get('successText') as string,
-      successIcon: formData.get('successIcon') as string,
-      failureBackground: formData.get('failureBackground') as string,
-      failureText: formData.get('failureText') as string,
-      failureIcon: formData.get('failureIcon') as string,
-      successTitle: formData.get('successTitle') as string,
-      successDescription: formData.get('successDescription') as string,
-      successFooterText: formData.get('successFooterText') as string,
-      failureTitle: formData.get('failureTitle') as string,
-      failureDescription: formData.get('failureDescription') as string,
-      failureFooterText: formData.get('failureFooterText') as string,
-      isRtl: formData.get('isRtl') === 'on',
-      enableReviews: formData.get('enableReviews') === 'on',
-      enableFeedback: formData.get('enableFeedback') === 'on',
-      primaryColor: formData.get('primaryColor') as string,
-      secondaryColor: formData.get('secondaryColor') as string,
+    // Provide a direct link to see the changes
+    toast.success(
+      <div className="flex flex-col gap-2">
+        <span>Appearance settings saved successfully</span>
+        <a 
+          href="/check?id=preview&test=true" 
+          target="_blank"
+          className="text-sm underline text-blue-500"
+        >
+          View verification page preview
+        </a>
+      </div>,
+      { duration: 5000 }
+    );
+  };
+  
+  const getPreviewBgStyle = (isSuccess: boolean) => {
+    return {
+      backgroundColor: isSuccess ? localSettings.successBackground : localSettings.failureBackground,
+      color: isSuccess ? localSettings.successText : localSettings.failureText
     };
-    
-    await updateSettings(settings);
   };
 
   return (
     <div className="container mx-auto py-8">
       <header className="mb-8">
-        <h1 className="text-4xl font-bold mb-2">Customize Your App</h1>
-        <p className="text-lg text-muted-foreground">Personalize the appearance and behavior of your QR verification</p>
+        <div className="flex items-center gap-2 mb-2">
+          <Palette className="h-7 w-7 text-primary" />
+          <h1 className="text-4xl font-bold">Customize Your App</h1>
+        </div>
+        <p className="text-lg text-muted-foreground">Personalize the appearance and behavior of your product verification pages</p>
+      
+        <div className="flex gap-4 mt-4">
+          <Link to="/check?id=preview&test=true" target="_blank">
+            <Button variant="outline" className="flex items-center gap-2">
+              <QrCode className="h-4 w-4" />
+              Preview QR Verification Page
+            </Button>
+          </Link>
+          
+          <Link to="/settings">
+            <Button variant="outline" className="flex items-center gap-2">
+              <Settings className="h-4 w-4" />
+              All Settings
+            </Button>
+          </Link>
+        </div>
       </header>
       
       <form onSubmit={handleSubmit}>
@@ -94,14 +195,16 @@ const CustomizeApp = () => {
                         type="color" 
                         id="successBackground" 
                         name="successBackground" 
-                        defaultValue={successBackground}
+                        value={localSettings.successBackground}
+                        onChange={handleInputChange}
                         className="w-12 h-12 p-1 cursor-pointer"
                       />
                       <Input 
                         type="text" 
-                        defaultValue={successBackground} 
+                        value={localSettings.successBackground} 
+                        name="successBackground"
+                        onChange={handleInputChange}
                         className="flex-1" 
-                        readOnly
                       />
                     </div>
                   </div>
@@ -113,14 +216,16 @@ const CustomizeApp = () => {
                         type="color" 
                         id="successText" 
                         name="successText" 
-                        defaultValue={successText}
+                        value={localSettings.successText}
+                        onChange={handleInputChange}
                         className="w-12 h-12 p-1 cursor-pointer"
                       />
                       <Input 
                         type="text" 
-                        defaultValue={successText} 
+                        value={localSettings.successText} 
+                        name="successText"
+                        onChange={handleInputChange}
                         className="flex-1" 
-                        readOnly
                       />
                     </div>
                   </div>
@@ -132,14 +237,16 @@ const CustomizeApp = () => {
                         type="color" 
                         id="successIcon" 
                         name="successIcon" 
-                        defaultValue={successIcon}
+                        value={localSettings.successIcon}
+                        onChange={handleInputChange}
                         className="w-12 h-12 p-1 cursor-pointer"
                       />
                       <Input 
                         type="text" 
-                        defaultValue={successIcon} 
+                        value={localSettings.successIcon}
+                        name="successIcon"
+                        onChange={handleInputChange}
                         className="flex-1" 
-                        readOnly
                       />
                     </div>
                   </div>
@@ -150,7 +257,8 @@ const CustomizeApp = () => {
                       type="text" 
                       id="successTitle" 
                       name="successTitle" 
-                      defaultValue={successTitle}
+                      value={localSettings.successTitle}
+                      onChange={handleInputChange}
                       placeholder="Product Verified" 
                     />
                   </div>
@@ -161,7 +269,8 @@ const CustomizeApp = () => {
                       type="text" 
                       id="successDescription" 
                       name="successDescription" 
-                      defaultValue={successDescription}
+                      value={localSettings.successDescription}
+                      onChange={handleInputChange}
                       placeholder="This product is legitimate and original." 
                     />
                   </div>
@@ -172,7 +281,8 @@ const CustomizeApp = () => {
                       type="text" 
                       id="successFooterText" 
                       name="successFooterText" 
-                      defaultValue={successFooterText}
+                      value={localSettings.successFooterText}
+                      onChange={handleInputChange}
                       placeholder="This QR code has been marked as used and cannot be verified again." 
                     />
                   </div>
@@ -194,14 +304,16 @@ const CustomizeApp = () => {
                         type="color" 
                         id="failureBackground" 
                         name="failureBackground" 
-                        defaultValue={failureBackground}
+                        value={localSettings.failureBackground}
+                        onChange={handleInputChange}
                         className="w-12 h-12 p-1 cursor-pointer"
                       />
                       <Input 
                         type="text" 
-                        defaultValue={failureBackground} 
+                        value={localSettings.failureBackground}
+                        name="failureBackground"
+                        onChange={handleInputChange}
                         className="flex-1" 
-                        readOnly
                       />
                     </div>
                   </div>
@@ -213,14 +325,16 @@ const CustomizeApp = () => {
                         type="color" 
                         id="failureText" 
                         name="failureText" 
-                        defaultValue={failureText}
+                        value={localSettings.failureText}
+                        onChange={handleInputChange}
                         className="w-12 h-12 p-1 cursor-pointer"
                       />
                       <Input 
                         type="text" 
-                        defaultValue={failureText} 
+                        value={localSettings.failureText}
+                        name="failureText"
+                        onChange={handleInputChange}
                         className="flex-1" 
-                        readOnly
                       />
                     </div>
                   </div>
@@ -232,14 +346,16 @@ const CustomizeApp = () => {
                         type="color" 
                         id="failureIcon" 
                         name="failureIcon" 
-                        defaultValue={failureIcon}
+                        value={localSettings.failureIcon}
+                        onChange={handleInputChange}
                         className="w-12 h-12 p-1 cursor-pointer"
                       />
                       <Input 
                         type="text" 
-                        defaultValue={failureIcon} 
+                        value={localSettings.failureIcon}
+                        name="failureIcon"
+                        onChange={handleInputChange}
                         className="flex-1" 
-                        readOnly
                       />
                     </div>
                   </div>
@@ -250,7 +366,8 @@ const CustomizeApp = () => {
                       type="text" 
                       id="failureTitle" 
                       name="failureTitle" 
-                      defaultValue={failureTitle}
+                      value={localSettings.failureTitle}
+                      onChange={handleInputChange}
                       placeholder="Not Authentic" 
                     />
                   </div>
@@ -261,7 +378,8 @@ const CustomizeApp = () => {
                       type="text" 
                       id="failureDescription" 
                       name="failureDescription" 
-                      defaultValue={failureDescription}
+                      value={localSettings.failureDescription}
+                      onChange={handleInputChange}
                       placeholder="This product could not be verified as authentic." 
                     />
                   </div>
@@ -272,13 +390,85 @@ const CustomizeApp = () => {
                       type="text" 
                       id="failureFooterText" 
                       name="failureFooterText" 
-                      defaultValue={failureFooterText}
+                      value={localSettings.failureFooterText}
+                      onChange={handleInputChange}
                       placeholder="If you believe this is an error, please contact the manufacturer." 
                     />
                   </div>
                 </CardContent>
               </Card>
             </div>
+            
+            {/* Live Preview Section */}
+            <Card className="mt-6">
+              <CardHeader>
+                <CardTitle>Preview</CardTitle>
+                <CardDescription>
+                  See how your verification page will look
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="border rounded-lg overflow-hidden">
+                    <div className="p-2 bg-gray-100 text-sm font-medium text-center border-b">
+                      Success Preview
+                    </div>
+                    <div 
+                      className="p-4 flex flex-col items-center text-center space-y-3"
+                      style={getPreviewBgStyle(true)}
+                    >
+                      {localSettings.logoUrl && (
+                        <img 
+                          src={localSettings.logoUrl} 
+                          alt="Logo" 
+                          className="h-8 mb-2"
+                        />
+                      )}
+                      <div 
+                        className="w-10 h-10 rounded-full flex items-center justify-center"
+                        style={{ backgroundColor: localSettings.successIcon }}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="white">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                      <h3 className="font-bold">{localSettings.successTitle}</h3>
+                      <p className="text-xs">{localSettings.successDescription}</p>
+                      <div className="text-xs opacity-70">{localSettings.successFooterText}</div>
+                    </div>
+                  </div>
+                  
+                  <div className="border rounded-lg overflow-hidden">
+                    <div className="p-2 bg-gray-100 text-sm font-medium text-center border-b">
+                      Failure Preview
+                    </div>
+                    <div 
+                      className="p-4 flex flex-col items-center text-center space-y-3"
+                      style={getPreviewBgStyle(false)}
+                    >
+                      {localSettings.logoUrl && (
+                        <img 
+                          src={localSettings.logoUrl} 
+                          alt="Logo" 
+                          className="h-8 mb-2"
+                        />
+                      )}
+                      <div 
+                        className="w-10 h-10 rounded-full flex items-center justify-center"
+                        style={{ backgroundColor: localSettings.failureIcon }}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="white">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </div>
+                      <h3 className="font-bold">{localSettings.failureTitle}</h3>
+                      <p className="text-xs">{localSettings.failureDescription}</p>
+                      <div className="text-xs opacity-70">{localSettings.failureFooterText}</div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
           
           <TabsContent value="branding" className="space-y-6">
@@ -298,14 +488,16 @@ const CustomizeApp = () => {
                         type="color" 
                         id="primaryColor" 
                         name="primaryColor" 
-                        defaultValue={primaryColor}
+                        value={localSettings.primaryColor}
+                        onChange={handleInputChange}
                         className="w-12 h-12 p-1 cursor-pointer"
                       />
                       <Input 
                         type="text" 
-                        defaultValue={primaryColor} 
+                        value={localSettings.primaryColor}
+                        name="primaryColor"
+                        onChange={handleInputChange}
                         className="flex-1" 
-                        readOnly
                       />
                     </div>
                   </div>
@@ -317,21 +509,55 @@ const CustomizeApp = () => {
                         type="color" 
                         id="secondaryColor" 
                         name="secondaryColor" 
-                        defaultValue={secondaryColor}
+                        value={localSettings.secondaryColor}
+                        onChange={handleInputChange}
                         className="w-12 h-12 p-1 cursor-pointer"
                       />
                       <Input 
                         type="text" 
-                        defaultValue={secondaryColor} 
+                        value={localSettings.secondaryColor}
+                        name="secondaryColor"
+                        onChange={handleInputChange}
                         className="flex-1" 
-                        readOnly
                       />
                     </div>
                   </div>
                   
                   <div className="flex items-center justify-between space-y-2 pt-4">
                     <Label htmlFor="isRtl">Right-to-left Text Direction</Label>
-                    <Switch id="isRtl" name="isRtl" defaultChecked={isRtl} />
+                    <Switch 
+                      id="isRtl" 
+                      name="isRtl" 
+                      checked={localSettings.isRtl}
+                      onCheckedChange={(checked) => handleSwitchChange(checked, 'isRtl')}
+                    />
+                  </div>
+                  
+                  {/* Logo Upload Section */}
+                  <div className="pt-4 border-t mt-4">
+                    <Label className="block mb-2">Brand Logo</Label>
+                    {localSettings.logoUrl ? (
+                      <div className="flex flex-col items-center gap-2">
+                        <div className="border p-2 rounded-lg w-40 h-20 flex items-center justify-center">
+                          <img 
+                            src={localSettings.logoUrl} 
+                            alt="Brand Logo" 
+                            className="max-w-full max-h-full object-contain"
+                          />
+                        </div>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => setLocalSettings(prev => ({ ...prev, logoUrl: null }))}
+                        >
+                          Remove Logo
+                        </Button>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">
+                        Upload your logo in the Settings page
+                      </p>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -344,14 +570,14 @@ const CustomizeApp = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="flex justify-center">
-                  <div className="w-60 h-60">
+                  <AspectRatio ratio={1/1} className="w-60">
                     <QRCodeTemplatePreview 
                       template="classic"
-                      primaryColor={primaryColor}
-                      secondaryColor={secondaryColor}
+                      primaryColor={localSettings.primaryColor}
+                      secondaryColor={localSettings.secondaryColor}
                       size={240}
                     />
-                  </div>
+                  </AspectRatio>
                 </CardContent>
               </Card>
             </div>
@@ -371,7 +597,12 @@ const CustomizeApp = () => {
                     <h3 className="font-medium">Enable Product Reviews</h3>
                     <p className="text-sm text-gray-500">Allow customers to leave product reviews after verification</p>
                   </div>
-                  <Switch id="enableReviews" name="enableReviews" defaultChecked={enableReviews} />
+                  <Switch 
+                    id="enableReviews" 
+                    name="enableReviews" 
+                    checked={localSettings.enableReviews}
+                    onCheckedChange={(checked) => handleSwitchChange(checked, 'enableReviews')}
+                  />
                 </div>
                 
                 <div className="flex items-center justify-between py-2 border-b">
@@ -379,7 +610,12 @@ const CustomizeApp = () => {
                     <h3 className="font-medium">Enable Customer Feedback</h3>
                     <p className="text-sm text-gray-500">Allow customers to provide improvement suggestions</p>
                   </div>
-                  <Switch id="enableFeedback" name="enableFeedback" defaultChecked={enableFeedback} />
+                  <Switch 
+                    id="enableFeedback" 
+                    name="enableFeedback" 
+                    checked={localSettings.enableFeedback}
+                    onCheckedChange={(checked) => handleSwitchChange(checked, 'enableFeedback')}
+                  />
                 </div>
                 
                 <div className="pt-4">
