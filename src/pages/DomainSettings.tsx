@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Info, Check, Copy } from "lucide-react";
+import { Info, Check, Copy, Shield } from "lucide-react";
 
 interface Domain {
   id: string;
@@ -202,7 +202,7 @@ const DomainSettings = () => {
                 <AlertTitle className="text-blue-800">How white-labeling works</AlertTitle>
                 <AlertDescription className="text-blue-700">
                   After adding your domain, you'll need to create DNS records at your domain provider pointing to QRified's servers. 
-                  This allows us to verify that you own the domain and properly serve your content.
+                  This allows us to verify that you own the domain and properly serve your content securely with SSL.
                 </AlertDescription>
               </Alert>
             </div>
@@ -226,20 +226,29 @@ const DomainSettings = () => {
                     <div className="flex justify-between items-center mb-2">
                       <div>
                         <h3 className="font-medium text-lg">{domain.domain}</h3>
-                        <span className={`inline-flex items-center px-2 py-1 text-xs rounded-full ${
-                          domain.status === 'verified' 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-yellow-100 text-yellow-800'
-                        }`}>
-                          {domain.status === 'verified' ? (
-                            <>
-                              <Check className="w-3 h-3 mr-1" />
-                              Verified
-                            </>
-                          ) : (
-                            'Pending Verification'
+                        <div className="flex gap-2 items-center">
+                          <span className={`inline-flex items-center px-2 py-1 text-xs rounded-full ${
+                            domain.status === 'verified' 
+                              ? 'bg-green-100 text-green-800' 
+                              : 'bg-yellow-100 text-yellow-800'
+                          }`}>
+                            {domain.status === 'verified' ? (
+                              <>
+                                <Check className="w-3 h-3 mr-1" />
+                                Verified
+                              </>
+                            ) : (
+                              'Pending Verification'
+                            )}
+                          </span>
+                          
+                          {domain.status === 'verified' && (
+                            <span className="inline-flex items-center px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">
+                              <Shield className="w-3 h-3 mr-1" />
+                              SSL Active
+                            </span>
                           )}
-                        </span>
+                        </div>
                       </div>
                       <div className="flex gap-2">
                         {domain.status !== 'verified' && (
@@ -317,6 +326,18 @@ const DomainSettings = () => {
                           </div>
                         )}
                         
+                        <div className="mt-4 bg-blue-50 p-3 rounded border border-blue-100">
+                          <div className="flex items-start">
+                            <Shield className="h-5 w-5 text-blue-600 mr-2 mt-0.5" />
+                            <div>
+                              <p className="font-medium text-blue-800">SSL Certificate (HTTPS)</p>
+                              <p className="text-sm text-blue-700 mt-1">
+                                SSL certificates are generated automatically once your domain is verified. This ensures your custom domain uses secure HTTPS connections. No additional setup is needed.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                        
                         <p className="text-xs text-amber-700 mt-2">
                           DNS changes may take up to 24-48 hours to propagate. Check back later if verification fails.
                         </p>
@@ -324,8 +345,22 @@ const DomainSettings = () => {
                     )}
                     
                     {domain.status === 'verified' && (
-                      <div className="mt-2 text-sm text-gray-600">
-                        Verified on: {new Date(domain.verified_at!).toLocaleDateString()}
+                      <div className="mt-3">
+                        <div className="text-sm text-gray-600 mb-2">
+                          Verified on: {new Date(domain.verified_at!).toLocaleDateString()}
+                        </div>
+                        
+                        <Alert className="bg-green-50 border border-green-100">
+                          <div className="flex items-start">
+                            <Shield className="h-5 w-5 text-green-600 mr-2" />
+                            <div>
+                              <AlertTitle className="text-green-800">SSL Certificate Active</AlertTitle>
+                              <AlertDescription className="text-green-700">
+                                Your domain is secured with SSL and can be accessed via https://{domain.domain}. SSL certificates are automatically renewed.
+                              </AlertDescription>
+                            </div>
+                          </div>
+                        </Alert>
                       </div>
                     )}
                   </div>

@@ -62,10 +62,36 @@ async function checkARecords(domain: string): Promise<string[]> {
   }
 }
 
+// Function to check if SSL is provisioned and valid
+async function checkSSLCertificate(domain: string): Promise<boolean> {
+  try {
+    // We'll just check if HTTPS is responding correctly as a proxy for SSL validation
+    // In a production environment, you might want more robust checking
+    const url = `https://${domain}`;
+    
+    try {
+      const response = await fetch(url, { 
+        method: 'HEAD',
+        // Very short timeout since we just need to check if SSL is working
+        signal: AbortSignal.timeout(10000) 
+      });
+      
+      // If we get any response at all over HTTPS, it means SSL is working
+      return response.status < 500; // Any response that's not a server error
+    } catch (e) {
+      console.log(`SSL check failed for ${domain}:`, e);
+      return false;
+    }
+  } catch (error) {
+    console.error("Error checking SSL:", error);
+    return false;
+  }
+}
+
 // Central IP address for your application
-const APP_IP_ADDRESS = "76.76.21.21"; // Replace with your actual server IP
+const APP_IP_ADDRESS = "76.76.21.21"; 
 // CNAME target for your application
-const APP_CNAME_TARGET = "qrified.app"; // Replace with your actual domain
+const APP_CNAME_TARGET = "qrified.app";
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -74,7 +100,7 @@ serve(async (req) => {
   }
 
   try {
-    const { domain, token } = await req.json();
+    const { domain } = await req.json();
     
     if (!domain) {
       return new Response(

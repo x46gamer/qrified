@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, Shield } from "lucide-react";
 import { useAuth } from '@/contexts/AuthContext';
 
 const Settings = () => {
@@ -94,16 +94,22 @@ const Settings = () => {
           <Card>
             <CardHeader>
               <CardTitle>Domain Settings</CardTitle>
-              <CardDescription>Connect your own domain to SeQRity</CardDescription>
+              <CardDescription>Connect your own domain to QRified</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-4">
                 <div className="border rounded-lg p-4 bg-gradient-to-r from-blue-50 to-violet-50">
-                  <h3 className="font-medium mb-2">White-Label Domain</h3>
+                  <h3 className="font-medium mb-2">White-Label Domain with SSL</h3>
                   <p className="text-sm text-gray-600 mb-4">
-                    Connect your own domain to SeQRity for a fully branded experience.
-                    Your customers will see your domain instead of SeQRity.app when scanning QR codes.
+                    Connect your own domain to QRified for a fully branded experience.
+                    Your customers will see your domain with secure HTTPS instead of QRified.app when scanning QR codes.
                   </p>
+                  <div className="flex items-center gap-2 mb-4 bg-blue-100 p-2 rounded-md">
+                    <Shield className="h-5 w-5 text-blue-600" />
+                    <p className="text-sm text-blue-800">
+                      Automatic SSL certificates included - no additional setup required!
+                    </p>
+                  </div>
                   
                   <Link to="/domains">
                     <Button className="bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-700 hover:to-violet-700">
