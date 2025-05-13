@@ -35,6 +35,7 @@ export type Database = {
           created_at: string
           domain: string
           id: string
+          ssl_status: string | null
           status: string
           user_id: string
           verification_token: string
@@ -44,6 +45,7 @@ export type Database = {
           created_at?: string
           domain: string
           id?: string
+          ssl_status?: string | null
           status?: string
           user_id: string
           verification_token: string
@@ -53,6 +55,7 @@ export type Database = {
           created_at?: string
           domain?: string
           id?: string
+          ssl_status?: string | null
           status?: string
           user_id?: string
           verification_token?: string

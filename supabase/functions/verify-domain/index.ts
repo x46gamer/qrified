@@ -65,6 +65,7 @@ async function checkARecords(domain: string): Promise<string[]> {
 // Function to check if SSL is provisioned and valid
 async function checkSSLCertificate(domain: string): Promise<{isValid: boolean; status: string}> {
   try {
+    console.log(`Checking SSL for domain: ${domain}`);
     // We'll check if HTTPS is responding correctly as a proxy for SSL validation
     const url = `https://${domain}`;
     
@@ -77,19 +78,21 @@ async function checkSSLCertificate(domain: string): Promise<{isValid: boolean; s
       
       // If we get any response at all over HTTPS, it means SSL is working
       if (response.status < 500) {
+        console.log(`SSL is working for ${domain}`);
         return { isValid: true, status: 'active' };
       } else {
+        console.log(`SSL check failed for ${domain} with status: ${response.status}`);
         return { isValid: false, status: 'failed' };
       }
-    } catch (e) {
+    } catch (e: any) {
       console.log(`SSL check failed for ${domain}:`, e);
-      // If it's a TLS error, the certificate might be provisioning
-      if (e.message.includes('TLS') || e.message.includes('certificate')) {
+      // If it's a TLS error or timeout, the certificate might be provisioning
+      if (e.message.includes('TLS') || e.message.includes('certificate') || e.message.includes('timeout')) {
         return { isValid: false, status: 'pending' };
       }
       return { isValid: false, status: 'failed' };
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error checking SSL:", error);
     return { isValid: false, status: 'failed' };
   }
@@ -145,7 +148,7 @@ serve(async (req) => {
         const sslStatus = await checkSSLCertificate(domain);
         
         // Update the SSL status in the database
-        if (sslStatus.isValid) {
+        if (sslStatus.isValid || sslStatus.status !== 'pending') {
           const { error } = await supabase
             .from('custom_domains')
             .update({
@@ -162,7 +165,7 @@ serve(async (req) => {
           JSON.stringify({ success: true, ssl: sslStatus }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
-      } catch (error) {
+      } catch (error: any) {
         console.error('SSL check error:', error);
         return new Response(
           JSON.stringify({ 
@@ -233,6 +236,7 @@ serve(async (req) => {
           
           // Initial SSL check 
           const sslStatus = await checkSSLCertificate(domain);
+          console.log(`Initial SSL status for ${domain}:`, sslStatus);
           
           // Update the domain status in the database
           const { error } = await supabase
@@ -267,7 +271,7 @@ serve(async (req) => {
             { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('DNS resolution error:', error);
         return new Response(
           JSON.stringify({ 
@@ -281,7 +285,7 @@ serve(async (req) => {
         );
       }
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Unexpected error:', error);
     return new Response(
       JSON.stringify({ success: false, message: `Unexpected error: ${error.message}` }),
