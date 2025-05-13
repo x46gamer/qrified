@@ -9,6 +9,7 @@ import { Progress } from './ui/progress';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface SidebarProps {
   className?: string;
@@ -25,7 +26,9 @@ const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const {
     state,
-    toggleSidebar
+    toggleSidebar,
+    openMobile,
+    setOpenMobile
   } = useSidebar();
   
   const isOpen = state === 'expanded';
@@ -33,6 +36,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   const { user, logout } = useAuth();
   const isAdmin = user?.role === 'admin';
   const [userLimits, setUserLimits] = useState<UserLimits | null>(null);
+  const isMobile = useIsMobile();
   
   useEffect(() => {
     if (user?.id) {
@@ -71,8 +75,33 @@ const Sidebar: React.FC<SidebarProps> = ({
   const remainingQrCodes = userLimits ? userLimits.qr_limit - userLimits.qr_created : 0;
   const qrCodePercentage = userLimits ? (userLimits.qr_created / userLimits.qr_limit) * 100 : 0;
   
+  const isVisible = !isMobile || (isMobile && openMobile);
+  
+  if (isMobile && !openMobile) {
+    return null; // Don't render sidebar on mobile when it's closed
+  }
+  
   return (
-    <div className={cn('flex flex-col h-full bg-white border-r transition-all duration-300', isOpen ? 'w-64' : 'w-[70px]', className)}>
+    <div className={cn(
+      'flex flex-col h-full bg-white border-r transition-all duration-300', 
+      isOpen ? 'w-64' : 'w-[70px]',
+      isMobile && 'fixed left-0 top-0 h-full z-40',
+      className
+    )}>
+      {isMobile && (
+        <div className="flex justify-end p-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setOpenMobile(false)}
+            className="md:hidden"
+          >
+            <X size={20} />
+            <span className="sr-only">Close Sidebar</span>
+          </Button>
+        </div>
+      )}
+      
       <div className="flex-1 overflow-y-clip py-6">
         <div className="flex items-center justify-between px-3 mb-8">
           <div className="flex items-center">

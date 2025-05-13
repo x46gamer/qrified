@@ -21,7 +21,7 @@ export function useIsMobile() {
     
     return () => {
       mql.removeEventListener("change", onChange)
-      window.addEventListener("resize", onChange)
+      window.removeEventListener("resize", onChange)
     }
   }, [])
 
