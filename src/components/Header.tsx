@@ -7,11 +7,13 @@ import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { SidebarTrigger, useSidebar } from './ui/sidebar';
 import { toast } from 'sonner';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const Header: React.FC = () => {
   const { user, logout } = useAuth();
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const isMobile = useIsMobile();
   
   // Conditionally use useSidebar hook only when it's wrapped in SidebarProvider
   // This prevents errors when Header is used outside of a SidebarProvider context
@@ -21,8 +23,8 @@ const Header: React.FC = () => {
       throw new Error("useSidebar must be used within a SidebarProvider.");
     })
   );
-  const sidebar = sidebarContext ? useSidebar() : { state: null, toggleSidebar: () => {} };
-  const { state, toggleSidebar } = sidebar;
+  const sidebar = sidebarContext ? useSidebar() : { state: null, toggleSidebar: () => {}, openMobile: false, setOpenMobile: () => {} };
+  const { state, toggleSidebar, openMobile, setOpenMobile } = sidebar;
   const isExpanded = state === 'expanded';
   
   // Handle scroll events for header
@@ -50,6 +52,12 @@ const Header: React.FC = () => {
     }
   };
 
+  const handleToggleMobileSidebar = () => {
+    if (isMobile && typeof setOpenMobile === 'function') {
+      setOpenMobile(!openMobile);
+    }
+  };
+
   return (
     <header className={cn(
       "sticky top-0 w-full z-50 transition-all duration-300",
@@ -58,16 +66,22 @@ const Header: React.FC = () => {
         : "bg-white/80 backdrop-blur-sm border-b border-gray-100 py-4"
     )}>
       <div className="container mx-auto flex items-center px-4">
-        {user && state !== null && (
+        {user && (
           <Button 
             variant="ghost" 
             size="icon" 
-            onClick={toggleSidebar} 
+            onClick={isMobile ? handleToggleMobileSidebar : toggleSidebar} 
             className="mr-2"
-            title={isExpanded ? "Collapse sidebar" : "Expand sidebar"}
+            title={isMobile ? (openMobile ? "Close sidebar" : "Open sidebar") : (isExpanded ? "Collapse sidebar" : "Expand sidebar")}
           >
-            {isExpanded ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
-            <span className="sr-only">{isExpanded ? "Collapse Sidebar" : "Expand Sidebar"}</span>
+            {isMobile ? (
+              <MenuIcon size={20} />
+            ) : (
+              isExpanded ? <ChevronLeft size={20} /> : <ChevronRight size={20} />
+            )}
+            <span className="sr-only">
+              {isMobile ? (openMobile ? "Close Sidebar" : "Open Sidebar") : (isExpanded ? "Collapse Sidebar" : "Expand Sidebar")}
+            </span>
           </Button>
         )}
         
