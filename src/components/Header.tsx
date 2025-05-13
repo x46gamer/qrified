@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { useAuth } from '../contexts/AuthContext';
@@ -22,13 +23,7 @@ const Header: React.FC = () => {
       throw new Error("useSidebar must be used within a SidebarProvider.");
     })
   );
-  const sidebar = sidebarContext ? useSidebar() : { 
-    state: null, 
-    toggleSidebar: () => {}, 
-    openMobile: false, 
-    setOpenMobile: () => {} 
-  };
-  
+  const sidebar = sidebarContext ? useSidebar() : { state: null, toggleSidebar: () => {}, openMobile: false, setOpenMobile: () => {} };
   const { state, toggleSidebar, openMobile, setOpenMobile } = sidebar;
   const isExpanded = state === 'expanded';
   
@@ -59,7 +54,6 @@ const Header: React.FC = () => {
 
   const handleToggleMobileSidebar = () => {
     if (isMobile && typeof setOpenMobile === 'function') {
-      console.log("Toggling mobile sidebar:", !openMobile);
       setOpenMobile(!openMobile);
     }
   };
@@ -76,12 +70,12 @@ const Header: React.FC = () => {
           <Button 
             variant="ghost" 
             size="icon" 
-            onClick={handleToggleMobileSidebar} 
+            onClick={isMobile ? handleToggleMobileSidebar : toggleSidebar} 
             className="mr-2"
             title={isMobile ? (openMobile ? "Close sidebar" : "Open sidebar") : (isExpanded ? "Collapse sidebar" : "Expand sidebar")}
           >
             {isMobile ? (
-              openMobile ? <X size={20} /> : <MenuIcon size={20} />
+              <MenuIcon size={20} />
             ) : (
               isExpanded ? <ChevronLeft size={20} /> : <ChevronRight size={20} />
             )}
