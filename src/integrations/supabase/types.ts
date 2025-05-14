@@ -143,7 +143,6 @@ export type Database = {
           sequential_number: string
           template: string | null
           url: string
-          user_id: string
           website_url: string | null
         }
         Insert: {
@@ -161,7 +160,6 @@ export type Database = {
           sequential_number: string
           template?: string | null
           url: string
-          user_id: string
           website_url?: string | null
         }
         Update: {
@@ -179,7 +177,6 @@ export type Database = {
           sequential_number?: string
           template?: string | null
           url?: string
-          user_id?: string
           website_url?: string | null
         }
         Relationships: []

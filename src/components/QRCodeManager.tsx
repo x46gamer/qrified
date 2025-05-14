@@ -14,7 +14,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { QRCodeTemplatePreview } from './QRCodeTemplatePreview';
 import { QRCode } from '@/types/qrCode';
 import { formatSequentialNumber } from '@/utils/qrCodeUtils';
-import { useAuth } from '@/contexts/AuthContext';
 
 interface QRCodeManagerProps {
   qrCodes: QRCode[];
@@ -28,7 +27,6 @@ const QRCodeManager: React.FC<QRCodeManagerProps> = ({ qrCodes, onUpdateQRCode, 
   const [previewQRCode, setPreviewQRCode] = useState<QRCode | null>(null);
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
-  const { user } = useAuth();
   
   const handleToggleEnabled = async (qrCode: QRCode) => {
     try {
@@ -108,14 +106,6 @@ const QRCodeManager: React.FC<QRCodeManagerProps> = ({ qrCodes, onUpdateQRCode, 
       (qr.websiteUrl && qr.websiteUrl.toLowerCase().includes(searchLower))
     );
   });
-  
-  if (!user) {
-    return (
-      <div className="text-center p-8">
-        <p>You must be logged in to view QR codes.</p>
-      </div>
-    );
-  }
   
   return (
     <div className="space-y-6">
