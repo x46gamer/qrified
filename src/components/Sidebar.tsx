@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { useSidebar } from '@/components/ui/sidebar';
@@ -74,16 +75,17 @@ const Sidebar: React.FC<SidebarProps> = ({
   const remainingQrCodes = userLimits ? userLimits.qr_limit - userLimits.qr_created : 0;
   const qrCodePercentage = userLimits ? (userLimits.qr_created / userLimits.qr_limit) * 100 : 0;
   
-  // If on mobile and sidebar is closed, don't render the sidebar content
+  const isVisible = !isMobile || (isMobile && openMobile);
+  
   if (isMobile && !openMobile) {
-    return null;
+    return null; // Don't render sidebar on mobile when it's closed
   }
   
   return (
     <div className={cn(
       'flex flex-col h-full bg-white border-r transition-all duration-300', 
       isOpen ? 'w-64' : 'w-[70px]',
-      isMobile ? 'fixed left-0 top-0 h-full z-40 shadow-lg' : '',
+      isMobile && 'fixed left-0 top-0 h-full z-40',
       className
     )}>
       {isMobile && (
@@ -100,7 +102,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         </div>
       )}
       
-      <div className="flex-1 overflow-y-auto py-6">
+      <div className="flex-1 overflow-y-clip py-6">
         <div className="flex items-center justify-between px-3 mb-8">
           <div className="flex items-center">
             <div className={cn("w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center text-white font-bold text-xl")}>
