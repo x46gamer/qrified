@@ -22,7 +22,13 @@ const Header: React.FC = () => {
       throw new Error("useSidebar must be used within a SidebarProvider.");
     })
   );
-  const sidebar = sidebarContext ? useSidebar() : { state: null, toggleSidebar: () => {}, openMobile: false, setOpenMobile: () => {} };
+  const sidebar = sidebarContext ? useSidebar() : { 
+    state: null, 
+    toggleSidebar: () => {}, 
+    openMobile: false, 
+    setOpenMobile: () => {} 
+  };
+  
   const { state, toggleSidebar, openMobile, setOpenMobile } = sidebar;
   const isExpanded = state === 'expanded';
   
@@ -53,6 +59,7 @@ const Header: React.FC = () => {
 
   const handleToggleMobileSidebar = () => {
     if (isMobile && typeof setOpenMobile === 'function') {
+      console.log("Toggling mobile sidebar:", !openMobile);
       setOpenMobile(!openMobile);
     }
   };
@@ -69,7 +76,7 @@ const Header: React.FC = () => {
           <Button 
             variant="ghost" 
             size="icon" 
-            onClick={isMobile ? handleToggleMobileSidebar : toggleSidebar} 
+            onClick={handleToggleMobileSidebar} 
             className="mr-2"
             title={isMobile ? (openMobile ? "Close sidebar" : "Open sidebar") : (isExpanded ? "Collapse sidebar" : "Expand sidebar")}
           >
