@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { useSidebar } from '@/components/ui/sidebar';
@@ -75,10 +74,9 @@ const Sidebar: React.FC<SidebarProps> = ({
   const remainingQrCodes = userLimits ? userLimits.qr_limit - userLimits.qr_created : 0;
   const qrCodePercentage = userLimits ? (userLimits.qr_created / userLimits.qr_limit) * 100 : 0;
   
-  const isVisible = !isMobile || (isMobile && openMobile);
-  
+  // If on mobile and sidebar is closed, render narrow sidebar with icons only
   if (isMobile && !openMobile) {
-    return null; // Don't render sidebar on mobile when it's closed
+    return null;
   }
   
   return (

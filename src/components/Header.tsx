@@ -15,15 +15,14 @@ const Header: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const isMobile = useIsMobile();
   
-  // Conditionally use useSidebar hook only when it's wrapped in SidebarProvider
-  // This prevents errors when Header is used outside of a SidebarProvider context
-  const sidebarContext = React.useContext(
-    // @ts-ignore - This is just to check if the context exists
-    React.createContext(null, () => {
-      throw new Error("useSidebar must be used within a SidebarProvider.");
-    })
-  );
-  const sidebar = sidebarContext ? useSidebar() : { state: null, toggleSidebar: () => {}, openMobile: false, setOpenMobile: () => {} };
+  // Use try-catch to safely access sidebar context
+  let sidebar = { state: null, toggleSidebar: () => {}, openMobile: false, setOpenMobile: () => {} };
+  try {
+    sidebar = useSidebar();
+  } catch (e) {
+    // Context not available, will use defaults
+  }
+  
   const { state, toggleSidebar, openMobile, setOpenMobile } = sidebar;
   const isExpanded = state === 'expanded';
   
@@ -52,9 +51,12 @@ const Header: React.FC = () => {
     }
   };
 
-  const handleToggleMobileSidebar = () => {
-    if (isMobile && typeof setOpenMobile === 'function') {
+  // This is the unified handler for sidebar toggling
+  const handleToggleSidebar = () => {
+    if (isMobile) {
       setOpenMobile(!openMobile);
+    } else {
+      toggleSidebar();
     }
   };
 
@@ -70,12 +72,12 @@ const Header: React.FC = () => {
           <Button 
             variant="ghost" 
             size="icon" 
-            onClick={isMobile ? handleToggleMobileSidebar : toggleSidebar} 
+            onClick={handleToggleSidebar} 
             className="mr-2"
             title={isMobile ? (openMobile ? "Close sidebar" : "Open sidebar") : (isExpanded ? "Collapse sidebar" : "Expand sidebar")}
           >
             {isMobile ? (
-              <MenuIcon size={20} />
+              openMobile ? <X size={20} /> : <MenuIcon size={20} />
             ) : (
               isExpanded ? <ChevronLeft size={20} /> : <ChevronRight size={20} />
             )}
