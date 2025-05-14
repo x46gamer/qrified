@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, UserRole } from '../types/auth';
 import { supabase } from '../integrations/supabase/client';
@@ -56,6 +57,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           };
           setUser(userData);
           localStorage.setItem('qrauth_user', JSON.stringify(userData));
+          
+          // Fetch user profile to get role
+          setTimeout(() => {
+            fetchUserProfile(session.user.id);
+          }, 0);
         } else {
           setUser(null);
           localStorage.removeItem('qrauth_user');
@@ -78,6 +84,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           };
           setUser(userData);
           localStorage.setItem('qrauth_user', JSON.stringify(userData));
+          
+          // Fetch user profile to get role
+          fetchUserProfile(session.user.id);
         } else {
           // Check if user is already logged in from localStorage (for demo login)
           const storedUser = localStorage.getItem('qrauth_user');
@@ -90,6 +99,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } catch (error) {
         console.error('Error checking session:', error);
         setIsLoading(false);
+      }
+    };
+
+    // Fetch user profile to get role
+    const fetchUserProfile = async (userId: string) => {
+      try {
+        const { data, error } = await supabase
+          .from('user_profiles')
+          .select('role')
+          .eq('id', userId)
+          .single();
+        
+        if (error) {
+          console.error('Error fetching user profile:', error);
+          return;
+        }
+        
+        if (data) {
+          setUser(prev => {
+            if (!prev) return null;
+            const updatedUser = {
+              ...prev,
+              role: data.role as UserRole
+            };
+            localStorage.setItem('qrauth_user', JSON.stringify(updatedUser));
+            return updatedUser;
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching user profile:', error);
       }
     };
 

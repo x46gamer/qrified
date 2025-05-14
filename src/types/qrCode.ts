@@ -26,4 +26,5 @@ export interface QRCode {
   websiteUrl?: string;
   footerText?: string;
   directionRTL?: boolean;
+  userId?: string; // Add user ID to track ownership
 }

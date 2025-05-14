@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import QRCodeGenerator from '@/components/QRCodeGenerator';
@@ -30,14 +31,18 @@ const Index = () => {
   
   // Load QR codes from Supabase on mount
   useEffect(() => {
-    fetchQRCodes();
-    fetchLastSequentialNumber();
-  }, []);
+    if (user) {
+      fetchQRCodes();
+      fetchLastSequentialNumber();
+    }
+  }, [user]);
   
   const fetchQRCodes = async () => {
+    if (!user) return;
+    
     setIsLoading(true);
     try {
-      // Fetch all QR codes
+      // Fetch QR codes (Row Level Security will restrict to only user's codes or all for admins)
       const { data, error } = await supabase
         .from('qr_codes')
         .select('*')
@@ -71,6 +76,7 @@ const Index = () => {
           websiteUrl: qr.website_url,
           footerText: qr.footer_text,
           directionRTL: qr.direction_rtl,
+          userId: qr.user_id,
         }));
         
         setQRCodes(mappedQrCodes);
@@ -111,16 +117,22 @@ const Index = () => {
   };
   
   const handleQRCodesGenerated = async (newQRCodes: QRCode[]) => {
+    // Make sure the user ID is set for new QR codes
+    const userQRCodes = newQRCodes.map(code => ({
+      ...code,
+      userId: user?.id,
+    }));
+    
     // Update the state with the new QR codes
-    setQRCodes(prevQrCodes => [...newQRCodes, ...prevQrCodes]);
+    setQRCodes(prevQrCodes => [...userQRCodes, ...prevQrCodes]);
     
     // Update the last sequential number
-    if (newQRCodes.length > 0) {
+    if (userQRCodes.length > 0) {
       await fetchLastSequentialNumber();
     }
     
     // Set the display QR codes
-    const codesWithDataUrls = newQRCodes.map(code => ({
+    const codesWithDataUrls = userQRCodes.map(code => ({
       ...code,
       dataUrl: code.dataUrl || ''
     }));
