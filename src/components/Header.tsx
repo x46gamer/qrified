@@ -16,7 +16,13 @@ const Header: React.FC = () => {
   const isMobile = useIsMobile();
   
   // Use try-catch to safely access sidebar context
-  let sidebar = { state: null, toggleSidebar: () => {}, openMobile: false, setOpenMobile: () => {} };
+  let sidebar = { 
+    state: null as any, 
+    toggleSidebar: () => {}, 
+    openMobile: false, 
+    setOpenMobile: (open: boolean) => {} 
+  };
+  
   try {
     sidebar = useSidebar();
   } catch (e) {
