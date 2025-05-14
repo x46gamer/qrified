@@ -381,7 +381,7 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
               </CardHeader>
               <CardContent className="flex-1">
                 <Tabs defaultValue="classic" className="w-full" onValueChange={(value) => setValue('template', value as TemplateType)}>
-                  <TabsList className="grid grid-cols-4 mb-4">
+                  <TabsList className="grid grid-cols-4 mb-4 display-table">
                     <TabsTrigger value="classic">Classic</TabsTrigger>
                     <TabsTrigger value="modern-blue">Modern Blue</TabsTrigger>
                     <TabsTrigger value="modern-beige">Modern Beige</TabsTrigger>
