@@ -30,14 +30,18 @@ const Index = () => {
   
   // Load QR codes from Supabase on mount
   useEffect(() => {
-    fetchQRCodes();
-    fetchLastSequentialNumber();
-  }, []);
+    if (user) {
+      fetchQRCodes();
+      fetchLastSequentialNumber();
+    }
+  }, [user]); // Re-fetch when user changes
   
   const fetchQRCodes = async () => {
+    if (!user) return;
+    
     setIsLoading(true);
     try {
-      // Fetch all QR codes
+      // Fetch QR codes - Row Level Security will enforce that users only see their own codes
       const { data, error } = await supabase
         .from('qr_codes')
         .select('*')
@@ -71,6 +75,7 @@ const Index = () => {
           websiteUrl: qr.website_url,
           footerText: qr.footer_text,
           directionRTL: qr.direction_rtl,
+          userId: qr.user_id, // Include the user_id field
         }));
         
         setQRCodes(mappedQrCodes);
@@ -155,203 +160,217 @@ const Index = () => {
         <p className="text-lg text-muted-foreground">Generate, manage, and verify product authenticity</p>
       </header>
       
-      <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-8">
-        <TabsContent value="generate" className="space-y-8 animate-fade-in">
-          <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-gray-100">
-            <QRCodeGenerator 
-              onQRCodesGenerated={handleQRCodesGenerated}
-              lastSequentialNumber={lastSequentialNumber}
-            />
-          </div>
-          
-          {displayQRCodes.length > 0 && (
+      {!user ? (
+        <Card className="p-6">
+          <CardContent className="flex flex-col items-center justify-center space-y-4 pt-6">
+            <p className="text-center">Please log in to access your QR codes.</p>
+            <Button 
+              onClick={() => window.location.href = '/login'}
+              className="bg-gradient-to-r from-blue-500 to-violet-500 hover:from-blue-600 hover:to-violet-600"
+            >
+              Log In
+            </Button>
+          </CardContent>
+        </Card>
+      ) : (
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-8">
+          <TabsContent value="generate" className="space-y-8 animate-fade-in">
             <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-gray-100">
-              <QRCodeDisplay qrCodes={displayQRCodes} />
+              <QRCodeGenerator 
+                onQRCodesGenerated={handleQRCodesGenerated}
+                lastSequentialNumber={lastSequentialNumber}
+              />
             </div>
-          )}
-        </TabsContent>
-        
-        {isAdmin && (
-          <>
-            <TabsContent value="manage" className="animate-fade-in">
-              <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-gray-100">
-                <QRCodeManager 
-                  qrCodes={qrCodes}
-                  onUpdateQRCode={handleUpdateQRCode}
-                  onRefresh={fetchQRCodes}
-                  onDeleteQRCode={handleDeleteQRCode}
-                />
-              </div>
-            </TabsContent>
             
-            <TabsContent value="customize" className="animate-fade-in">
+            {displayQRCodes.length > 0 && (
               <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-gray-100">
-                <AppearanceSettings />
+                <QRCodeDisplay qrCodes={displayQRCodes} />
               </div>
-            </TabsContent>
-            
-            <TabsContent value="analytics" className="animate-fade-in">
-              <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-gray-100">
-                <QRCodeAnalytics qrCodes={qrCodes} />
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="settings" className="animate-fade-in">
-              <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-gray-100">
-                <Card className="border-none shadow-none bg-transparent">
-                  <CardHeader>
-                    <CardTitle>Admin Settings</CardTitle>
-                    <CardDescription>Manage your team and system settings</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="space-y-4">
-                      <div className="border rounded-lg p-4 bg-white/50 transition-shadow hover:shadow-md">
-                        <div className="flex justify-between items-center mb-2">
-                          <div>
-                            <h3 className="font-medium">Team Management</h3>
-                            <p className="text-sm text-gray-500">Add, edit or remove team members</p>
-                          </div>
-                        </div>
-                        <div className="mt-4 border-t pt-4">
-                          <div className="flex justify-between items-center mb-3">
-                            <div>
-                              <h4 className="font-medium">Employee User</h4>
-                              <p className="text-sm text-gray-500">employee@example.com</p>
-                            </div>
-                            <Button variant="outline" size="sm">Manage</Button>
-                          </div>
-                          
-                          <div className="mt-4">
-                            <Label htmlFor="new-member">Add Team Member</Label>
-                            <div className="flex gap-2 mt-1">
-                              <Input id="new-member" placeholder="Email address" />
-                              <Button>Add</Button>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div className="border rounded-lg p-4 bg-white/50 transition-shadow hover:shadow-md">
-                        <h3 className="font-medium mb-2">System Settings</h3>
-                        <div className="space-y-4">
-                          <div>
-                            <Label htmlFor="company-name">Company Name</Label>
-                            <Input id="company-name" defaultValue="My Company" className="mt-1" />
-                          </div>
-                          
-                          <div>
-                            <Label htmlFor="default-template">Default QR Template</Label>
-                            <select 
-                              id="default-template"
-                              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 mt-1"
-                            >
-                              <option value="classic">Classic</option>
-                              <option value="modern-blue">Modern Blue</option>
-                              <option value="modern-beige">Modern Beige</option>
-                              <option value="arabic">Arabic</option>
-                            </select>
-                          </div>
-                          
-                          <Button className="bg-gradient-to-r from-blue-500 to-violet-500 hover:from-blue-600 hover:to-violet-600">
-                            Save Settings
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="team" className="animate-fade-in">
-              <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-gray-100">
-                <Card className="border-none shadow-none bg-transparent">
-                  <CardHeader>
-                    <CardTitle>Team Management</CardTitle>
-                    <CardDescription>Manage team members and their access levels</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="bg-white/50 rounded-lg p-6 shadow-sm">
-                      <h3 className="font-medium mb-4 text-lg">Team Members</h3>
-                      
+            )}
+          </TabsContent>
+          
+          {isAdmin && (
+            <>
+              <TabsContent value="manage" className="animate-fade-in">
+                <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-gray-100">
+                  <QRCodeManager 
+                    qrCodes={qrCodes}
+                    onUpdateQRCode={handleUpdateQRCode}
+                    onRefresh={fetchQRCodes}
+                    onDeleteQRCode={handleDeleteQRCode}
+                  />
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="customize" className="animate-fade-in">
+                <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-gray-100">
+                  <AppearanceSettings />
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="analytics" className="animate-fade-in">
+                <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-gray-100">
+                  <QRCodeAnalytics qrCodes={qrCodes} />
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="settings" className="animate-fade-in">
+                <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-gray-100">
+                  <Card className="border-none shadow-none bg-transparent">
+                    <CardHeader>
+                      <CardTitle>Admin Settings</CardTitle>
+                      <CardDescription>Manage your team and system settings</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
                       <div className="space-y-4">
-                        <div className="flex items-center justify-between p-3 border rounded-md bg-white hover:bg-gray-50 transition-colors">
-                          <div>
-                            <p className="font-medium">Admin User</p>
-                            <p className="text-sm text-gray-500">admin@seqrity.com</p>
+                        <div className="border rounded-lg p-4 bg-white/50 transition-shadow hover:shadow-md">
+                          <div className="flex justify-between items-center mb-2">
+                            <div>
+                              <h3 className="font-medium">Team Management</h3>
+                              <p className="text-sm text-gray-500">Add, edit or remove team members</p>
+                            </div>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full">Admin</span>
-                            <Button variant="outline" size="sm">Edit</Button>
+                          <div className="mt-4 border-t pt-4">
+                            <div className="flex justify-between items-center mb-3">
+                              <div>
+                                <h4 className="font-medium">Employee User</h4>
+                                <p className="text-sm text-gray-500">employee@example.com</p>
+                              </div>
+                              <Button variant="outline" size="sm">Manage</Button>
+                            </div>
+                            
+                            <div className="mt-4">
+                              <Label htmlFor="new-member">Add Team Member</Label>
+                              <div className="flex gap-2 mt-1">
+                                <Input id="new-member" placeholder="Email address" />
+                                <Button>Add</Button>
+                              </div>
+                            </div>
                           </div>
                         </div>
                         
-                        <div className="flex items-center justify-between p-3 border rounded-md bg-white hover:bg-gray-50 transition-colors">
-                          <div>
-                            <p className="font-medium">Employee User</p>
-                            <p className="text-sm text-gray-500">employee@seqrity.com</p>
+                        <div className="border rounded-lg p-4 bg-white/50 transition-shadow hover:shadow-md">
+                          <h3 className="font-medium mb-2">System Settings</h3>
+                          <div className="space-y-4">
+                            <div>
+                              <Label htmlFor="company-name">Company Name</Label>
+                              <Input id="company-name" defaultValue="My Company" className="mt-1" />
+                            </div>
+                            
+                            <div>
+                              <Label htmlFor="default-template">Default QR Template</Label>
+                              <select 
+                                id="default-template"
+                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 mt-1"
+                              >
+                                <option value="classic">Classic</option>
+                                <option value="modern-blue">Modern Blue</option>
+                                <option value="modern-beige">Modern Beige</option>
+                                <option value="arabic">Arabic</option>
+                              </select>
+                            </div>
+                            
+                            <Button className="bg-gradient-to-r from-blue-500 to-violet-500 hover:from-blue-600 hover:to-violet-600">
+                              Save Settings
+                            </Button>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full">Employee</span>
-                            <Button variant="outline" size="sm">Edit</Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="team" className="animate-fade-in">
+                <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-gray-100">
+                  <Card className="border-none shadow-none bg-transparent">
+                    <CardHeader>
+                      <CardTitle>Team Management</CardTitle>
+                      <CardDescription>Manage team members and their access levels</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="bg-white/50 rounded-lg p-6 shadow-sm">
+                        <h3 className="font-medium mb-4 text-lg">Team Members</h3>
+                        
+                        <div className="space-y-4">
+                          <div className="flex items-center justify-between p-3 border rounded-md bg-white hover:bg-gray-50 transition-colors">
+                            <div>
+                              <p className="font-medium">Admin User</p>
+                              <p className="text-sm text-gray-500">admin@seqrity.com</p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full">Admin</span>
+                              <Button variant="outline" size="sm">Edit</Button>
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-center justify-between p-3 border rounded-md bg-white hover:bg-gray-50 transition-colors">
+                            <div>
+                              <p className="font-medium">Employee User</p>
+                              <p className="text-sm text-gray-500">employee@seqrity.com</p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full">Employee</span>
+                              <Button variant="outline" size="sm">Edit</Button>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="mt-6">
+                          <h4 className="font-medium mb-2">Invite New Member</h4>
+                          <div className="flex gap-2">
+                            <Input placeholder="Email address" className="flex-1" />
+                            <select 
+                              className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                            >
+                              <option>Admin</option>
+                              <option>Employee</option>
+                            </select>
+                            <Button className="bg-gradient-to-r from-blue-500 to-violet-500 hover:from-blue-600 hover:to-violet-600">
+                              Send Invite
+                            </Button>
                           </div>
                         </div>
                       </div>
                       
-                      <div className="mt-6">
-                        <h4 className="font-medium mb-2">Invite New Member</h4>
-                        <div className="flex gap-2">
-                          <Input placeholder="Email address" className="flex-1" />
-                          <select 
-                            className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                          >
-                            <option>Admin</option>
-                            <option>Employee</option>
-                          </select>
-                          <Button className="bg-gradient-to-r from-blue-500 to-violet-500 hover:from-blue-600 hover:to-violet-600">
-                            Send Invite
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="bg-white/50 rounded-lg p-6 shadow-sm">
-                      <h3 className="font-medium mb-2 text-lg">Permission Settings</h3>
-                      <p className="text-sm text-gray-500 mb-4">
-                        Configure what each role can access in the system
-                      </p>
-                      
-                      <div className="space-y-2">
-                        <div className="bg-white p-4 rounded-md border">
-                          <h4 className="font-medium mb-2">Employee Permissions</h4>
-                          <div className="space-y-2">
-                            <div className="flex items-center justify-between">
-                              <span>Generate QR codes</span>
-                              <input type="checkbox" checked disabled className="h-4 w-4 rounded border-gray-300" />
-                            </div>
-                            <div className="flex items-center justify-between">
-                              <span>Manage QR codes</span>
-                              <input type="checkbox" className="h-4 w-4 rounded border-gray-300" />
-                            </div>
-                            <div className="flex items-center justify-between">
-                              <span>Access analytics</span>
-                              <input type="checkbox" className="h-4 w-4 rounded border-gray-300" />
+                      <div className="bg-white/50 rounded-lg p-6 shadow-sm">
+                        <h3 className="font-medium mb-2 text-lg">Permission Settings</h3>
+                        <p className="text-sm text-gray-500 mb-4">
+                          Configure what each role can access in the system
+                        </p>
+                        
+                        <div className="space-y-2">
+                          <div className="bg-white p-4 rounded-md border">
+                            <h4 className="font-medium mb-2">Employee Permissions</h4>
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between">
+                                <span>Generate QR codes</span>
+                                <input type="checkbox" checked disabled className="h-4 w-4 rounded border-gray-300" />
+                              </div>
+                              <div className="flex items-center justify-between">
+                                <span>Manage QR codes</span>
+                                <input type="checkbox" className="h-4 w-4 rounded border-gray-300" />
+                              </div>
+                              <div className="flex items-center justify-between">
+                                <span>Access analytics</span>
+                                <input type="checkbox" className="h-4 w-4 rounded border-gray-300" />
+                              </div>
                             </div>
                           </div>
                         </div>
+                        
+                        <Button className="mt-4 bg-gradient-to-r from-blue-500 to-violet-500 hover:from-blue-600 hover:to-violet-600">
+                          Save Permissions
+                        </Button>
                       </div>
-                      
-                      <Button className="mt-4 bg-gradient-to-r from-blue-500 to-violet-500 hover:from-blue-600 hover:to-violet-600">
-                        Save Permissions
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </TabsContent>
-          </>
-        )}
-      </Tabs>
+                    </CardContent>
+                  </Card>
+                </div>
+              </TabsContent>
+            </>
+          )}
+        </Tabs>
+      )}
     </div>
   );
 };
