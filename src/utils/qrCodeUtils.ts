@@ -1,3 +1,4 @@
+
 import QRCode from 'qrcode';
 import CryptoJS from 'crypto-js';
 import { v4 as uuidv4 } from 'uuid';
@@ -27,6 +28,7 @@ export const encryptData = (data: string): string => {
     }).toString();
     
     console.log('Encrypted data length:', encrypted.length);
+    console.log('Encrypted result:', encrypted, 'length:', encrypted.length);
     return encrypted;
   } catch (error) {
     console.error('Error encrypting data:', error);
@@ -43,18 +45,20 @@ export const decryptData = (encryptedData: string): string => {
     }
 
     console.log('Decrypting data of length:', encryptedData.length);
+    console.log('Encrypted data to decrypt:', encryptedData);
     
     const decrypted = CryptoJS.AES.decrypt(encryptedData, SECRET_KEY).toString(CryptoJS.enc.Utf8);
     
     if (!decrypted) {
-      throw new Error('Decryption resulted in empty data');
+      console.error('Decryption resulted in empty data');
+      throw new Error('Decryption resulted in empty data - wrong key or corrupted data');
     }
     
     console.log('Decrypted data:', decrypted);
     return decrypted;
   } catch (error) {
     console.error('Error decrypting data:', error);
-    throw new Error('Failed to decrypt QR code data');
+    throw new Error(`Failed to decrypt QR code data: ${error instanceof Error ? error.message : String(error)}`);
   }
 };
 
@@ -126,6 +130,21 @@ export const generateQRCodeImage = async (data: string, options?: {
   } catch (error) {
     console.error('Error generating QR code with template:', error);
     throw new Error('Failed to generate QR code with template');
+  }
+};
+
+// Debug function to test encryption/decryption
+export const testEncryptionDecryption = (testData: string): boolean => {
+  try {
+    console.log('Testing encryption/decryption with data:', testData);
+    const encrypted = encryptData(testData);
+    const decrypted = decryptData(encrypted);
+    const success = decrypted === testData;
+    console.log('Encryption test result:', success);
+    return success;
+  } catch (error) {
+    console.error('Encryption test failed:', error);
+    return false;
   }
 };
 
@@ -229,10 +248,12 @@ export const debugVerifyQRCodeInDatabase = async (id: string) => {
   }
 };
 
-// Direct fetch by QR code ID
+// Direct fetch by QR code ID with detailed logging
 export const fetchQRCodeById = async (id: string) => {
   try {
     const { supabase } = await import('@/integrations/supabase/client');
+    console.log('Fetching QR code by ID:', id);
+    
     const { data, error } = await supabase
       .from('qr_codes')
       .select('*')
@@ -243,6 +264,8 @@ export const fetchQRCodeById = async (id: string) => {
       console.error('Error fetching QR code by ID:', error);
       throw new Error(`Failed to fetch QR code: ${error.message}`);
     }
+    
+    console.log('Fetched QR code data:', data);
     
     return data ? {
       id: data.id,

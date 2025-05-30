@@ -22,6 +22,7 @@ const ProductCheck = () => {
   const [showReviews, setShowReviews] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
   const [localSettings, setLocalSettings] = useState<AppearanceSettings>(DEFAULT_SETTINGS);
+  const [verificationMessage, setVerificationMessage] = useState<string>('');
   
   // Get appearance settings
   const themeContext = useAppearanceSettings();
@@ -85,6 +86,7 @@ const ProductCheck = () => {
     const fetchQRCode = async () => {
       if (!qrId) {
         console.log('No QR ID provided');
+        setVerificationMessage('No QR code ID provided');
         setIsLoading(false);
         return;
       }
@@ -101,86 +103,108 @@ const ProductCheck = () => {
         if (error) {
           console.error('Error fetching QR code:', error);
           setIsVerified(false);
+          setVerificationMessage(`Database error: ${error.message}`);
+          setIsLoading(false);
+          return;
+        }
+        
+        if (!data) {
+          console.log('No QR code found with this ID');
+          setIsVerified(false);
+          setVerificationMessage('QR code not found in database');
           setIsLoading(false);
           return;
         }
         
         // Map database fields to our app's QRCode type
-        if (data) {
-          console.log('QR code data retrieved:', data);
+        console.log('QR code data retrieved:', data);
+        
+        const templateValue = data.template as TemplateType || 'classic';
+        
+        const mappedQr: QRCode = {
+          id: data.id,
+          sequentialNumber: data.sequential_number,
+          encryptedData: data.encrypted_data,
+          url: data.url,
+          isScanned: data.is_scanned,
+          isEnabled: data.is_enabled,
+          createdAt: data.created_at,
+          scannedAt: data.scanned_at,
+          dataUrl: data.data_url,
+          template: templateValue,
+          headerText: data.header_text,
+          instructionText: data.instruction_text,
+          websiteUrl: data.website_url,
+          footerText: data.footer_text,
+          directionRTL: data.direction_rtl,
+        };
+        
+        setQrCode(mappedQr);
+        console.log('QR code status - isEnabled:', mappedQr.isEnabled, 'isScanned:', mappedQr.isScanned);
+        
+        // Check if QR code is valid for verification
+        if (!mappedQr.isEnabled) {
+          console.log('QR code is disabled');
+          setIsVerified(false);
+          setVerificationMessage('This QR code has been disabled');
+          setIsLoading(false);
+          return;
+        }
+        
+        // If already scanned, show as not authentic
+        if (mappedQr.isScanned) {
+          console.log('QR code already scanned at:', mappedQr.scannedAt);
+          setIsVerified(false);
+          setVerificationMessage(`This QR code was already scanned on ${mappedQr.scannedAt ? new Date(mappedQr.scannedAt).toLocaleString() : 'unknown date'}`);
+          setIsLoading(false);
+          return;
+        }
+        
+        // Try to decrypt and verify the QR code
+        try {
+          console.log('Attempting to decrypt data:', mappedQr.encryptedData);
+          const decryptedData = await decryptData(mappedQr.encryptedData);
+          console.log('Successfully decrypted data:', decryptedData);
           
-          const templateValue = data.template as TemplateType || 'classic';
+          setProductData(decryptedData);
           
-          const mappedQr: QRCode = {
-            id: data.id,
-            sequentialNumber: data.sequential_number,
-            encryptedData: data.encrypted_data,
-            url: data.url,
-            isScanned: data.is_scanned,
-            isEnabled: data.is_enabled,
-            createdAt: data.created_at,
-            scannedAt: data.scanned_at,
-            dataUrl: data.data_url,
-            template: templateValue,
-            headerText: data.header_text,
-            instructionText: data.instruction_text,
-            websiteUrl: data.website_url,
-            footerText: data.footer_text,
-            directionRTL: data.direction_rtl,
-          };
+          // Mark as scanned after successful verification - using a transaction-like approach
+          console.log('Marking QR code as scanned');
+          const updateTimestamp = new Date().toISOString();
           
-          setQrCode(mappedQr);
-          console.log('QR code status - isEnabled:', mappedQr.isEnabled, 'isScanned:', mappedQr.isScanned);
+          const { error: updateError, data: updateData } = await supabase
+            .from('qr_codes')
+            .update({
+              is_scanned: true,
+              scanned_at: updateTimestamp
+            })
+            .eq('id', qrId)
+            .eq('is_scanned', false) // Only update if not already scanned (race condition protection)
+            .select();
           
-          // Check if QR code is valid for verification
-          if (!mappedQr.isEnabled) {
-            console.log('QR code is disabled');
+          if (updateError) {
+            console.error('Error updating QR code scan status:', updateError);
             setIsVerified(false);
-            setIsLoading(false);
-            return;
-          }
-          
-          // If already scanned, show as not authentic
-          if (mappedQr.isScanned) {
-            console.log('QR code already scanned at:', mappedQr.scannedAt);
+            setVerificationMessage('Failed to mark QR code as scanned');
+          } else if (!updateData || updateData.length === 0) {
+            console.log('QR code was already scanned by another request');
             setIsVerified(false);
-            setIsLoading(false);
-            return;
-          }
-          
-          // Try to decrypt and verify the QR code
-          try {
-            console.log('Attempting to decrypt data:', mappedQr.encryptedData);
-            const decryptedData = await decryptData(mappedQr.encryptedData);
-            console.log('Successfully decrypted data:', decryptedData);
-            
-            setProductData(decryptedData);
+            setVerificationMessage('This QR code was just scanned by another request');
+          } else {
+            console.log('QR code marked as scanned successfully:', updateData);
             setIsVerified(true);
-            
-            // Mark as scanned after successful verification
-            console.log('Marking QR code as scanned');
-            const { error: updateError } = await supabase
-              .from('qr_codes')
-              .update({
-                is_scanned: true,
-                scanned_at: new Date().toISOString()
-              })
-              .eq('id', qrId);
-            
-            if (updateError) {
-              console.error('Error updating QR code scan status:', updateError);
-            } else {
-              console.log('QR code marked as scanned successfully');
-            }
-                
-          } catch (decryptError) {
-            console.error("Decryption error:", decryptError);
-            setIsVerified(false);
+            setVerificationMessage('Product verified successfully');
           }
+              
+        } catch (decryptError) {
+          console.error("Decryption error:", decryptError);
+          setIsVerified(false);
+          setVerificationMessage('Failed to decrypt QR code data - may be corrupted');
         }
       } catch (err) {
         console.error("Error fetching QR code:", err);
         setIsVerified(false);
+        setVerificationMessage(`Unexpected error: ${err instanceof Error ? err.message : String(err)}`);
       } finally {
         setIsLoading(false);
       }
@@ -232,7 +256,7 @@ const ProductCheck = () => {
     if (isVerified === true) {
       return theme.successDescription || "This product is legitimate and original. Thank you for checking its authenticity.";
     }
-    return theme.failureDescription || "This product could not be verified as authentic. It may be counterfeit or has been previously verified.";
+    return theme.failureDescription || verificationMessage || "This product could not be verified as authentic. It may be counterfeit or has been previously verified.";
   };
   
   const getFooterText = () => {
@@ -299,6 +323,22 @@ const ProductCheck = () => {
           )}
           
           <p className="text-lg">{getDescription()}</p>
+          
+          {/* Debug information */}
+          {process.env.NODE_ENV === 'development' && (
+            <div className="text-xs text-gray-500 border rounded p-2 text-left">
+              <p><strong>Debug Info:</strong></p>
+              <p>QR ID: {qrId}</p>
+              <p>Verification Message: {verificationMessage}</p>
+              {qrCode && (
+                <>
+                  <p>Is Enabled: {qrCode.isEnabled ? 'Yes' : 'No'}</p>
+                  <p>Is Scanned: {qrCode.isScanned ? 'Yes' : 'No'}</p>
+                  <p>Scanned At: {qrCode.scannedAt || 'Never'}</p>
+                </>
+              )}
+            </div>
+          )}
           
           {isVerified && productData && (
             <div className="border rounded-lg p-4 bg-gray-50 text-left">
