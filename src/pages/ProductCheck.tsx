@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -160,7 +159,7 @@ const ProductCheck = () => {
           return;
         }
         
-        // Try to decrypt and verify the QR code
+        // QR code is valid and not yet scanned - proceed with verification
         try {
           console.log('Attempting to decrypt data:', mappedQr.encryptedData);
           const decryptedData = await decryptData(mappedQr.encryptedData);
@@ -168,7 +167,7 @@ const ProductCheck = () => {
           
           setProductData(decryptedData);
           
-          // Mark as scanned after successful verification - using a transaction-like approach
+          // Mark as scanned ONLY after successful decryption
           console.log('Marking QR code as scanned');
           const updateTimestamp = new Date().toISOString();
           
@@ -184,8 +183,9 @@ const ProductCheck = () => {
           
           if (updateError) {
             console.error('Error updating QR code scan status:', updateError);
-            setIsVerified(false);
-            setVerificationMessage('Failed to mark QR code as scanned');
+            // Even if update fails, we can still show as verified since decryption worked
+            setIsVerified(true);
+            setVerificationMessage('Product verified successfully (scan status update failed)');
           } else if (!updateData || updateData.length === 0) {
             console.log('QR code was already scanned by another request');
             setIsVerified(false);
@@ -199,7 +199,7 @@ const ProductCheck = () => {
         } catch (decryptError) {
           console.error("Decryption error:", decryptError);
           setIsVerified(false);
-          setVerificationMessage('Failed to decrypt QR code data - may be corrupted');
+          setVerificationMessage('Failed to decrypt QR code data - may be corrupted or invalid');
         }
       } catch (err) {
         console.error("Error fetching QR code:", err);
