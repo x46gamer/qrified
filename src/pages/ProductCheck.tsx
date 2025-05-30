@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -115,7 +116,6 @@ const ProductCheck = () => {
           return;
         }
         
-        // Map database fields to our app's QRCode type
         console.log('QR code data retrieved:', data);
         
         const templateValue = data.template as TemplateType || 'classic';
@@ -136,6 +136,7 @@ const ProductCheck = () => {
           websiteUrl: data.website_url,
           footerText: data.footer_text,
           directionRTL: data.direction_rtl,
+          userId: data.user_id,
         };
         
         setQrCode(mappedQr);
@@ -178,12 +179,11 @@ const ProductCheck = () => {
               scanned_at: updateTimestamp
             })
             .eq('id', qrId)
-            .eq('is_scanned', false) // Only update if not already scanned (race condition protection)
+            .eq('is_scanned', false) // Race condition protection
             .select();
           
           if (updateError) {
             console.error('Error updating QR code scan status:', updateError);
-            // Even if update fails, we can still show as verified since decryption worked
             setIsVerified(true);
             setVerificationMessage('Product verified successfully (scan status update failed)');
           } else if (!updateData || updateData.length === 0) {
