@@ -14,6 +14,7 @@ import { generateQRCodeImage, encryptData } from '@/utils/qrCodeUtils';
 import { supabase } from '@/integrations/supabase/client';
 import { v4 as uuidv4 } from 'uuid';
 import { TemplateType } from '@/types/qrCode';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface QRCodeGeneratorProps {
   onQRCodesGenerated: (qrCodes: any[]) => void;
@@ -53,10 +54,11 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
   });
   
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
-  const [primaryColor, setPrimaryColor] = useState<string>('#000000'); // blue-500
-  const [secondaryColor, setSecondaryColor] = useState<string>('#ffffff'); // purple-500
+  const [primaryColor, setPrimaryColor] = useState<string>('#000000');
+  const [secondaryColor, setSecondaryColor] = useState<string>('#ffffff');
   const [previewQRCode, setPreviewQRCode] = useState<string | null>(null);
   
+  const { user } = useAuth();
   const template = watch('template');
   const quantity = watch('quantity');
   const baseUrl = watch('baseUrl');
@@ -89,9 +91,15 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
   const onSubmit = async (data: FormValues) => {
     if (isGenerating) return;
     
+    if (!user) {
+      toast.error('You must be logged in to generate QR codes');
+      return;
+    }
+    
     try {
       setIsGenerating(true);
       console.log('Generating QR codes with data:', data);
+      console.log('Current user:', user);
       
       if (!data.productData || data.productData.trim() === '') {
         toast.error('Please enter valid product data');
@@ -146,13 +154,15 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
           instruction_text: data.instructionText || 'Scan this QR code to verify the authenticity of your product',
           website_url: data.websiteUrl || null,
           footer_text: data.footerText || 'Thank you for choosing our product',
-          direction_rtl: data.isRTL
+          direction_rtl: data.isRTL,
+          user_id: user.id // Ensure user_id is set to the current user's ID
         });
       }
       
       // Save to database
       try {
         console.log('Saving QR codes to database:', qrCodes.length, 'codes');
+        console.log('QR codes user_id:', qrCodes[0]?.user_id);
         
         // Insert into database
         const { error } = await supabase
@@ -189,7 +199,8 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
           instructionText: qr.instruction_text,
           websiteUrl: qr.website_url,
           footerText: qr.footer_text,
-          directionRTL: qr.direction_rtl
+          directionRTL: qr.direction_rtl,
+          userId: qr.user_id
         }));
         
         toast.success(`Successfully generated ${data.quantity} QR code(s)`);
@@ -414,7 +425,7 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
                 <Button 
                   type="submit"
                   className="w-full bg-gradient-to-r from-blue-500 to-violet-500 hover:from-blue-600 hover:to-violet-600"
-                  disabled={isGenerating}
+                  disabled={isGenerating || !user}
                 >
                   {isGenerating ? (
                     <>
@@ -426,6 +437,12 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
                     </>
                   )}
                 </Button>
+                
+                {!user && (
+                  <p className="text-sm text-red-500 mt-2">
+                    You must be logged in to generate QR codes
+                  </p>
+                )}
                 
                 <div className="mt-4 text-center flex items-center justify-center text-sm text-muted-foreground">
                   <ShieldCheck className="h-4 w-4 mr-1 text-green-500" />

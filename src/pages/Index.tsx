@@ -42,6 +42,8 @@ const Index = () => {
     
     setIsLoading(true);
     try {
+      console.log('Fetching QR codes for user:', user.id);
+      
       // Fetch QR codes (Row Level Security will restrict to only user's codes or all for admins)
       const { data, error } = await supabase
         .from('qr_codes')
@@ -59,6 +61,8 @@ const Index = () => {
       }
       
       if (data) {
+        console.log('Fetched QR codes raw data:', data.length, 'codes');
+        
         // Map database fields to our app's QRCode type
         const mappedQrCodes: QRCode[] = data.map(qr => ({
           id: qr.id,
@@ -80,7 +84,7 @@ const Index = () => {
         }));
         
         setQRCodes(mappedQrCodes);
-        console.log('Fetched QR codes:', mappedQrCodes);
+        console.log('Mapped QR codes:', mappedQrCodes.length, 'codes for user:', user.id);
       }
     } catch (error) {
       console.error('Error loading QR codes:', error);
@@ -160,11 +164,27 @@ const Index = () => {
     }
   };
 
+  if (!user) {
+    return (
+      <div className="container mx-auto py-8 px-4 md:px-6">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-4">Please log in to access the dashboard</h1>
+          <p className="text-muted-foreground">You need to be authenticated to create and manage QR codes.</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto py-8 px-4 md:px-6">
       <header className="mb-8">
         <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent">Dashboard</h1>
         <p className="text-lg text-muted-foreground">Generate, manage, and verify product authenticity</p>
+        {user && (
+          <p className="text-sm text-muted-foreground mt-2">
+            Welcome back, {user.name} ({user.role})
+          </p>
+        )}
       </header>
       
       <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-8">
