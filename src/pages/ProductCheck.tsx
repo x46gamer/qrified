@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -83,11 +84,14 @@ const ProductCheck = () => {
   useEffect(() => {
     const fetchQRCode = async () => {
       if (!qrId) {
+        console.log('No QR ID provided');
         setIsLoading(false);
         return;
       }
       
       try {
+        console.log('Fetching QR code with ID:', qrId);
+        
         const { data, error } = await supabase
           .from('qr_codes')
           .select('*')
@@ -95,11 +99,16 @@ const ProductCheck = () => {
           .single();
         
         if (error) {
-          throw error;
+          console.error('Error fetching QR code:', error);
+          setIsVerified(false);
+          setIsLoading(false);
+          return;
         }
         
         // Map database fields to our app's QRCode type
         if (data) {
+          console.log('QR code data retrieved:', data);
+          
           const templateValue = data.template as TemplateType || 'classic';
           
           const mappedQr: QRCode = {
@@ -121,30 +130,51 @@ const ProductCheck = () => {
           };
           
           setQrCode(mappedQr);
+          console.log('QR code status - isEnabled:', mappedQr.isEnabled, 'isScanned:', mappedQr.isScanned);
           
-          // Check if already scanned and still enabled
-          if (mappedQr.isEnabled && !mappedQr.isScanned) {
-            // Decrypt data
-            try {
-              const decryptedData = await decryptData(mappedQr.encryptedData);
-              setProductData(decryptedData);
-              setIsVerified(true);
-              
-              // Mark as scanned
-              await supabase
-                .from('qr_codes')
-                .update({
-                  is_scanned: true,
-                  scanned_at: new Date().toISOString()
-                })
-                .eq('id', qrId);
-                
-            } catch (err) {
-              console.error("Decryption error:", err);
-              setIsVerified(false);
+          // Check if QR code is valid for verification
+          if (!mappedQr.isEnabled) {
+            console.log('QR code is disabled');
+            setIsVerified(false);
+            setIsLoading(false);
+            return;
+          }
+          
+          // If already scanned, show as not authentic
+          if (mappedQr.isScanned) {
+            console.log('QR code already scanned at:', mappedQr.scannedAt);
+            setIsVerified(false);
+            setIsLoading(false);
+            return;
+          }
+          
+          // Try to decrypt and verify the QR code
+          try {
+            console.log('Attempting to decrypt data:', mappedQr.encryptedData);
+            const decryptedData = await decryptData(mappedQr.encryptedData);
+            console.log('Successfully decrypted data:', decryptedData);
+            
+            setProductData(decryptedData);
+            setIsVerified(true);
+            
+            // Mark as scanned after successful verification
+            console.log('Marking QR code as scanned');
+            const { error: updateError } = await supabase
+              .from('qr_codes')
+              .update({
+                is_scanned: true,
+                scanned_at: new Date().toISOString()
+              })
+              .eq('id', qrId);
+            
+            if (updateError) {
+              console.error('Error updating QR code scan status:', updateError);
+            } else {
+              console.log('QR code marked as scanned successfully');
             }
-          } else {
-            // Already scanned or disabled
+                
+          } catch (decryptError) {
+            console.error("Decryption error:", decryptError);
             setIsVerified(false);
           }
         }
