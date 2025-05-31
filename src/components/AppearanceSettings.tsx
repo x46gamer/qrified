@@ -1,618 +1,443 @@
 
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
-import { HexColorPicker } from "react-colorful";
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
-import { AlertCircle, Upload } from "lucide-react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Separator } from "@/components/ui/separator";
-import { Link } from 'react-router-dom';
-import { FileText } from "lucide-react";
-import { AppearanceSettings as AppearanceSettingsType, DEFAULT_SETTINGS } from '@/contexts/AppearanceContext';
-import type { Json } from '@/integrations/supabase/types';
+import { toast } from "sonner";
+import { supabase } from '@/integrations/supabase/client';
+import { useAppearanceSettings } from '@/contexts/AppearanceContext';
 
 export const AppearanceSettings = () => {
-  const [activeTab, setActiveTab] = useState<"success" | "failure" | "features" | "general">("general");
-  const [theme, setTheme] = useState<AppearanceSettingsType>(DEFAULT_SETTINGS);
-  const [isSaving, setIsSaving] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [logoFile, setLogoFile] = useState<File | null>(null);
-  const [logoPreview, setLogoPreview] = useState<string | null>(null);
-  const [uploadError, setUploadError] = useState<string | null>(null);
+  const { refreshSettings } = useAppearanceSettings();
+  const [isLoading, setIsLoading] = useState(false);
+  const [settings, setSettings] = useState({
+    primaryColor: '#3b82f6',
+    secondaryColor: '#10b981',
+    successBackground: '#f0fdf4',
+    successText: '#16a34a',
+    successIcon: '#22c55e',
+    successTitle: 'Product Verified',
+    successDescription: 'This product is legitimate and original. Thank you for checking its authenticity.',
+    successFooterText: 'This QR code has been marked as used and cannot be verified again.',
+    failureBackground: '#fef2f2',
+    failureText: '#dc2626',
+    failureIcon: '#ef4444',
+    failureTitle: 'Not Authentic',
+    failureDescription: 'This product could not be verified as authentic. It may be counterfeit or has been previously verified.',
+    failureFooterText: 'If you believe this is an error, please contact the product manufacturer.',
+    logoUrl: '',
+    isRtl: false,
+    enableReviews: true,
+    enableFeedback: true
+  });
 
   useEffect(() => {
-    const fetchSettings = async () => {
-      try {
-        setIsLoading(true);
-        // Explicitly type the query to app_settings table
-        const { data, error } = await supabase
-          .from('app_settings')
-          .select('*')
-          .eq('id', 'theme')
-          .maybeSingle();
-
-        if (error) throw error;
-        
-        if (data && data.settings) {
-          // Properly handle the type conversion with type assertions
-          const storedSettings = data.settings as unknown;
-          setTheme({...DEFAULT_SETTINGS, ...(storedSettings as AppearanceSettingsType)});
-          
-          // Set logo preview if exists
-          const typedSettings = storedSettings as AppearanceSettingsType;
-          if (typedSettings.logoUrl) {
-            setLogoPreview(typedSettings.logoUrl);
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching theme settings:', error);
-        toast.error('Failed to load appearance settings');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchSettings();
+    loadSettings();
   }, []);
 
-  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setUploadError(null);
-    
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      
-      // Validate file size (max 2MB)
-      if (file.size > 2 * 1024 * 1024) {
-        setUploadError("Logo image must be smaller than 2MB");
-        return;
-      }
-      
-      // Validate file type
-      if (!['image/jpeg', 'image/png', 'image/svg+xml'].includes(file.type)) {
-        setUploadError("Only JPEG, PNG and SVG formats are supported");
-        return;
-      }
-      
-      setLogoFile(file);
-      
-      // Create preview
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setLogoPreview(e.target?.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const uploadLogo = async () => {
-    if (!logoFile) return null;
-    
+  const loadSettings = async () => {
     try {
-      // Check if the app-assets bucket exists, if not create it
-      const { data: bucketExists } = await supabase
-        .storage
-        .getBucket('app-assets');
+      console.log('Loading appearance settings...');
       
-      if (!bucketExists) {
-        // Create the bucket if it doesn't exist
-        const { error: createBucketError } = await supabase
-          .storage
-          .createBucket('app-assets', {
-            public: true,
-            fileSizeLimit: 2097152 // 2MB
-          });
-          
-        if (createBucketError) throw createBucketError;
+      const { data, error } = await supabase
+        .from('app_settings')
+        .select('settings')
+        .eq('id', 'theme')
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error loading settings:', error);
+        toast.error('Failed to load settings');
+        return;
       }
-      
-      // Generate a unique file path
-      const fileExt = logoFile.name.split('.').pop();
-      const fileName = `logo-${Date.now()}.${fileExt}`;
-      const filePath = `logos/${fileName}`;
-      
-      // Upload the file to Supabase Storage
-      const { error: uploadError } = await supabase
-        .storage
-        .from('app-assets')
-        .upload(filePath, logoFile);
-        
-      if (uploadError) throw uploadError;
-      
-      // Get the public URL
-      const { data } = supabase
-        .storage
-        .from('app-assets')
-        .getPublicUrl(filePath);
-        
-      return data.publicUrl;
+
+      if (data?.settings) {
+        console.log('Loaded settings from database:', data.settings);
+        setSettings(prev => ({
+          ...prev,
+          ...(data.settings as any)
+        }));
+      } else {
+        console.log('No settings found, using defaults');
+      }
     } catch (error) {
-      console.error('Error uploading logo:', error);
-      toast.error('Failed to upload logo');
-      return null;
+      console.error('Error loading settings:', error);
+      toast.error('Failed to load settings');
     }
   };
 
-  const handleSave = async () => {
+  const saveSettings = async () => {
+    setIsLoading(true);
     try {
-      setIsSaving(true);
-      
-      // Upload logo if a new one was selected
-      let logoUrl = theme.logoUrl;
-      if (logoFile) {
-        const uploadedUrl = await uploadLogo();
-        if (uploadedUrl) {
-          logoUrl = uploadedUrl;
-        }
-      }
-      
-      // Update the theme settings with the logo URL
-      const updatedTheme = { ...theme, logoUrl };
-      
+      console.log('Saving settings:', settings);
+
       const { error } = await supabase
         .from('app_settings')
-        .upsert({ 
-          id: 'theme', 
-          settings: updatedTheme as unknown as Json
-        }, { 
-          onConflict: 'id' 
+        .upsert({
+          id: 'theme',
+          settings: settings,
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'id'
         });
-      
+
       if (error) {
-        console.error('Error saving theme settings:', error);
-        throw error;
+        console.error('Error saving settings:', error);
+        toast.error('Failed to save settings');
+        return;
       }
+
+      console.log('Settings saved successfully');
+      toast.success('Settings saved successfully');
       
-      // Update local state with the new logo URL
-      setTheme(updatedTheme);
-      setLogoFile(null);  // Reset the file input
+      // Refresh the appearance context
+      await refreshSettings();
       
-      toast.success('Appearance settings saved successfully');
+      // Trigger storage event for other tabs
+      localStorage.setItem('appearance_updated', Date.now().toString());
     } catch (error) {
-      console.error('Error saving theme settings:', error);
-      toast.error('Failed to save appearance settings');
+      console.error('Error saving settings:', error);
+      toast.error('Failed to save settings');
     } finally {
-      setIsSaving(false);
+      setIsLoading(false);
     }
   };
 
-  const handleReset = () => {
-    setTheme(DEFAULT_SETTINGS);
-    setLogoPreview(null);
-    setLogoFile(null);
-    toast.info('Settings reset to default values');
+  const updateSetting = (key: string, value: any) => {
+    setSettings(prev => ({
+      ...prev,
+      [key]: value
+    }));
   };
 
-  const handleColorChange = (color: string, property: keyof AppearanceSettingsType) => {
-    setTheme(prev => ({ ...prev, [property]: color }));
-  };
-
-  const handleTextChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, property: keyof AppearanceSettingsType) => {
-    setTheme(prev => ({ ...prev, [property]: e.target.value }));
-  };
-
-  const handleToggleChange = (checked: boolean, property: keyof AppearanceSettingsType) => {
-    setTheme(prev => ({ ...prev, [property]: checked }));
-  };
-
-  const renderColorPicker = (colorKey: keyof AppearanceSettingsType, label: string) => (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between">
-        <Label htmlFor={String(colorKey)}>{label}</Label>
-        <div className="flex items-center space-x-2">
-          <div 
-            className="h-5 w-5 rounded border" 
-            style={{ backgroundColor: theme[colorKey] as string }}
-          />
-          <span className="text-sm text-muted-foreground">{theme[colorKey] as string}</span>
-        </div>
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold">Appearance Settings</h2>
+        <Button onClick={saveSettings} disabled={isLoading}>
+          {isLoading ? 'Saving...' : 'Save Changes'}
+        </Button>
       </div>
-      <HexColorPicker
-        color={theme[colorKey] as string}
-        onChange={(color) => handleColorChange(color, colorKey)}
-        className="w-full max-w-[240px]"
-      />
-    </div>
-  );
 
-  const renderTextField = (key: keyof AppearanceSettingsType, label: string, placeholder: string, multiline: boolean = false) => (
-    <div className="space-y-2">
-      <Label htmlFor={String(key)}>{label}</Label>
-      {multiline ? (
-        <Textarea
-          id={String(key)}
-          value={theme[key] as string}
-          onChange={(e) => handleTextChange(e, key)}
-          placeholder={placeholder}
-          className="min-h-[80px]"
-        />
-      ) : (
-        <Input
-          id={String(key)}
-          value={theme[key] as string}
-          onChange={(e) => handleTextChange(e, key)}
-          placeholder={placeholder}
-        />
-      )}
-    </div>
-  );
+      {/* Brand Settings */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Brand Settings</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <Label htmlFor="logoUrl">Logo URL</Label>
+            <Input
+              id="logoUrl"
+              value={settings.logoUrl}
+              onChange={(e) => updateSetting('logoUrl', e.target.value)}
+              placeholder="https://example.com/logo.png"
+            />
+          </div>
+          
+          <div>
+            <Label htmlFor="primaryColor">Primary Color</Label>
+            <div className="flex gap-2">
+              <Input
+                id="primaryColor"
+                type="color"
+                value={settings.primaryColor}
+                onChange={(e) => updateSetting('primaryColor', e.target.value)}
+                className="w-20"
+              />
+              <Input
+                value={settings.primaryColor}
+                onChange={(e) => updateSetting('primaryColor', e.target.value)}
+                placeholder="#3b82f6"
+              />
+            </div>
+          </div>
 
-  if (isLoading) {
-    return (
-      <Card className="w-full">
-        <CardContent className="pt-6">
-          <div className="flex justify-center">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+          <div>
+            <Label htmlFor="secondaryColor">Secondary Color</Label>
+            <div className="flex gap-2">
+              <Input
+                id="secondaryColor"
+                type="color"
+                value={settings.secondaryColor}
+                onChange={(e) => updateSetting('secondaryColor', e.target.value)}
+                className="w-20"
+              />
+              <Input
+                value={settings.secondaryColor}
+                onChange={(e) => updateSetting('secondaryColor', e.target.value)}
+                placeholder="#10b981"
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="isRtl"
+              checked={settings.isRtl}
+              onCheckedChange={(checked) => updateSetting('isRtl', checked)}
+            />
+            <Label htmlFor="isRtl">Right-to-Left Text Direction</Label>
           </div>
         </CardContent>
       </Card>
-    );
-  }
 
-  return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle>Appearance Settings</CardTitle>
-        <CardDescription>
-          Customize how the product verification pages look and function
-        </CardDescription>
-      </CardHeader>
-      
-      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
-        <div className="px-6">
-          <TabsList className="grid grid-cols-4 w-full">
-            <TabsTrigger value="general">General</TabsTrigger>
-            <TabsTrigger value="success">Success Page</TabsTrigger>
-            <TabsTrigger value="failure">Failure Page</TabsTrigger>
-            <TabsTrigger value="features">Features</TabsTrigger>
-          </TabsList>
-        </div>
-        
-        <CardContent className="space-y-6 pt-6">
-          
-          <TabsContent value="general" className="space-y-6">
-            {/* RTL Support */}
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label htmlFor="rtl-mode">RTL Text Direction</Label>
-                <p className="text-sm text-muted-foreground">
-                  Enable right-to-left text direction for languages like Arabic and Hebrew
-                </p>
-              </div>
-              <Switch 
-                id="rtl-mode"
-                checked={theme.isRtl}
-                onCheckedChange={(checked) => handleToggleChange(checked, 'isRtl')}
+      {/* Success Page Settings */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Success Page Settings</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <Label htmlFor="successTitle">Success Title</Label>
+            <Input
+              id="successTitle"
+              value={settings.successTitle}
+              onChange={(e) => updateSetting('successTitle', e.target.value)}
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="successDescription">Success Description</Label>
+            <Textarea
+              id="successDescription"
+              value={settings.successDescription}
+              onChange={(e) => updateSetting('successDescription', e.target.value)}
+              rows={3}
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="successFooterText">Success Footer Text</Label>
+            <Textarea
+              id="successFooterText"
+              value={settings.successFooterText}
+              onChange={(e) => updateSetting('successFooterText', e.target.value)}
+              rows={2}
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="successBackground">Success Background Color</Label>
+            <div className="flex gap-2">
+              <Input
+                id="successBackground"
+                type="color"
+                value={settings.successBackground}
+                onChange={(e) => updateSetting('successBackground', e.target.value)}
+                className="w-20"
+              />
+              <Input
+                value={settings.successBackground}
+                onChange={(e) => updateSetting('successBackground', e.target.value)}
               />
             </div>
-            
-            <Separator className="my-4" />
-            
-            {/* Logo Upload */}
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="logo-upload">Brand Logo</Label>
-                <p className="text-sm text-muted-foreground">
-                  Upload your brand logo to display on verification pages (Max 2MB, formats: JPEG, PNG, SVG)
-                </p>
-              </div>
-              
-              <div className="flex flex-col gap-4 items-center justify-center p-6 border-2 border-dashed border-gray-300 rounded-lg">
-                {logoPreview ? (
-                  <div className="flex flex-col items-center gap-4">
-                    <img 
-                      src={logoPreview} 
-                      alt="Logo preview" 
-                      className="max-h-32 max-w-full object-contain"
-                    />
-                    <Button 
-                      variant="outline" 
-                      onClick={() => {
-                        setLogoPreview(null);
-                        setLogoFile(null);
-                        if (theme.logoUrl) {
-                          setTheme(prev => ({ ...prev, logoUrl: null }));
-                        }
-                      }}
-                    >
-                      Remove Logo
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center gap-4">
-                    <div className="p-4 rounded-full bg-gray-100">
-                      <Upload size={24} className="text-gray-500" />
-                    </div>
-                    <p className="text-sm text-center text-muted-foreground">
-                      Drag and drop or click to upload
-                    </p>
-                    <Button
-                      variant="secondary"
-                      onClick={() => document.getElementById('logo-input')?.click()}
-                    >
-                      Select Logo
-                    </Button>
-                  </div>
-                )}
-                <input
-                  id="logo-input"
-                  type="file"
-                  accept="image/png, image/jpeg, image/svg+xml"
-                  onChange={handleLogoChange}
-                  className="hidden"
-                />
-              </div>
-              
-              {uploadError && (
-                <Alert variant="destructive" className="mt-2">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>{uploadError}</AlertDescription>
-                </Alert>
-              )}
-            </div>
+          </div>
 
-            {/* Brand Colors */}
-            <div className="space-y-4">
-              <h3 className="font-medium text-lg">Brand Colors</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {renderColorPicker("primaryColor", "Primary Color")}
-                {renderColorPicker("secondaryColor", "Secondary Color")}
-              </div>
-              <p className="text-sm text-muted-foreground">
-                These colors will be used in various places throughout the application, including QR code templates.
-              </p>
+          <div>
+            <Label htmlFor="successText">Success Text Color</Label>
+            <div className="flex gap-2">
+              <Input
+                id="successText"
+                type="color"
+                value={settings.successText}
+                onChange={(e) => updateSetting('successText', e.target.value)}
+                className="w-20"
+              />
+              <Input
+                value={settings.successText}
+                onChange={(e) => updateSetting('successText', e.target.value)}
+              />
             </div>
-          </TabsContent>
-          
-          <TabsContent value="features" className="space-y-6">
-            {/* Reviews Feature Toggle */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label htmlFor="enable-reviews">Enable Reviews</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Allow customers to leave reviews after product verification
-                  </p>
-                </div>
-                <Switch 
-                  id="enable-reviews"
-                  checked={theme.enableReviews}
-                  onCheckedChange={(checked) => handleToggleChange(checked, 'enableReviews')}
-                />
-              </div>
+          </div>
 
-              {theme.enableReviews && (
-                <div className="ml-6 pl-2 border-l-2 border-primary/20">
-                  <p className="text-sm text-muted-foreground mb-2">
-                    When enabled, a review form will be displayed on the success page allowing customers to:
-                  </p>
-                  <ul className="text-sm text-muted-foreground list-disc list-inside space-y-1">
-                    <li>Rate their purchase with stars</li>
-                    <li>Upload product photos</li>
-                    <li>Leave text comments</li>
-                  </ul>
-                  
-                  <div className="mt-4">
-                    <Link to="/admin/feedback">
-                      <Button variant="outline" size="sm" className="flex items-center gap-2">
-                        <FileText className="h-4 w-4" />
-                        View All Reviews
-                      </Button>
-                    </Link>
-                  </div>
-                </div>
-              )}
+          <div>
+            <Label htmlFor="successIcon">Success Icon Color</Label>
+            <div className="flex gap-2">
+              <Input
+                id="successIcon"
+                type="color"
+                value={settings.successIcon}
+                onChange={(e) => updateSetting('successIcon', e.target.value)}
+                className="w-20"
+              />
+              <Input
+                value={settings.successIcon}
+                onChange={(e) => updateSetting('successIcon', e.target.value)}
+              />
             </div>
-
-            <Separator />
-
-            {/* Feedback Feature Toggle */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label htmlFor="enable-feedback">Enable Feedback Form</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Allow customers to submit improvement suggestions
-                  </p>
-                </div>
-                <Switch 
-                  id="enable-feedback"
-                  checked={theme.enableFeedback}
-                  onCheckedChange={(checked) => handleToggleChange(checked, 'enableFeedback')}
-                />
-              </div>
-
-              {theme.enableFeedback && (
-                <div className="ml-6 pl-2 border-l-2 border-primary/20">
-                  <p className="text-sm text-muted-foreground mb-2">
-                    When enabled, a feedback form will be shown on the success page for customers to suggest improvements.
-                  </p>
-                  
-                  <div className="mt-4">
-                    <Link to="/admin/feedback">
-                      <Button variant="outline" size="sm" className="flex items-center gap-2">
-                        <FileText className="h-4 w-4" />
-                        View All Feedback
-                      </Button>
-                    </Link>
-                  </div>
-                </div>
-              )}
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="success" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-6">
-                <h3 className="text-lg font-medium">Colors</h3>
-                {renderColorPicker("successBackground", "Background Color")}
-                {renderColorPicker("successText", "Text Color")}
-                {renderColorPicker("successIcon", "Icon Color")}
-              </div>
-              
-              <div className="space-y-6">
-                <h3 className="text-lg font-medium">Text Content</h3>
-                {renderTextField("successTitle", "Title", "Product Verified")}
-                {renderTextField("successDescription", "Description", "This product is legitimate and original...", true)}
-                {renderTextField("successFooterText", "Footer Text", "This QR code has been marked as used...")}
-              </div>
-            </div>
-            
-            <div className="mt-6 rounded-lg p-4" style={{ backgroundColor: theme.successBackground }}>
-              <div className="flex justify-center">
-                {logoPreview && (
-                  <img 
-                    src={logoPreview} 
-                    alt="Brand logo" 
-                    className="max-h-12 mb-4 object-contain" 
-                  />
-                )}
-              </div>
-              <div className="flex justify-center">
-                <div className="w-16 h-16 rounded-full" style={{ backgroundColor: theme.successIcon, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="white">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                  </svg>
-                </div>
-              </div>
-              <h3 className="mt-3 text-xl font-bold text-center" style={{ color: theme.successText }}>
-                {theme.successTitle}
-              </h3>
-              <p className="mt-2 text-center" style={{ color: theme.successText }}>
-                {theme.successDescription}
-              </p>
-              <p className="mt-4 text-sm text-center" style={{ color: theme.successText }}>
-                {theme.successFooterText}
-              </p>
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="failure" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-6">
-                <h3 className="text-lg font-medium">Colors</h3>
-                {renderColorPicker("failureBackground", "Background Color")}
-                {renderColorPicker("failureText", "Text Color")}
-                {renderColorPicker("failureIcon", "Icon Color")}
-              </div>
-              
-              <div className="space-y-6">
-                <h3 className="text-lg font-medium">Text Content</h3>
-                {renderTextField("failureTitle", "Title", "Not Authentic")}
-                {renderTextField("failureDescription", "Description", "This product could not be verified as authentic...", true)}
-                {renderTextField("failureFooterText", "Footer Text", "If you believe this is an error...")}
-              </div>
-            </div>
-            
-            <div className="mt-6 rounded-lg p-4" style={{ backgroundColor: theme.failureBackground }}>
-              <div className="flex justify-center">
-                {logoPreview && (
-                  <img 
-                    src={logoPreview} 
-                    alt="Brand logo" 
-                    className="max-h-12 mb-4 object-contain" 
-                  />
-                )}
-              </div>
-              <div className="flex justify-center">
-                <div className="w-16 h-16 rounded-full" style={{ backgroundColor: theme.failureIcon, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="white">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </div>
-              </div>
-              <h3 className="mt-3 text-xl font-bold text-center" style={{ color: theme.failureText }}>
-                {theme.failureTitle}
-              </h3>
-              <p className="mt-2 text-center" style={{ color: theme.failureText }}>
-                {theme.failureDescription}
-              </p>
-              <p className="mt-4 text-sm text-center" style={{ color: theme.failureText }}>
-                {theme.failureFooterText}
-              </p>
-            </div>
-          </TabsContent>
+          </div>
         </CardContent>
-      </Tabs>
-      
-      {/* Preview Section */}
-      <div className="px-6 pb-6 pt-2">
-        <h3 className="text-lg font-medium mb-4">Page Previews</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="border rounded-lg p-4">
-            <h4 className="text-center text-sm font-medium mb-2">Valid Product Preview</h4>
-            <div className="mt-2 rounded-lg p-4" style={{ backgroundColor: theme.successBackground }}>
-              <div className="flex justify-center">
-                {logoPreview && (
-                  <img 
-                    src={logoPreview} 
-                    alt="Brand logo" 
-                    className="max-h-10 mb-2 object-contain" 
-                  />
-                )}
-              </div>
-              <div className="flex justify-center">
-                <div className="w-12 h-12 rounded-full" style={{ backgroundColor: theme.successIcon, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="white">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                  </svg>
-                </div>
-              </div>
-              <h3 className="mt-2 text-base font-bold text-center" style={{ color: theme.successText }}>
-                {theme.successTitle}
-              </h3>
-              <p className="mt-1 text-xs text-center" style={{ color: theme.successText }}>
-                {theme.successDescription}
-              </p>
+      </Card>
+
+      {/* Failure Page Settings */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Failure Page Settings</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <Label htmlFor="failureTitle">Failure Title</Label>
+            <Input
+              id="failureTitle"
+              value={settings.failureTitle}
+              onChange={(e) => updateSetting('failureTitle', e.target.value)}
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="failureDescription">Failure Description</Label>
+            <Textarea
+              id="failureDescription"
+              value={settings.failureDescription}
+              onChange={(e) => updateSetting('failureDescription', e.target.value)}
+              rows={3}
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="failureFooterText">Failure Footer Text</Label>
+            <Textarea
+              id="failureFooterText"
+              value={settings.failureFooterText}
+              onChange={(e) => updateSetting('failureFooterText', e.target.value)}
+              rows={2}
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="failureBackground">Failure Background Color</Label>
+            <div className="flex gap-2">
+              <Input
+                id="failureBackground"
+                type="color"
+                value={settings.failureBackground}
+                onChange={(e) => updateSetting('failureBackground', e.target.value)}
+                className="w-20"
+              />
+              <Input
+                value={settings.failureBackground}
+                onChange={(e) => updateSetting('failureBackground', e.target.value)}
+              />
             </div>
           </div>
-          
-          <div className="border rounded-lg p-4">
-            <h4 className="text-center text-sm font-medium mb-2">Invalid Product Preview</h4>
-            <div className="mt-2 rounded-lg p-4" style={{ backgroundColor: theme.failureBackground }}>
-              <div className="flex justify-center">
-                {logoPreview && (
-                  <img 
-                    src={logoPreview} 
-                    alt="Brand logo" 
-                    className="max-h-10 mb-2 object-contain" 
-                  />
-                )}
-              </div>
-              <div className="flex justify-center">
-                <div className="w-12 h-12 rounded-full" style={{ backgroundColor: theme.failureIcon, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="white">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </div>
-              </div>
-              <h3 className="mt-2 text-base font-bold text-center" style={{ color: theme.failureText }}>
-                {theme.failureTitle}
-              </h3>
-              <p className="mt-1 text-xs text-center" style={{ color: theme.failureText }}>
-                {theme.failureDescription}
-              </p>
+
+          <div>
+            <Label htmlFor="failureText">Failure Text Color</Label>
+            <div className="flex gap-2">
+              <Input
+                id="failureText"
+                type="color"
+                value={settings.failureText}
+                onChange={(e) => updateSetting('failureText', e.target.value)}
+                className="w-20"
+              />
+              <Input
+                value={settings.failureText}
+                onChange={(e) => updateSetting('failureText', e.target.value)}
+              />
             </div>
           </div>
-        </div>
-      </div>
-      
-      <CardFooter className="flex justify-between">
-        <Button variant="outline" onClick={handleReset} disabled={isSaving}>
-          Reset to Default
-        </Button>
-        <Button onClick={handleSave} disabled={isSaving}>
-          {isSaving ? "Saving..." : "Save Changes"}
-        </Button>
-      </CardFooter>
-    </Card>
+
+          <div>
+            <Label htmlFor="failureIcon">Failure Icon Color</Label>
+            <div className="flex gap-2">
+              <Input
+                id="failureIcon"
+                type="color"
+                value={settings.failureIcon}
+                onChange={(e) => updateSetting('failureIcon', e.target.value)}
+                className="w-20"
+              />
+              <Input
+                value={settings.failureIcon}
+                onChange={(e) => updateSetting('failureIcon', e.target.value)}
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Feature Settings */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Feature Settings</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="enableReviews"
+              checked={settings.enableReviews}
+              onCheckedChange={(checked) => updateSetting('enableReviews', checked)}
+            />
+            <Label htmlFor="enableReviews">Enable Product Reviews</Label>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="enableFeedback"
+              checked={settings.enableFeedback}
+              onCheckedChange={(checked) => updateSetting('enableFeedback', checked)}
+            />
+            <Label htmlFor="enableFeedback">Enable Customer Feedback</Label>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Preview */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Preview</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Success Preview */}
+            <div 
+              className="p-4 rounded-lg border-2"
+              style={{ 
+                backgroundColor: settings.successBackground,
+                color: settings.successText 
+              }}
+            >
+              <div className="text-center">
+                <div 
+                  className="w-8 h-8 mx-auto mb-2 rounded-full flex items-center justify-center"
+                  style={{ color: settings.successIcon }}
+                >
+                  ✓
+                </div>
+                <h3 className="font-bold mb-2">{settings.successTitle}</h3>
+                <p className="text-sm mb-2">{settings.successDescription}</p>
+                <p className="text-xs">{settings.successFooterText}</p>
+              </div>
+            </div>
+
+            {/* Failure Preview */}
+            <div 
+              className="p-4 rounded-lg border-2"
+              style={{ 
+                backgroundColor: settings.failureBackground,
+                color: settings.failureText 
+              }}
+            >
+              <div className="text-center">
+                <div 
+                  className="w-8 h-8 mx-auto mb-2 rounded-full flex items-center justify-center"
+                  style={{ color: settings.failureIcon }}
+                >
+                  ✗
+                </div>
+                <h3 className="font-bold mb-2">{settings.failureTitle}</h3>
+                <p className="text-sm mb-2">{settings.failureDescription}</p>
+                <p className="text-xs">{settings.failureFooterText}</p>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
-
-export default AppearanceSettings;

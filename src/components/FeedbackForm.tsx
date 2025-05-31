@@ -1,86 +1,115 @@
 
 import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { MessageSquare } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from '@/integrations/supabase/client';
 
 interface FeedbackFormProps {
   qrId: string;
-  successBackground: string;
-  successText: string;
+  successBackground?: string;
+  successText?: string;
 }
 
-export const FeedbackForm: React.FC<FeedbackFormProps> = ({ qrId, successBackground, successText }) => {
+const FeedbackForm: React.FC<FeedbackFormProps> = ({ 
+  qrId, 
+  successBackground = "#f0fdf4", 
+  successText = "#16a34a" 
+}) => {
   const [feedback, setFeedback] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  
+  const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!feedback.trim()) {
-      toast.error("Please enter your feedback");
+      toast.error('Please enter your feedback');
       return;
     }
-    
+
+    setIsSubmitting(true);
     try {
-      setIsSubmitting(true);
+      console.log('Submitting feedback:', { qrId, feedback });
       
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('customer_feedback')
         .insert({
           qr_code_id: qrId,
           feedback: feedback.trim()
-        });
-        
-      if (error) throw error;
-      
-      toast.success("Thank you for your feedback!");
-      setFeedback('');
-      
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error submitting feedback:', error);
+        toast.error('Failed to submit feedback');
+        return;
+      }
+
+      console.log('Feedback submitted successfully:', data);
+      toast.success('Thank you for your feedback!');
+      setIsSubmitted(true);
     } catch (error) {
       console.error('Error submitting feedback:', error);
-      toast.error("Failed to submit your feedback. Please try again.");
+      toast.error('An error occurred while submitting feedback');
     } finally {
       setIsSubmitting(false);
     }
   };
-  
+
+  if (isSubmitted) {
+    return (
+      <Card 
+        className="w-full" 
+        style={{ 
+          backgroundColor: successBackground, 
+          color: successText 
+        }}
+      >
+        <CardContent className="p-4 text-center">
+          <div className="flex items-center justify-center mb-2">
+            <MessageSquare className="h-6 w-6" />
+          </div>
+          <h3 className="font-medium mb-1">Feedback Submitted!</h3>
+          <p className="text-sm">Thank you for helping us improve.</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
-    <Card className="w-full mt-4">
-      <CardHeader style={{ backgroundColor: `${successBackground}30` }}>
-        <CardTitle style={{ color: successText }}>Help Us Improve</CardTitle>
-        <CardDescription style={{ color: successText }}>
-          Share your suggestions for how we can improve our products or service
-        </CardDescription>
+    <Card className="w-full">
+      <CardHeader>
+        <CardTitle className="text-lg">Give Feedback</CardTitle>
       </CardHeader>
-      
-      <form onSubmit={handleSubmit}>
-        <CardContent className="space-y-4 pt-4">
-          <div className="space-y-2">
+      <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
             <Label htmlFor="feedback">Your Feedback</Label>
             <Textarea
               id="feedback"
               value={feedback}
               onChange={(e) => setFeedback(e.target.value)}
-              placeholder="What could we improve? We value your input!"
-              className="min-h-[100px]"
+              placeholder="Please share your thoughts, suggestions, or report any issues..."
+              rows={4}
+              className="mt-1"
+              required
             />
           </div>
-        </CardContent>
-        
-        <CardFooter>
-          <Button
-            type="submit"
-            className="w-full"
+
+          <Button 
+            type="submit" 
             disabled={isSubmitting || !feedback.trim()}
+            className="w-full"
           >
-            {isSubmitting ? "Submitting..." : "Submit Feedback"}
+            {isSubmitting ? 'Submitting...' : 'Submit Feedback'}
           </Button>
-        </CardFooter>
-      </form>
+        </form>
+      </CardContent>
     </Card>
   );
 };
