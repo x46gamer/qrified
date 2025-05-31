@@ -9,6 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { useAppearanceSettings } from '@/contexts/AppearanceContext';
 import { Loader2, QrCode, Save, Settings, Palette } from 'lucide-react';
 import QRCodeTemplatePreview from '@/components/QRCodeTemplatePreview';
+import LanguagePresets from '@/components/LanguagePresets';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
@@ -117,6 +118,33 @@ const CustomizeApp = () => {
     }));
   };
 
+  const handleLanguagePreset = (preset: 'english' | 'arabic') => {
+    if (preset === 'english') {
+      setLocalSettings(prev => ({
+        ...prev,
+        successTitle: 'Product Verified',
+        successDescription: 'This product is legitimate and original. Thank you for checking its authenticity.',
+        successFooterText: 'This QR code has been marked as used and cannot be verified again.',
+        failureTitle: 'ffffffff',
+        failureDescription: 'This product could not be verified as authentic. It may be counterfeit or has been previously verified.',
+        failureFooterText: 'If you believe this is an error, please contact the product manufacturer.',
+        isRtl: false
+      }));
+    } else if (preset === 'arabic') {
+      setLocalSettings(prev => ({
+        ...prev,
+        successTitle: 'تم التحقق من المنتج',
+        successDescription: 'هذا المنتج أصلي وموثوق. شكراً لك على التحقق من صحته',
+        successFooterText: 'هذا ولا يمكن التحقق منه مرة أخرى QR لقد تم استخدام رمز',
+        failureTitle: 'تعذر التحقق من المنتج',
+        failureDescription: 'تعذر التحقق من أصالة هذا المنتج. قد يكون مزوراً أو تم التحقق منه مسبقاً',
+        failureFooterText: 'إذا كنت تعتقد أن هذا خطأ، يرجى الاتصال بالشركة المصنعة للمنتج',
+        isRtl: true
+      }));
+    }
+    toast.success(`${preset === 'english' ? 'English' : 'Arabic'} preset loaded successfully`);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     await updateSettings(localSettings);
@@ -179,6 +207,9 @@ const CustomizeApp = () => {
           </TabsList>
           
           <TabsContent value="verification-page" className="space-y-6">
+            {/* Language Presets */}
+            <LanguagePresets onLoadPreset={handleLanguagePreset} />
+            
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <Card>
                 <CardHeader>
@@ -416,6 +447,7 @@ const CustomizeApp = () => {
                     <div 
                       className="p-4 flex flex-col items-center text-center space-y-3"
                       style={getPreviewBgStyle(true)}
+                      dir={localSettings.isRtl ? 'rtl' : 'ltr'}
                     >
                       {localSettings.logoUrl && (
                         <img 
@@ -445,6 +477,7 @@ const CustomizeApp = () => {
                     <div 
                       className="p-4 flex flex-col items-center text-center space-y-3"
                       style={getPreviewBgStyle(false)}
+                      dir={localSettings.isRtl ? 'rtl' : 'ltr'}
                     >
                       {localSettings.logoUrl && (
                         <img 

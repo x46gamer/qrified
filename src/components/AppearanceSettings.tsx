@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { supabase } from '@/integrations/supabase/client';
 import { useAppearanceSettings } from '@/contexts/AppearanceContext';
+import LanguagePresets from '@/components/LanguagePresets';
 
 export const AppearanceSettings = () => {
   const { 
@@ -97,6 +99,33 @@ export const AppearanceSettings = () => {
     enableFeedback
   ]);
 
+  const handleLanguagePreset = (preset: 'english' | 'arabic') => {
+    if (preset === 'english') {
+      setSettings(prev => ({
+        ...prev,
+        successTitle: 'Product Verified',
+        successDescription: 'This product is legitimate and original. Thank you for checking its authenticity.',
+        successFooterText: 'This QR code has been marked as used and cannot be verified again.',
+        failureTitle: 'ffffffff',
+        failureDescription: 'This product could not be verified as authentic. It may be counterfeit or has been previously verified.',
+        failureFooterText: 'If you believe this is an error, please contact the product manufacturer.',
+        isRtl: false
+      }));
+    } else if (preset === 'arabic') {
+      setSettings(prev => ({
+        ...prev,
+        successTitle: 'تم التحقق من المنتج',
+        successDescription: 'هذا المنتج أصلي وموثوق. شكراً لك على التحقق من صحته',
+        successFooterText: 'هذا ولا يمكن التحقق منه مرة أخرى QR لقد تم استخدام رمز',
+        failureTitle: 'تعذر التحقق من المنتج',
+        failureDescription: 'تعذر التحقق من أصالة هذا المنتج. قد يكون مزوراً أو تم التحقق منه مسبقاً',
+        failureFooterText: 'إذا كنت تعتقد أن هذا خطأ، يرجى الاتصال بالشركة المصنعة للمنتج',
+        isRtl: true
+      }));
+    }
+    toast.success(`${preset === 'english' ? 'English' : 'Arabic'} preset loaded successfully`);
+  };
+
   const saveSettings = async () => {
     setIsLoading(true);
     try {
@@ -132,6 +161,9 @@ export const AppearanceSettings = () => {
           {isLoading || isSaving ? 'Saving...' : 'Save Changes'}
         </Button>
       </div>
+
+      {/* Language Presets */}
+      <LanguagePresets onLoadPreset={handleLanguagePreset} />
 
       {/* Brand Settings */}
       <Card>
@@ -412,6 +444,7 @@ export const AppearanceSettings = () => {
                 backgroundColor: settings.successBackground,
                 color: settings.successText 
               }}
+              dir={settings.isRtl ? 'rtl' : 'ltr'}
             >
               <div className="text-center">
                 <div 
@@ -433,6 +466,7 @@ export const AppearanceSettings = () => {
                 backgroundColor: settings.failureBackground,
                 color: settings.failureText 
               }}
+              dir={settings.isRtl ? 'rtl' : 'ltr'}
             >
               <div className="text-center">
                 <div 

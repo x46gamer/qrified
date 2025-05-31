@@ -54,6 +54,24 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
   const uploadImages = async (files: File[]): Promise<string[]> => {
     const uploadPromises = files.map(async (file) => {
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}-${file.name}`;
+      
+      // First, ensure the bucket exists
+      const { data: buckets, error: bucketError } = await supabase.storage.listBuckets();
+      const bucketExists = buckets?.some(bucket => bucket.name === 'review-images');
+      
+      if (!bucketExists) {
+        const { error: createBucketError } = await supabase.storage.createBucket('review-images', {
+          public: true,
+          allowedMimeTypes: ['image/*'],
+          fileSizeLimit: 5242880 // 5MB
+        });
+        
+        if (createBucketError) {
+          console.error('Error creating bucket:', createBucketError);
+          throw createBucketError;
+        }
+      }
+      
       const { data, error } = await supabase.storage
         .from('review-images')
         .upload(fileName, file);
