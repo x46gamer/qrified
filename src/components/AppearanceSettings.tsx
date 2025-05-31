@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,90 +10,102 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAppearanceSettings } from '@/contexts/AppearanceContext';
 
 export const AppearanceSettings = () => {
-  const { refreshSettings } = useAppearanceSettings();
+  const { 
+    updateSettings,
+    isSaving,
+    successBackground,
+    successText,
+    successIcon,
+    failureBackground,
+    failureText,
+    failureIcon,
+    successTitle,
+    successDescription,
+    successFooterText,
+    failureTitle,
+    failureDescription,
+    failureFooterText,
+    isRtl,
+    enableReviews,
+    enableFeedback,
+    logoUrl,
+    primaryColor,
+    secondaryColor
+  } = useAppearanceSettings();
+  
   const [isLoading, setIsLoading] = useState(false);
   const [settings, setSettings] = useState({
-    primaryColor: '#3b82f6',
-    secondaryColor: '#10b981',
-    successBackground: '#f0fdf4',
-    successText: '#16a34a',
-    successIcon: '#22c55e',
-    successTitle: 'Product Verified',
-    successDescription: 'This product is legitimate and original. Thank you for checking its authenticity.',
-    successFooterText: 'This QR code has been marked as used and cannot be verified again.',
-    failureBackground: '#fef2f2',
-    failureText: '#dc2626',
-    failureIcon: '#ef4444',
-    failureTitle: 'Not Authentic',
-    failureDescription: 'This product could not be verified as authentic. It may be counterfeit or has been previously verified.',
-    failureFooterText: 'If you believe this is an error, please contact the product manufacturer.',
-    logoUrl: '',
-    isRtl: false,
-    enableReviews: true,
-    enableFeedback: true
+    primaryColor,
+    secondaryColor,
+    successBackground,
+    successText,
+    successIcon,
+    successTitle,
+    successDescription,
+    successFooterText,
+    failureBackground,
+    failureText,
+    failureIcon,
+    failureTitle,
+    failureDescription,
+    failureFooterText,
+    logoUrl,
+    isRtl,
+    enableReviews,
+    enableFeedback
   });
 
   useEffect(() => {
-    loadSettings();
-  }, []);
-
-  const loadSettings = async () => {
-    try {
-      console.log('Loading appearance settings...');
-      
-      const { data, error } = await supabase
-        .from('app_settings')
-        .select('settings')
-        .eq('id', 'theme')
-        .single();
-
-      if (error && error.code !== 'PGRST116') {
-        console.error('Error loading settings:', error);
-        toast.error('Failed to load settings');
-        return;
-      }
-
-      if (data?.settings) {
-        console.log('Loaded settings from database:', data.settings);
-        setSettings(prev => ({
-          ...prev,
-          ...(data.settings as any)
-        }));
-      } else {
-        console.log('No settings found, using defaults');
-      }
-    } catch (error) {
-      console.error('Error loading settings:', error);
-      toast.error('Failed to load settings');
-    }
-  };
+    setSettings({
+      primaryColor,
+      secondaryColor,
+      successBackground,
+      successText,
+      successIcon,
+      successTitle,
+      successDescription,
+      successFooterText,
+      failureBackground,
+      failureText,
+      failureIcon,
+      failureTitle,
+      failureDescription,
+      failureFooterText,
+      logoUrl,
+      isRtl,
+      enableReviews,
+      enableFeedback
+    });
+  }, [
+    primaryColor,
+    secondaryColor,
+    successBackground,
+    successText,
+    successIcon,
+    successTitle,
+    successDescription,
+    successFooterText,
+    failureBackground,
+    failureText,
+    failureIcon,
+    failureTitle,
+    failureDescription,
+    failureFooterText,
+    logoUrl,
+    isRtl,
+    enableReviews,
+    enableFeedback
+  ]);
 
   const saveSettings = async () => {
     setIsLoading(true);
     try {
       console.log('Saving settings:', settings);
 
-      const { error } = await supabase
-        .from('app_settings')
-        .upsert({
-          id: 'theme',
-          settings: settings,
-          updated_at: new Date().toISOString()
-        }, {
-          onConflict: 'id'
-        });
-
-      if (error) {
-        console.error('Error saving settings:', error);
-        toast.error('Failed to save settings');
-        return;
-      }
-
+      await updateSettings(settings);
+      
       console.log('Settings saved successfully');
       toast.success('Settings saved successfully');
-      
-      // Refresh the appearance context
-      await refreshSettings();
       
       // Trigger storage event for other tabs
       localStorage.setItem('appearance_updated', Date.now().toString());
@@ -117,8 +128,8 @@ export const AppearanceSettings = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Appearance Settings</h2>
-        <Button onClick={saveSettings} disabled={isLoading}>
-          {isLoading ? 'Saving...' : 'Save Changes'}
+        <Button onClick={saveSettings} disabled={isLoading || isSaving}>
+          {isLoading || isSaving ? 'Saving...' : 'Save Changes'}
         </Button>
       </div>
 
@@ -132,7 +143,7 @@ export const AppearanceSettings = () => {
             <Label htmlFor="logoUrl">Logo URL</Label>
             <Input
               id="logoUrl"
-              value={settings.logoUrl}
+              value={settings.logoUrl || ''}
               onChange={(e) => updateSetting('logoUrl', e.target.value)}
               placeholder="https://example.com/logo.png"
             />
