@@ -14,6 +14,7 @@ interface ReviewData {
   id: string;
   rating: number;
   comment: string | null;
+  image_urls: string[] | null;
   created_at: string;
   qr_code_id: string;
 }
@@ -33,11 +34,11 @@ const QRCodeAnalytics: React.FC<QRCodeAnalyticsProps> = ({ qrCodes }) => {
 
   useEffect(() => {
     const fetchAnalyticsData = async () => {
-      if (!user) return;
-      
       setIsLoading(true);
       try {
-        // Fetch reviews
+        console.log('Fetching analytics data...');
+
+        // Fetch reviews with updated RLS policies
         const { data: reviewsData, error: reviewsError } = await supabase
           .from('product_reviews')
           .select('*')
@@ -50,7 +51,7 @@ const QRCodeAnalytics: React.FC<QRCodeAnalyticsProps> = ({ qrCodes }) => {
           setReviews(reviewsData || []);
         }
 
-        // Fetch feedback
+        // Fetch feedback with updated RLS policies
         const { data: feedbackData, error: feedbackError } = await supabase
           .from('customer_feedback')
           .select('*')
@@ -70,7 +71,37 @@ const QRCodeAnalytics: React.FC<QRCodeAnalyticsProps> = ({ qrCodes }) => {
     };
 
     fetchAnalyticsData();
-  }, [user]);
+
+    // Set up real-time subscriptions for live updates
+    const reviewsSubscription = supabase
+      .channel('reviews-changes')
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'product_reviews' 
+      }, (payload) => {
+        console.log('Review change received:', payload);
+        fetchAnalyticsData(); // Refresh data on any change
+      })
+      .subscribe();
+
+    const feedbackSubscription = supabase
+      .channel('feedback-changes')
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'customer_feedback' 
+      }, (payload) => {
+        console.log('Feedback change received:', payload);
+        fetchAnalyticsData(); // Refresh data on any change
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(reviewsSubscription);
+      supabase.removeChannel(feedbackSubscription);
+    };
+  }, []);
 
   const totalQRCodes = qrCodes.length;
   const scannedQRCodes = qrCodes.filter(qr => qr.isScanned).length;
@@ -241,7 +272,19 @@ const QRCodeAnalytics: React.FC<QRCodeAnalyticsProps> = ({ qrCodes }) => {
                     </span>
                   </div>
                   {review.comment && (
-                    <p className="text-sm">{review.comment}</p>
+                    <p className="text-sm mb-2">{review.comment}</p>
+                  )}
+                  {review.image_urls && review.image_urls.length > 0 && (
+                    <div className="flex gap-2 mt-2">
+                      {review.image_urls.map((url, index) => (
+                        <img
+                          key={index}
+                          src={url}
+                          alt={`Review image ${index + 1}`}
+                          className="w-16 h-16 object-cover rounded border"
+                        />
+                      ))}
+                    </div>
                   )}
                 </div>
               ))}

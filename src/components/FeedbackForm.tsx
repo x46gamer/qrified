@@ -35,12 +35,14 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({
     try {
       console.log('Submitting feedback:', { qrId, feedback });
       
+      const feedbackData = {
+        qr_code_id: qrId,
+        feedback: feedback.trim()
+      };
+
       const { data, error } = await supabase
         .from('customer_feedback')
-        .insert({
-          qr_code_id: qrId,
-          feedback: feedback.trim()
-        })
+        .insert(feedbackData)
         .select()
         .single();
 
