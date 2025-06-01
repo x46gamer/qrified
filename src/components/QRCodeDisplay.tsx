@@ -1,5 +1,5 @@
-
-import React, { useState } from 'react';
+import React from 'react';
+import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -25,7 +25,6 @@ interface QRCodeDisplayProps {
 
 const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({ qrCodes }) => {
   const [view, setView] = useState<'grid' | 'list'>('grid');
-  const [selectedTemplate, setSelectedTemplate] = useState<'qr-only' | 'with-template'>('with-template');
   
   const handleDownload = (dataUrl: string, id: string, sequentialNumber: string | number) => {
     if (!dataUrl) {
@@ -120,35 +119,21 @@ const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({ qrCodes }) => {
               <TabsTrigger value="list">List View</TabsTrigger>
             </TabsList>
           </Tabs>
-          
-          <Tabs value={selectedTemplate} onValueChange={(v) => setSelectedTemplate(v as 'qr-only' | 'with-template')}>
-            <TabsList>
-              <TabsTrigger value="qr-only">QR Only</TabsTrigger>
-              <TabsTrigger value="with-template">With Template</TabsTrigger>
-            </TabsList>
-          </Tabs>
         </div>
       </div>
       
       <div className={`${view === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6' : 'space-y-4'}`}>
         {qrCodes.map((qrCode) => (
-          <Card key={qrCode.id} className="overflow-hidden h-full flex flex-col">
-            <CardContent className="p-4 flex flex-col h-full">
+          <Card key={qrCode.id} className="overflow-hidden flex flex-col">
+            <CardContent className="p-4 flex flex-col items-center">
               <div className="text-center mb-2">
                 <p className="font-medium">QR Code #{formatSequentialNumber(Number(qrCode.sequentialNumber))}</p>
               </div>
               
-              <div className="flex-grow flex justify-center items-center mb-4">
-                {selectedTemplate === 'qr-only' ? (
-                  <img 
-                    src={qrCode.dataUrl} 
-                    alt={`QR Code ${qrCode.sequentialNumber}`} 
-                    className="w-full max-w-[200px] h-auto"
-                  />
-                ) : (
+              <div className="w-full flex justify-center items-center mb-4">
                   <div 
                     id={`qr-template-${qrCode.id}`} 
-                    className="w-full max-w-[280px] overflow-hidden rounded-lg shadow-md"
+                    className="w-full max-w-xs overflow-hidden rounded-lg shadow-md mx-auto"
                   >
                     <QRCodeTemplatePreview
                       template={qrCode.template}
@@ -160,10 +145,9 @@ const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({ qrCodes }) => {
                       directionRTL={qrCode.directionRTL}
                     />
                   </div>
-                )}
               </div>
               
-              <div className="flex gap-2 mt-auto justify-center">
+              <div className="flex gap-2 mt-auto justify-center w-full">
                 <Button 
                   variant="outline" 
                   size="sm"

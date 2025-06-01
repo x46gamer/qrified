@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -55,7 +54,7 @@ const Signup = () => {
       <div className="absolute top-0 left-0 w-full">
         <div className="container mx-auto py-5">
           <Link to="/" className="text-xl font-bold block">
-            <span className="bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent">seQRity</span>
+            <span className="bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent">QRified</span>
           </Link>
         </div>
       </div>
@@ -66,7 +65,7 @@ const Signup = () => {
             Create Account
           </CardTitle>
           <CardDescription>
-            Sign up for seQRity Authentication System
+            Sign up for QRified Authentication System
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -14,6 +13,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { QRCodeTemplatePreview } from './QRCodeTemplatePreview';
 import { QRCode } from '@/types/qrCode';
 import { formatSequentialNumber } from '@/utils/qrCodeUtils';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface QRCodeManagerProps {
   qrCodes: QRCode[];
@@ -27,6 +27,8 @@ const QRCodeManager: React.FC<QRCodeManagerProps> = ({ qrCodes, onUpdateQRCode, 
   const [previewQRCode, setPreviewQRCode] = useState<QRCode | null>(null);
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
+  
+  const { user } = useAuth();
   
   const handleToggleEnabled = async (qrCode: QRCode) => {
     try {
@@ -60,24 +62,59 @@ const QRCodeManager: React.FC<QRCodeManagerProps> = ({ qrCodes, onUpdateQRCode, 
       return;
     }
     
+    if (!user) {
+      toast.error('You must be logged in to delete QR codes');
+      return;
+    }
+    
     setLoading(true);
     try {
-      const { error } = await supabase
+      const { data: userLimitData, error: fetchLimitError } = await supabase
+        .from('user_limits')
+        .select('qr_created, monthly_qr_created')
+        .eq('id', user.id)
+        .single();
+
+      if (fetchLimitError || !userLimitData) {
+        console.error('Error fetching user limits before deletion:', fetchLimitError);
+        toast.error('Failed to get user limits. QR code not deleted.');
+        setLoading(false);
+        return;
+      }
+
+      const { error: deleteError } = await supabase
         .from('qr_codes')
         .delete()
         .eq('id', id);
       
-      if (error) {
-        console.error('Error deleting QR code:', error);
+      if (deleteError) {
+        console.error('Error deleting QR code:', deleteError);
         toast.error('Failed to delete QR code');
+        setLoading(false);
         return;
+      }
+      
+      const updatedQrCreated = Math.max(0, userLimitData.qr_created - 1);
+      const updatedMonthlyQrCreated = Math.max(0, userLimitData.monthly_qr_created - 1);
+
+      const { error: updateLimitError } = await supabase
+        .from('user_limits')
+        .update({
+          qr_created: updatedQrCreated,
+          monthly_qr_created: updatedMonthlyQrCreated,
+        })
+        .eq('id', user.id);
+
+      if (updateLimitError) {
+        console.error('Error updating user limits after deletion:', updateLimitError);
+        toast.warning('QR code deleted, but user limits failed to update.');
       }
       
       onDeleteQRCode(id);
       toast.success('QR code deleted successfully');
     } catch (error) {
-      console.error('Error deleting QR code:', error);
-      toast.error('An error occurred while deleting QR code');
+      console.error('Error deleting QR code or updating limits:', error);
+      toast.error('An error occurred during the deletion process');
     } finally {
       setLoading(false);
     }
@@ -234,7 +271,7 @@ const QRCodeManager: React.FC<QRCodeManagerProps> = ({ qrCodes, onUpdateQRCode, 
           
           {previewQRCode && (
             <div className="flex flex-col items-center space-y-4">
-              <div className="w-full max-w-[280px] overflow-hidden rounded-lg shadow-md">
+              <div className="w-full max-w-xs overflow-hidden rounded-lg shadow-md">
                 <QRCodeTemplatePreview
                   template={previewQRCode.template || 'classic'}
                   qrCodeDataUrl={previewQRCode.dataUrl}

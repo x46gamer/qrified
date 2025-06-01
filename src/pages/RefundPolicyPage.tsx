@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
@@ -25,7 +24,7 @@ const RefundPolicyPage = () => {
             <p>For monthly subscription plans:</p>
             <ul>
               <li>We offer a 7-day refund period from the date of subscription if you are not satisfied with our services</li>
-              <li>Refund requests must be submitted in writing to billing@seqrity.dz</li>
+              <li>Refund requests must be submitted in writing to billing@qrified.dz</li>
               <li>No refunds will be issued after the 7-day period</li>
               <li>You may cancel your subscription at any time, but no partial refunds will be provided for unused portions of the current billing cycle</li>
             </ul>
@@ -34,7 +33,7 @@ const RefundPolicyPage = () => {
             <p>For one-time lifetime purchases:</p>
             <ul>
               <li>We offer a 14-day refund period from the date of purchase</li>
-              <li>Refund requests must be submitted in writing to billing@seqrity.dz with a detailed explanation of why the service does not meet your needs</li>
+              <li>Refund requests must be submitted in writing to billing@qrified.dz with a detailed explanation of why the service does not meet your needs</li>
               <li>No refunds will be issued after the 14-day period</li>
             </ul>
             
@@ -57,7 +56,7 @@ const RefundPolicyPage = () => {
             <h2>4. Refund Process</h2>
             <p>To request a refund:</p>
             <ol>
-              <li>Email billing@seqrity.dz with the subject line "Refund Request"</li>
+              <li>Email billing@qrified.dz with the subject line "Refund Request"</li>
               <li>Include your account email address and the reason for your refund request</li>
               <li>Our team will review your request within 3-5 business days</li>
               <li>If approved, refunds will be processed using the original payment method</li>
@@ -71,7 +70,7 @@ const RefundPolicyPage = () => {
             <p>We reserve the right to modify this Refund Policy at any time. Changes will be effective immediately upon posting on our website. We will notify users of any material changes by updating the "Last Updated" date at the top of this policy.</p>
             
             <h2>7. Contact Us</h2>
-            <p>If you have any questions about this Refund Policy, please contact us at billing@seqrity.dz or through our contact page.</p>
+            <p>If you have any questions about this Refund Policy, please contact us at billing@qrified.dz or through our contact page.</p>
           </div>
         </div>
       </div>

@@ -18,6 +18,8 @@ interface UserLimits {
   qr_limit: number;
   qr_created: number;
   qr_successful: number;
+  monthly_qr_limit: number;
+  monthly_qr_created: number;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
@@ -45,20 +47,40 @@ const Sidebar: React.FC<SidebarProps> = ({
   
   const fetchUserLimits = async () => {
     try {
-      const { data, error } = await supabase
+      const { data, error: userLimitError } = await supabase
         .from('user_limits')
-        .select('qr_limit, qr_created, qr_successful')
+        .select('qr_limit, qr_created, qr_successful, monthly_qr_limit, monthly_qr_created')
         .eq('id', user?.id)
         .single();
         
-      if (error) {
-        console.error('Error fetching user limits:', error);
+      if (userLimitError) {
+        console.error('Error fetching user limits:', userLimitError.message);
+        // Set to default zeros on error
+        setUserLimits({ qr_limit: 0, qr_created: 0, qr_successful: 0, monthly_qr_limit: 0, monthly_qr_created: 0 });
         return;
       }
       
-      setUserLimits(data);
+      // Check if data is successfully fetched and is not null
+      if (data) {
+        // Explicitly define the expected structure and assign
+        const limitsData: UserLimits = {
+            qr_limit: (data as any).qr_limit || 0,
+            qr_created: (data as any).qr_created || 0,
+            qr_successful: (data as any).qr_successful || 0,
+            monthly_qr_limit: (data as any).monthly_qr_limit || 0,
+            monthly_qr_created: (data as any).monthly_qr_created || 0,
+        };
+        setUserLimits(limitsData);
+      } else {
+          // Data is null - user might not have a limits entry yet
+          console.log('No user limits data found for user:', user?.id);
+          setUserLimits({ qr_limit: 0, qr_created: 0, qr_successful: 0, monthly_qr_limit: 0, monthly_qr_created: 0 });
+      }
+
     } catch (err) {
       console.error('Error in fetch user limits:', err);
+      // Set to default zeros on error
+      setUserLimits({ qr_limit: 0, qr_created: 0, qr_successful: 0, monthly_qr_limit: 0, monthly_qr_created: 0 });
     }
   };
   
@@ -71,8 +93,10 @@ const Sidebar: React.FC<SidebarProps> = ({
     }
   };
   
-  const remainingQrCodes = userLimits ? userLimits.qr_limit - userLimits.qr_created : 0;
-  const qrCodePercentage = userLimits ? (userLimits.qr_created / userLimits.qr_limit) * 100 : 0;
+  // Updated calculations for monthly limits
+  const monthlyQrCreatedCount = userLimits ? userLimits.monthly_qr_created : 0;
+  const monthlyQrLimitCount = userLimits ? userLimits.monthly_qr_limit : 0;
+  const monthlyQrPercentage = monthlyQrLimitCount > 0 ? (monthlyQrCreatedCount / monthlyQrLimitCount) * 100 : (monthlyQrCreatedCount > 0 ? 100 : 0);
   
   // If on mobile and sidebar is closed, render narrow sidebar with icons only
   if (isMobile && !openMobile) {
@@ -104,10 +128,10 @@ const Sidebar: React.FC<SidebarProps> = ({
         <div className="flex items-center justify-between px-3 mb-8">
           <div className="flex items-center">
             <div className={cn("w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center text-white font-bold text-xl")}>
-              S
+              QRified
             </div>
             <span className={cn("ml-3 text-xl font-semibold tracking-tight transition-opacity duration-300", isOpen ? "opacity-100" : "opacity-0")}>
-              SeQRity
+              QRified
             </span>
           </div>
         </div>
@@ -212,10 +236,10 @@ const Sidebar: React.FC<SidebarProps> = ({
           <div className={cn("transition-opacity duration-300", isOpen ? "opacity-100" : "opacity-0")}>
             <div className="flex justify-between items-center mb-1">
               <span className="text-xs font-medium text-gray-600">QR Codes Monthly</span>
-              <span className="text-xs font-medium text-gray-600">{remainingQrCodes}/{userLimits.qr_limit}</span>
+              <span className="text-xs font-medium text-gray-600">{monthlyQrCreatedCount}/{monthlyQrLimitCount}</span>
             </div>
           </div>
-          <Progress value={qrCodePercentage} className={cn("h-2", qrCodePercentage > 80 ? "bg-red-100" : "bg-blue-100")} />
+          <Progress value={monthlyQrPercentage} className={cn("h-2", monthlyQrPercentage > 80 ? "bg-red-100" : "bg-blue-100")} />
         </div>
       )}
       

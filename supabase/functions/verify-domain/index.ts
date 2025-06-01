@@ -1,4 +1,3 @@
-
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.7';
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
 
@@ -58,6 +57,33 @@ async function checkARecords(domain: string): Promise<string[]> {
     return data.Answer.map((record: any) => record.data);
   } catch (error) {
     console.error("Error checking A records:", error);
+    throw error;
+  }
+}
+
+// Function to check DNS TXT records using public DNS API
+async function checkTxtRecords(domain: string): Promise<string[]> {
+  try {
+    // Use Google's DNS API to lookup TXT records
+    const response = await fetch(`https://dns.google/resolve?name=${domain}&type=TXT`);
+    
+    if (!response.ok) {
+      throw new Error(`DNS API error: ${response.status} ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    
+    if (!data.Answer) {
+      return [];
+    }
+    
+    // Extract the TXT record values
+    return data.Answer.map((record: any) => {
+      // TXT records are returned as arrays of strings
+      return record.data.join('');
+    });
+  } catch (error) {
+    console.error("Error checking TXT records:", error);
     throw error;
   }
 }
@@ -125,7 +151,7 @@ serve(async (req) => {
   }
 
   try {
-    const { domain, action } = await req.json();
+    const { domain, action, dns_type } = await req.json();
     
     if (!domain) {
       return new Response(
@@ -171,6 +197,103 @@ serve(async (req) => {
           JSON.stringify({ 
             success: false, 
             message: `SSL check error: ${error.message}` 
+          }),
+          { 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 500 
+          }
+        );
+      }
+    } else if (action === 'verify') {
+      console.log(`Verifying domain ${domain} with DNS type ${dns_type}`);
+      
+      try {
+        let verified = false;
+        
+        if (dns_type === 'txt') {
+          // For TXT verification
+          const txtRecords = await checkTxtRecords(domain);
+          console.log(`TXT records for ${domain}:`, txtRecords);
+          
+          // Check if any TXT record matches our verification string
+          const verificationString = `qrified-verify=${domain}`;
+          for (const record of txtRecords) {
+            if (record === verificationString) {
+              verified = true;
+              break;
+            }
+          }
+        } else if (domain.startsWith('www.')) {
+          // Existing CNAME check for www subdomain
+          const cnameRecords = await checkCnameRecords(domain);
+          console.log(`CNAME records for ${domain}:`, cnameRecords);
+          
+          for (const record of cnameRecords) {
+            if (record.includes(APP_CNAME_TARGET)) {
+              verified = true;
+              break;
+            }
+          }
+        } else {
+          // Existing A record check for root domain
+          const aRecords = await checkARecords(domain);
+          console.log(`A records for ${domain}:`, aRecords);
+          
+          for (const record of aRecords) {
+            if (record === APP_IP_ADDRESS) {
+              verified = true;
+              break;
+            }
+          }
+        }
+        
+        if (verified) {
+          // Initiate SSL provisioning
+          const sslInitiated = await initiateSSLProvisioning(domain);
+          
+          // Initial SSL check 
+          const sslStatus = await checkSSLCertificate(domain);
+          console.log(`Initial SSL status for ${domain}:`, sslStatus);
+          
+          // Update the domain status in the database
+          const { error } = await supabase
+            .from('custom_domains')
+            .update({
+              status: 'verified',
+              verified_at: new Date().toISOString(),
+              ssl_status: sslStatus.status
+            })
+            .eq('domain', domain);
+          
+          if (error) {
+            console.error('Error updating domain:', error);
+            throw error;
+          }
+          
+          return new Response(
+            JSON.stringify({ 
+              success: true, 
+              verified: true,
+              ssl: { initiated: sslInitiated, status: sslStatus.status }
+            }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        } else {
+          return new Response(
+            JSON.stringify({ 
+              success: true, 
+              verified: false, 
+              message: 'Verification failed: DNS records not correctly configured' 
+            }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+      } catch (error: any) {
+        console.error('DNS resolution error:', error);
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            message: `DNS resolution error: ${error.message}` 
           }),
           { 
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },

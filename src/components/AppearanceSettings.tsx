@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,6 +9,8 @@ import { toast } from "sonner";
 import { supabase } from '@/integrations/supabase/client';
 import { useAppearanceSettings } from '@/contexts/AppearanceContext';
 import LanguagePresets from '@/components/LanguagePresets';
+import { ImagePlus, Trash2 } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 export const AppearanceSettings = () => {
   const { 
@@ -35,7 +36,12 @@ export const AppearanceSettings = () => {
     secondaryColor
   } = useAppearanceSettings();
   
+  const { user } = useAuth();
+
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
+  
   const [settings, setSettings] = useState({
     primaryColor,
     secondaryColor,
@@ -106,7 +112,7 @@ export const AppearanceSettings = () => {
         successTitle: 'Product Verified',
         successDescription: 'This product is legitimate and original. Thank you for checking its authenticity.',
         successFooterText: 'This QR code has been marked as used and cannot be verified again.',
-        failureTitle: 'ffffffff',
+        failureTitle: 'Product NOT Verified',
         failureDescription: 'This product could not be verified as authentic. It may be counterfeit or has been previously verified.',
         failureFooterText: 'If you believe this is an error, please contact the product manufacturer.',
         isRtl: false
@@ -118,13 +124,15 @@ export const AppearanceSettings = () => {
         successDescription: 'هذا المنتج أصلي وموثوق. شكراً لك على التحقق من صحته',
         successFooterText: 'هذا ولا يمكن التحقق منه مرة أخرى QR لقد تم استخدام رمز',
         failureTitle: 'تعذر التحقق من المنتج',
-        failureDescription: 'تعذر التحقق من أصالة هذا المنتج. قد يكون مزوراً أو تم التحقق منه مسبقاً',
+        failureDescription: 'تعذر التحقق من أصلية هذا المنتج. قد يكون مزوراً أو تم التحقق منه مسبقاً',
         failureFooterText: 'إذا كنت تعتقد أن هذا خطأ، يرجى الاتصال بالشركة المصنعة للمنتج',
         isRtl: true
       }));
     }
     toast.success(`${preset === 'english' ? 'English' : 'Arabic'} preset loaded successfully`);
   };
+
+
 
   const saveSettings = async () => {
     setIsLoading(true);
@@ -136,7 +144,6 @@ export const AppearanceSettings = () => {
       console.log('Settings saved successfully');
       toast.success('Settings saved successfully');
       
-      // Trigger storage event for other tabs
       localStorage.setItem('appearance_updated', Date.now().toString());
     } catch (error) {
       console.error('Error saving settings:', error);
@@ -157,8 +164,8 @@ export const AppearanceSettings = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Appearance Settings</h2>
-        <Button onClick={saveSettings} disabled={isLoading || isSaving}>
-          {isLoading || isSaving ? 'Saving...' : 'Save Changes'}
+        <Button onClick={saveSettings} disabled={isLoading || isSaving || isUploadingLogo}>
+          {isLoading || isSaving || isUploadingLogo ? 'Saving...' : 'Save Changes'}
         </Button>
       </div>
 
@@ -181,41 +188,8 @@ export const AppearanceSettings = () => {
             />
           </div>
           
-          <div>
-            <Label htmlFor="primaryColor">Primary Color</Label>
-            <div className="flex gap-2">
-              <Input
-                id="primaryColor"
-                type="color"
-                value={settings.primaryColor}
-                onChange={(e) => updateSetting('primaryColor', e.target.value)}
-                className="w-20"
-              />
-              <Input
-                value={settings.primaryColor}
-                onChange={(e) => updateSetting('primaryColor', e.target.value)}
-                placeholder="#3b82f6"
-              />
-            </div>
-          </div>
+          
 
-          <div>
-            <Label htmlFor="secondaryColor">Secondary Color</Label>
-            <div className="flex gap-2">
-              <Input
-                id="secondaryColor"
-                type="color"
-                value={settings.secondaryColor}
-                onChange={(e) => updateSetting('secondaryColor', e.target.value)}
-                className="w-20"
-              />
-              <Input
-                value={settings.secondaryColor}
-                onChange={(e) => updateSetting('secondaryColor', e.target.value)}
-                placeholder="#10b981"
-              />
-            </div>
-          </div>
 
           <div className="flex items-center space-x-2">
             <Switch

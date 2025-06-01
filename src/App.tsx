@@ -1,5 +1,5 @@
-
-import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import React, { lazy, Suspense } from 'react';
+import { BrowserRouter, Route, Routes, Navigate } from 'react-router-dom';
 import LandingPage from './pages/LandingPage';
 import Index from './pages/Index';
 import CustomizeApp from './pages/CustomizeApp';
@@ -14,13 +14,14 @@ import ProductCheck from './pages/ProductCheck';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import ForgotPassword from './pages/ForgotPassword';
+import SubscribePage from './pages/SubscribePage';
 import NotFound from './pages/NotFound';
 import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
 import AuthGuard from './components/AuthGuard';
 import { Toaster } from 'sonner';
 import { AppearanceSettingsProvider } from './contexts/AppearanceContext';
-import { AuthProvider } from './contexts/AuthContext';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import AppLayout from './components/AppLayout';
 import DashboardLayout from './components/DashboardLayout';
 import AdminLayout from './components/AdminLayout';
@@ -28,6 +29,15 @@ import { SidebarProvider } from './components/ui/sidebar';
 import DomainSettings from './pages/DomainSettings';
 import Settings from './pages/Settings';
 import AdminFeedback from './pages/AdminFeedback';
+
+// Public Pages
+const CookiePolicyPage = lazy(() => import('./pages/CookiePolicyPage'));
+const CareersPage = lazy(() => import('./pages/CareersPage'));
+const DocumentationPage = lazy(() => import('./pages/DocumentationPage'));
+const SupportCenterPage = lazy(() => import('./pages/SupportCenterPage'));
+const CaseStudiesPage = lazy(() => import('./pages/CaseStudiesPage'));
+const CommunityForumPage = lazy(() => import('./pages/CommunityForumPage'));
+const PartnersPage = lazy(() => import('./pages/PartnersPage'));
 
 function App() {
   return (
@@ -50,6 +60,7 @@ function App() {
             <Route path="/login" element={<AppLayout><Login /></AppLayout>} />
             <Route path="/signup" element={<AppLayout><Signup /></AppLayout>} />
             <Route path="/forgot-password" element={<AppLayout><ForgotPassword /></AppLayout>} />
+            <Route path="/subscribe" element={<AppLayout><SubscribePage /></AppLayout>} />
             
             {/* Admin routes - completely separated auth system */}
             <Route path="/admin" element={<AdminLogin />} />
@@ -125,6 +136,13 @@ function App() {
                 </AuthGuard>
               }
             />
+            <Route path="/cookie-policy" element={<CookiePolicyPage />} />
+            <Route path="/careers" element={<CareersPage />} />
+            <Route path="/docs" element={<DocumentationPage />} />
+            <Route path="/support" element={<SupportCenterPage />} />
+            <Route path="/case-studies" element={<CaseStudiesPage />} />
+            <Route path="/community" element={<CommunityForumPage />} />
+            <Route path="/partners" element={<PartnersPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
           <Toaster position="top-right" />
@@ -133,5 +151,16 @@ function App() {
     </AuthProvider>
   );
 }
+
+const PrivateRoute = ({ children }: { children: JSX.Element }) => {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    // Optionally return a loading spinner or null while checking auth status
+    return <div className="flex items-center justify-center min-h-screen"><div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div></div>; // Example loading spinner
+  }
+
+  return isAuthenticated ? children : <Navigate to="/login" replace />;
+};
 
 export default App;

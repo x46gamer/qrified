@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import QRCodeGenerator from '@/components/QRCodeGenerator';
@@ -248,7 +247,7 @@ const Index = () => {
                           <div className="flex justify-between items-center mb-3">
                             <div>
                               <h4 className="font-medium">Employee User</h4>
-                              <p className="text-sm text-gray-500">employee@example.com</p>
+                              <p className="text-sm text-gray-500">employee@qrified.com</p>
                             </div>
                             <Button variant="outline" size="sm">Manage</Button>
                           </div>
@@ -310,7 +309,7 @@ const Index = () => {
                         <div className="flex items-center justify-between p-3 border rounded-md bg-white hover:bg-gray-50 transition-colors">
                           <div>
                             <p className="font-medium">Admin User</p>
-                            <p className="text-sm text-gray-500">admin@seqrity.com</p>
+                            <p className="text-sm text-gray-500">admin@qrified.com</p>
                           </div>
                           <div className="flex items-center gap-2">
                             <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full">Admin</span>
@@ -321,7 +320,7 @@ const Index = () => {
                         <div className="flex items-center justify-between p-3 border rounded-md bg-white hover:bg-gray-50 transition-colors">
                           <div>
                             <p className="font-medium">Employee User</p>
-                            <p className="text-sm text-gray-500">employee@seqrity.com</p>
+                            <p className="text-sm text-gray-500">employee@qrified.com</p>
                           </div>
                           <div className="flex items-center gap-2">
                             <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full">Employee</span>

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -8,10 +7,24 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { ExternalLink, Shield } from "lucide-react";
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client'; // Import supabase if needed to fetch plan info
 
 const Settings = () => {
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
+
+  // TODO: Fetch user's current plan details
+  // You'll likely need a state variable and a useEffect hook here
+  // Example: const [currentPlan, setCurrentPlan] = useState(null);
+  // useEffect(() => { ... fetch plan ... }, [user]);
+
+  // TODO: Implement logic to get Stripe customer portal URL
+  const handleManagePlan = async () => {
+    // This will likely require a backend call to generate a customer portal session URL
+    console.log('Manage plan clicked');
+    // Example: const { data } = await supabase.functions.invoke('create-customer-portal', { userId: user.id });
+    // if (data?.url) { window.location.href = data.url; }
+  };
 
   return (
     <div className="container mx-auto py-8">
@@ -26,6 +39,8 @@ const Settings = () => {
           <TabsTrigger value="system">System Settings</TabsTrigger>
           <TabsTrigger value="domains">Domains</TabsTrigger>
           <TabsTrigger value="help">Help & Resources</TabsTrigger>
+          {/* Add Plan & Billing Tab */}
+          {!isAdmin && <TabsTrigger value="plan">Plan & Billing</TabsTrigger>}
         </TabsList>
         
         <TabsContent value="team">
@@ -154,6 +169,41 @@ const Settings = () => {
             </CardContent>
           </Card>
         </TabsContent>
+
+        {/* Add Plan & Billing TabsContent */}
+        {!isAdmin && (
+          <TabsContent value="plan">
+            <Card>
+              <CardHeader>
+                <CardTitle>Plan & Billing</CardTitle>
+                <CardDescription>Manage your subscription and view billing information.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* TODO: Display current plan details */}
+                <div className="border rounded-lg p-4">
+                  <h3 className="font-medium mb-2">Your Current Plan</h3>
+                  <p className="text-sm text-gray-600">{/* Display plan name here */}
+                    {/* Example: {currentPlan ? currentPlan.name : 'Loading plan...'} */}
+                    Loading plan...
+                  </p>
+                </div>
+                
+                <div className="border rounded-lg p-4 bg-blue-50">
+                  <h3 className="font-medium mb-2">Manage Subscription</h3>
+                  <p className="text-sm text-gray-600 mb-4">
+                    Update your payment method, change your plan, or cancel your subscription.
+                  </p>
+                  <Button onClick={handleManagePlan} className="bg-blue-600 hover:bg-blue-700">
+                    Go to Billing Portal
+                  </Button>
+                </div>
+                
+                {/* TODO: Optionally add billing history section */}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        )}
+
       </Tabs>
     </div>
   );

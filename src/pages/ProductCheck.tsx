@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -324,21 +323,7 @@ const ProductCheck = () => {
           
           <p className="text-lg">{getDescription()}</p>
           
-          {/* Debug information */}
-          {process.env.NODE_ENV === 'development' && (
-            <div className="text-xs text-gray-500 border rounded p-2 text-left">
-              <p><strong>Debug Info:</strong></p>
-              <p>QR ID: {qrId}</p>
-              <p>Verification Message: {verificationMessage}</p>
-              {qrCode && (
-                <>
-                  <p>Is Enabled: {qrCode.isEnabled ? 'Yes' : 'No'}</p>
-                  <p>Is Scanned: {qrCode.isScanned ? 'Yes' : 'No'}</p>
-                  <p>Scanned At: {qrCode.scannedAt || 'Never'}</p>
-                </>
-              )}
-            </div>
-          )}
+          
           
           {isVerified && productData && (
             <div className="border rounded-lg p-4 bg-gray-50 text-left">

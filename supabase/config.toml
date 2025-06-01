@@ -1,4 +1,3 @@
-
 # A string used to distinguish different Supabase projects on the same host. Defaults to the project ID.
 project_id = "xowxgbovrbnpsreqgrlt"
 
@@ -62,8 +61,8 @@ port = 54327
 vector_port = 54328
 
 # Configure Postgres restore command.
-[restore]
-verbose = false
+#[restore] # Comment out section header
+#verbose = false # Comment out key-value pair
 
 [auth]
 enabled = true
@@ -83,8 +82,8 @@ refresh_token_reuse_interval = 10
 enable_signup = true
 
 [functions]
-enabled = true
-port = 54321
+# enabled = true # Comment out or remove
+# port = 54321 # Comment out or remove
 
 [functions.verify-domain]
 verify_jwt = false

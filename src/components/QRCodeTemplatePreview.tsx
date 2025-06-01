@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { TemplateType } from '@/types/qrCode';
 
@@ -29,43 +28,43 @@ export const QRCodeTemplatePreview: React.FC<QRCodeTemplatePreviewProps> = ({
 }) => {
   // Define template-specific styles
   const getTemplateStyles = () => {
+    // Base styles shared by all 'classic' variants
+    const baseClassicStyles = {
+      containerClass: 'flex flex-col items-center text-black font-sans overflow-hidden rounded-lg shadow-md w-[250px] h-[400px]',
+      headerSectionClass: 'w-full bg-gray-400 text-black text-center pt-3 px-2 text-xl font-bold uppercase',
+      middleSectionClass: 'flex flex-col items-center bg-gray-400 w-full pb-4 px-2',
+      instructionClass: 'text-sm text-center mt-1 px-1 font-bold',
+      websiteClass: 'w-full bg-black text-white text-center text-sm font-bold py-1 break-all',
+      bottomSectionClass: 'w-full bg-green-700 text-white text-center text-xs py-1 flex flex-col items-center',
+      footerTextClass: 'font-bold',
+      thankYouTextClass: 'text-xs',
+    };
+
     switch (template) {
-      case 'modern-blue':
-        return {
-          bgColor: 'bg-blue-100',
-          headerClass: 'text-3xl font-bold uppercase mb-3', 
-          instructionClass: 'text-xl mb-2', 
-          websiteClass: 'font-medium mb-3', 
-          footerClass: 'bg-black text-white font-medium py-2 px-4 rounded-md mt-3', 
-          containerClass: 'p-6 rounded-lg'
-        };
-      case 'modern-beige':
-        return {
-          bgColor: 'bg-amber-50',
-          headerClass: 'text-3xl font-bold uppercase mb-3', 
-          instructionClass: 'text-xl mb-2', 
-          websiteClass: 'font-medium mb-3', 
-          footerClass: 'bg-black text-white font-medium py-2 px-4 rounded-md mt-3', 
-          containerClass: 'p-6 rounded-lg'
-        };
-      case 'arabic':
-        return {
-          bgColor: 'bg-amber-50',
-          headerClass: 'text-3xl font-bold mb-3', 
-          instructionClass: 'text-xl mb-2', 
-          websiteClass: 'font-medium mb-3', 
-          footerClass: 'bg-green-800 text-white font-medium py-2 px-4 rounded-md mt-3', 
-          containerClass: 'p-6 rounded-lg border-4 border-brown-600 rounded-xl'
-        };
       case 'classic':
+        return {
+          ...baseClassicStyles,
+          bottomSectionClass: baseClassicStyles.bottomSectionClass.replace('bg-green-700', 'bg-green-700'),
+        };
+      case 'classic1': // Original Product1 - Red bottom
+          return {
+          ...baseClassicStyles,
+          bottomSectionClass: baseClassicStyles.bottomSectionClass.replace('bg-green-700', 'bg-red-700'),
+          };
+      case 'classic2': // Original Product2 - Blue bottom
+              return {
+          ...baseClassicStyles,
+          bottomSectionClass: baseClassicStyles.bottomSectionClass.replace('bg-green-700', 'bg-blue-700'),
+        };
+      case 'classic3': // Original Product3 - Black bottom
+        return {
+          ...baseClassicStyles,
+          bottomSectionClass: baseClassicStyles.bottomSectionClass.replace('bg-green-700', 'bg-black'),
+        };
       default:
         return {
-          bgColor: 'bg-white',
-          headerClass: 'text-2xl font-bold mb-3', 
-          instructionClass: 'text-lg mb-2', 
-          websiteClass: 'font-normal mb-3', 
-          footerClass: 'bg-gray-800 text-white py-2 px-4 mt-3', 
-          containerClass: 'p-4'
+          ...baseClassicStyles,
+          bottomSectionClass: baseClassicStyles.bottomSectionClass.replace('bg-green-700', 'bg-green-700'),
         };
     }
   };
@@ -73,20 +72,21 @@ export const QRCodeTemplatePreview: React.FC<QRCodeTemplatePreviewProps> = ({
   const styles = getTemplateStyles();
   
   return (
-    <div className={`w-full ${styles.bgColor} ${styles.containerClass} ${directionRTL ? 'rtl' : 'ltr'}`}>
-      <div className="flex flex-col items-center gap-4 max-w-xs mx-auto">
-        {headerText && (
-          <div className={`text-center ${styles.headerClass}`}>
-            {headerText}
+    <div className={`w-full max-w-xs mx-auto ${styles.containerClass} ${directionRTL ? 'rtl' : 'ltr'}`}>
+      
+      {/* Top Section: PRODUCT AUTHENTICATION */}
+      <div className={styles.headerSectionClass}>
+        {headerText || 'PRODUCT AUTHENTICATION'}
           </div>
-        )}
         
+      {/* Middle Section: QR Code, Instruction Text */}
+      <div className={`${styles.middleSectionClass} flex-grow`}>
         {qrCodeDataUrl && (
-          <div className="w-full mb-3 flex justify-center">
+          <div className="w-full flex justify-center">
             <img 
               src={qrCodeDataUrl} 
               alt="QR Code" 
-              className="w-full max-w-[200px] mx-auto object-contain"
+              className="w-[90%] h-auto object-contain"
               onError={(e) => {
                 console.error("Error loading QR code image");
                 (e.target as HTMLImageElement).src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2YwZjBmMCIgLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1zaXplPSIxNiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iIGZpbGw9IiM5OTkiPlFSIENvZGUgRXJyb3I8L3RleHQ+PC9zdmc+';
@@ -96,23 +96,29 @@ export const QRCodeTemplatePreview: React.FC<QRCodeTemplatePreviewProps> = ({
         )}
         
         {instructionText && (
-          <div className={`text-center ${styles.instructionClass}`}>
-            {instructionText}
+          <div className={`${styles.instructionClass}`}>
+            {instructionText || 'Scan this QR code to verify the\nauthenticity of your product'}
           </div>
         )}
+      </div>
         
+      {/* Website URL Section (Black band) - Conditionally displayed */}
         {websiteUrl && (
-          <div className={`text-center ${styles.websiteClass} break-all`}>
+        <div className={styles.websiteClass}>
             {websiteUrl}
           </div>
         )}
         
-        {footerText && (
-          <div className={`text-center w-full ${styles.footerClass}`}>
-            {footerText}
+      {/* Bottom Section: VOID IF REMOVED ! and Thank You */}
+      <div className={styles.bottomSectionClass}>
+        <div className={styles.footerTextClass}>
+            {'VOID IF REMOVED !'}
+        </div>
+        <div className={styles.thankYouTextClass}>
+            {footerText || 'THANK YOU FOR CHOOSING OUR PRODUCT'}
           </div>
-        )}
       </div>
+
     </div>
   );
 };

@@ -1,17 +1,15 @@
-
 import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 
-export type TemplateType = 'classic' | 'modern-blue' | 'modern-beige' | 'arabic';
+export type TemplateType = 'classic' | 'classic1' | 'classic2' | 'classic3';
 
 interface TemplateOption {
   id: TemplateType;
   name: string;
-  bgColor: string;
-  textColor: string;
-  imageUrl?: string;
+  // Removed bgColor, textColor as styles will be more complex
+  // imageUrl?: string; // Removed as we won't have a simple preview image
 }
 
 interface QRCodeTemplatesProps {
@@ -22,31 +20,20 @@ interface QRCodeTemplatesProps {
 const templates: TemplateOption[] = [
   {
     id: 'classic',
-    name: 'Classic (No Template)',
-    bgColor: 'bg-white',
-    textColor: 'text-black',
+    name: 'Original Product',
   },
   {
-    id: 'modern-blue',
-    name: 'Modern Blue',
-    bgColor: 'bg-blue-100',
-    textColor: 'text-black',
-    imageUrl: '/lovable-uploads/2e0c5504-d6ed-42fc-adfc-0c237922171a.png'
+    id: 'classic1',
+    name: 'Original Product1',
   },
   {
-    id: 'modern-beige',
-    name: 'Modern Beige',
-    bgColor: 'bg-amber-50',
-    textColor: 'text-black',
-    imageUrl: '/lovable-uploads/be74d445-2cb2-40e6-92c9-ab17ae02540b.png'
+    id: 'classic2',
+    name: 'Original Product2',
   },
   {
-    id: 'arabic',
-    name: 'Arabic RTL',
-    bgColor: 'bg-amber-50',
-    textColor: 'text-brown-800',
-    imageUrl: '/lovable-uploads/5e2755bb-b112-4900-a768-141373638ba4.png'
-  }
+    id: 'classic3',
+    name: 'Original Product3',
+  },
 ];
 
 const QRCodeTemplates: React.FC<QRCodeTemplatesProps> = ({ selectedTemplate, onSelectTemplate }) => {
@@ -72,21 +59,11 @@ const QRCodeTemplates: React.FC<QRCodeTemplatesProps> = ({ selectedTemplate, onS
               <Card className={`overflow-hidden ${
                 selectedTemplate === template.id ? 'ring-2 ring-primary' : ''
               }`}>
-                <CardContent className="p-2">
-                  {template.imageUrl ? (
-                    <div className="h-40 relative">
-                      <img
-                        src={template.imageUrl}
-                        alt={template.name}
-                        className="object-cover w-full h-full rounded-sm"
-                      />
+                <CardContent className="p-2 flex items-center justify-center">
+                  {/* Simplified preview representation */}
+                  <div className="h-40 w-40 flex items-center justify-center rounded-sm border">
+                    <span className="text-sm font-medium text-center">{template.name} Preview</span>
                     </div>
-                  ) : (
-                    <div className={`h-40 ${template.bgColor} flex items-center justify-center rounded-sm`}>
-                      <span className={`${template.textColor} text-sm font-medium`}>Basic Template</span>
-                    </div>
-                  )}
-                  <div className="mt-2 text-sm text-center font-medium">{template.name}</div>
                 </CardContent>
               </Card>
             </Label>

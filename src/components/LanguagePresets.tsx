@@ -14,7 +14,7 @@ const LanguagePresets: React.FC<LanguagePresetsProps> = ({ onLoadPreset }) => {
         <CardTitle>Language Presets</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="flex gap-4">
+        <div className="flex gap-4 display grid">
           <Button 
             onClick={() => onLoadPreset('english')}
             variant="outline"

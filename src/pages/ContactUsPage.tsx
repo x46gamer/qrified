@@ -1,12 +1,7 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { ChevronLeft, Mail, Phone, MapPin } from 'lucide-react';
 import Header from './LandingPage';
 
-const ContactPage = () => (
+const ContactUsPage = () => (
   <>
     <Header />
     <main className="container mx-auto py-16 px-4 max-w-xl">
@@ -30,4 +25,4 @@ const ContactPage = () => (
   </>
 );
 
-export default ContactPage;
+export default ContactUsPage; 

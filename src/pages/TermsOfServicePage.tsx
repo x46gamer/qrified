@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
@@ -22,10 +21,10 @@ const TermsOfServicePage = () => {
             <p>Last Updated: May 9, 2025</p>
             
             <h2>1. Acceptance of Terms</h2>
-            <p>By accessing or using seQRity's services, you agree to be bound by these Terms of Service. If you do not agree to all the terms and conditions, you may not access or use our services.</p>
+            <p>By accessing or using QRified's services, you agree to be bound by these Terms of Service. If you do not agree to all the terms and conditions, you may not access or use our services.</p>
             
             <h2>2. Description of Services</h2>
-            <p>seQRity provides a QR code authentication system that allows businesses to generate, manage, and track QR codes for product verification. Our services include QR code generation, customer feedback collection, analytics, and related functionalities.</p>
+            <p>QRified provides a QR code authentication system that allows businesses to generate, manage, and track QR codes for product verification. Our services include QR code generation, customer feedback collection, analytics, and related functionalities.</p>
             
             <h2>3. User Accounts</h2>
             <p>To access certain features of our services, you must register for an account. You are responsible for maintaining the confidentiality of your account credentials and for all activities that occur under your account. You agree to provide accurate and complete information when creating an account and to update your information to keep it accurate and current.</p>
@@ -57,7 +56,7 @@ const TermsOfServicePage = () => {
             <p>We may terminate or suspend your access to our services immediately, without prior notice or liability, for any reason, including if you breach these Terms of Service. Upon termination, your right to use our services will immediately cease.</p>
             
             <h2>10. Limitation of Liability</h2>
-            <p>To the maximum extent permitted by law, in no event shall seQRity be liable for any indirect, incidental, special, consequential, or punitive damages, or any loss of profits or revenues, whether incurred directly or indirectly, or any loss of data, use, goodwill, or other intangible losses.</p>
+            <p>To the maximum extent permitted by law, in no event shall QRified be liable for any indirect, incidental, special, consequential, or punitive damages, or any loss of profits or revenues, whether incurred directly or indirectly, or any loss of data, use, goodwill, or other intangible losses.</p>
             
             <h2>11. Changes to Terms</h2>
             <p>We reserve the right to modify these Terms of Service at any time. We will notify users of any material changes by posting the new Terms of Service on this page and updating the "Last Updated" date.</p>
@@ -66,7 +65,7 @@ const TermsOfServicePage = () => {
             <p>These Terms of Service shall be governed by the laws of Algeria, without regard to its conflict of law provisions.</p>
             
             <h2>13. Contact Us</h2>
-            <p>If you have any questions about these Terms of Service, please contact us at legal@seqrity.dz.</p>
+            <p>If you have any questions about these Terms of Service, please contact us at legal@qrified.dz.</p>
           </div>
         </div>
       </div>

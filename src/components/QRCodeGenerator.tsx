@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,13 +7,16 @@ import { toast } from "sonner";
 import { useForm } from "react-hook-form";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { QRCodeTemplatePreview } from './QRCodeTemplatePreview';
-import { ShieldCheck, Loader2, QrCode } from 'lucide-react';
+import { ShieldCheck, Loader2, QrCode, ExternalLink } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { generateQRCodeImage, encryptData } from '@/utils/qrCodeUtils';
 import { supabase } from '@/integrations/supabase/client';
 import { v4 as uuidv4 } from 'uuid';
 import { TemplateType } from '@/types/qrCode';
 import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { UserLimits } from "@/types/userLimits";
 
 interface QRCodeGeneratorProps {
   onQRCodesGenerated: (qrCodes: any[]) => void;
@@ -35,7 +37,7 @@ interface FormValues {
 
 const DEFAULT_VALUES: FormValues = {
   quantity: 1,
-  productData: "Original Authentic Product",
+  productData: "Your Product Name",
   template: "classic",
   baseUrl: window.location.origin,
   headerText: "Product Authentication",
@@ -57,11 +59,85 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
   const [primaryColor, setPrimaryColor] = useState<string>('#000000');
   const [secondaryColor, setSecondaryColor] = useState<string>('#ffffff');
   const [previewQRCode, setPreviewQRCode] = useState<string | null>(null);
+  const [verifiedDomains, setVerifiedDomains] = useState<Array<{ id: string; domain: string }>>([]);
+  const [isLoadingDomains, setIsLoadingDomains] = useState(false);
+  const [monthlyQrLimit, setMonthlyQrLimit] = useState<number>(0);
+  const [monthlyQrCreated, setMonthlyQrCreated] = useState<number>(0);
   
   const { user } = useAuth();
+  const navigate = useNavigate();
   const template = watch('template');
   const quantity = watch('quantity');
   const baseUrl = watch('baseUrl');
+
+  // Fetch user limits on component mount
+  useEffect(() => {
+    const fetchUserLimits = async () => {
+      if (!user) return;
+      
+      try {
+        const { data: fetchedLimitData, error: userLimitError } = await supabase
+          .from('user_limits')
+          .select('monthly_qr_limit, monthly_qr_created, last_monthly_reset')
+          .eq('id', user.id)
+          .single();
+
+        if (userLimitError) {
+          console.error('Error fetching user limits:', userLimitError.message);
+          return;
+        }
+
+        if (fetchedLimitData) {
+          const now = new Date();
+          const lastReset = new Date((fetchedLimitData as any).last_monthly_reset);
+          
+          // Check if a month has passed since the last reset
+          if (now.getFullYear() > lastReset.getFullYear() || 
+              (now.getFullYear() === lastReset.getFullYear() && now.getMonth() > lastReset.getMonth())) {
+            // Reset monthly count if a new month has started
+            setMonthlyQrCreated(0);
+          } else {
+            setMonthlyQrCreated((fetchedLimitData as any).monthly_qr_created);
+          }
+          
+          setMonthlyQrLimit((fetchedLimitData as any).monthly_qr_limit);
+        }
+      } catch (error) {
+        console.error('Error in fetchUserLimits:', error);
+      }
+    };
+
+    fetchUserLimits();
+  }, [user]);
+
+  // Fetch verified domains
+  useEffect(() => {
+    const fetchVerifiedDomains = async () => {
+      if (!user) return;
+      
+      setIsLoadingDomains(true);
+      try {
+        const { data, error } = await supabase
+          .from('custom_domains')
+          .select('id, domain')
+          .eq('status', 'verified')
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          console.error('Error fetching domains:', error);
+          return;
+        }
+
+        setVerifiedDomains(data || []);
+      } catch (error) {
+        console.error('Error fetching domains:', error);
+      } finally {
+        setIsLoadingDomains(false);
+      }
+    };
+
+    fetchVerifiedDomains();
+  }, [user]);
 
   // Set the base URL on component mount
   useEffect(() => {
@@ -107,10 +183,74 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
         return;
       }
       
+      // --- Monthly Limit Check and Reset ---
+      console.log('Fetching user limits for user:', user.id);
+      const { data: fetchedLimitData, error: userLimitError } = await supabase
+        .from('user_limits')
+        .select('monthly_qr_limit, monthly_qr_created, last_monthly_reset, qr_created')
+        .eq('id', user.id)
+        .single();
+
+      let monthly_qr_limit = 0; // Default to 0 if limits not found or error
+      let monthly_qr_created = 0; // Default to 0
+      let last_monthly_reset = new Date(0).toISOString(); // Default to epoch for reset check
+      let allTimeQrCreated = 0; // Default to 0
+
+      if (userLimitError) {
+          console.error('Error fetching user limits:', userLimitError.message);
+          // Log the error. The default/zero limits will prevent generation if quantity > 0.
+      } else if (fetchedLimitData) { // Check if data is successfully fetched and not null
+          // Safely access properties
+          monthly_qr_limit = (fetchedLimitData as any).monthly_qr_limit;
+          monthly_qr_created = (fetchedLimitData as any).monthly_qr_created;
+          last_monthly_reset = (fetchedLimitData as any).last_monthly_reset;
+          allTimeQrCreated = (fetchedLimitData as any).qr_created;
+      } else {
+          // fetchedLimitData is null - user might not have a limits entry yet
+          console.log('No user limits entry found for user:', user.id);
+          // Proceed with default/zero limits, which prevents generation.
+      }
+
+      const now = new Date();
+      // Ensure last_monthly_reset is a valid date string before passing to Date constructor
+      const lastReset = new Date(last_monthly_reset || new Date(0).toISOString());
+
+      // Check if a month has passed since the last reset
+      let resetNeeded = false;
+      if (now.getFullYear() > lastReset.getFullYear() || (now.getFullYear() === lastReset.getFullYear() && now.getMonth() > lastReset.getMonth())) {
+        console.log('Resetting monthly QR count for user:', user.id);
+        monthly_qr_created = 0; // Reset count
+        last_monthly_reset = now.toISOString(); // Update reset date
+        resetNeeded = true;
+      }
+
+      // Check if generating this quantity exceeds the monthly limit
+      // Ensure counts are treated as numbers for the check
+      const currentMonthlyCreated = typeof monthly_qr_created === 'number' ? monthly_qr_created : 0;
+      const monthlyLimit = typeof monthly_qr_limit === 'number' ? monthly_qr_limit : 0;
+
+      if (currentMonthlyCreated + data.quantity > monthlyLimit) {
+        toast.error(`You have reached your monthly limit of ${monthlyLimit} QR codes.`);
+        setIsGenerating(false);
+        return;
+      }
+      // --- End Monthly Limit Check and Reset ---
+      
       // Create an array of QR codes based on quantity
       const qrCodes = [];
-      const startingSeqNumber = lastSequentialNumber + 1;
-      
+      const { data: counterData, error: counterError } = await supabase
+      .from('sequence_counters')
+      .select('current_value')
+      .eq('id', 'qr_code_sequential')
+      .single();
+    
+    if (counterError) {
+      toast.error('Failed to fetch sequence counter');
+      setIsGenerating(false);
+      return;
+    }
+    
+    const startingSeqNumber = (counterData?.current_value || 0) + 1;      
       for (let i = 0; i < data.quantity; i++) {
         const id = uuidv4();
         const sequentialNumber = startingSeqNumber + i;
@@ -175,7 +315,32 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
           return;
         }
 
-        // Update sequence counter
+        // --- Update Limits and Counter ---
+        const updatePayload: Partial<UserLimits> = { // Use Partial to allow updating only some fields
+          monthly_qr_created: monthly_qr_created + data.quantity, // Use the potentially reset monthly_qr_created
+          qr_created: allTimeQrCreated + data.quantity, // Update all-time count
+        };
+
+        if (resetNeeded) {
+          updatePayload.last_monthly_reset = last_monthly_reset; // Use the updated reset date
+        }
+
+        console.log('Updating user limits for user:', user.id, 'with payload:', updatePayload);
+        const { error: updateLimitError } = await supabase
+          .from('user_limits')
+          .update(updatePayload)
+          .eq('id', user.id);
+
+        if (updateLimitError) {
+          console.error('Error updating user limits:', updateLimitError.message);
+          toast.warning('QR codes created but user limits failed to update.');
+          // Continue anyway, don't block generation if limit update fails
+        } else {
+          // Update the displayed monthly count
+          setMonthlyQrCreated(prev => prev + data.quantity);
+        }
+
+        // Update sequence counter (This still uses the RPC for atomicity)
         const newCount = startingSeqNumber + data.quantity - 1;
         const { data: counterData, error: counterError } = await supabase.rpc('increment_counter', {
           counter_id: 'qr_code_sequential',
@@ -221,6 +386,10 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
   
   const handleSliderChange = (value: number[]) => {
     setValue('quantity', value[0]);
+  };
+
+  const handleDomainSelect = (domain: string) => {
+    setValue('websiteUrl', `https://${domain}`);
   };
 
   return (
@@ -300,13 +469,49 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
                 </div>
 
                 <div>
-                  <Label htmlFor="websiteUrl">Website URL (Optional)</Label>
-                  <Input
-                    {...register('websiteUrl')}
-                    id="websiteUrl"
-                    placeholder="https://yourwebsite.com"
-                    className="mt-1"
-                  />
+                  <Label htmlFor="websiteUrl">Website URL</Label>
+                  {isLoadingDomains ? (
+                    <div className="flex items-center gap-2 mt-1">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span className="text-sm text-muted-foreground">Loading domains...</span>
+                    </div>
+                  ) : verifiedDomains.length > 0 ? (
+                    <div className="space-y-2">
+                      <Select onValueChange={handleDomainSelect}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a verified domain" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {verifiedDomains.map((domain) => (
+                            <SelectItem key={domain.id} value={domain.domain}>
+                              {domain.domain}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Input
+                        {...register('websiteUrl')}
+                        id="websiteUrl"
+                        placeholder="https://yourwebsite.com"
+                        className="mt-1"
+                      />
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <p className="text-sm text-muted-foreground">
+                        No verified domains found. Add and verify a domain to use it in your QR codes.
+                      </p>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => navigate('/domains')}
+                        className="w-full"
+                      >
+                        <ExternalLink className="h-4 w-4 mr-2" />
+                        Add Domain
+                      </Button>
+                    </div>
+                  )}
                   <p className="text-sm text-muted-foreground mt-1">
                     If provided, a button to visit this website will be displayed on verification page
                   </p>
@@ -341,7 +546,32 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
               <CardHeader>
                 <CardTitle>Verification Page Content</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-4"><div className="flex gap-2 mb-4">
+  <Button
+    type="button"
+    variant="outline"
+    onClick={() => {
+      setValue('headerText', 'Product Authentication');
+      setValue('instructionText', 'Scan this QR code to verify the authenticity of your product');
+      setValue('footerText', 'Thank you for choosing our product');
+      setValue('isRTL', false);
+    }}
+  >
+    EN
+  </Button>
+  <Button
+    type="button"
+    variant="outline"
+    onClick={() => {
+      setValue('headerText', 'توثيق المنتج');
+      setValue('instructionText', 'امسح رمز الاستجابة السريعة هذا للتحقق من أصلية منتجك');
+      setValue('footerText', 'شكرًا لاختيارك منتجنا');
+      setValue('isRTL', true);
+    }}
+  >
+    AR
+  </Button>
+</div>
                 <div>
                   <Label htmlFor="headerText">Header Text</Label>
                   <Input
@@ -393,10 +623,10 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
               <CardContent className="flex-1">
                 <Tabs defaultValue="classic" className="w-full" onValueChange={(value) => setValue('template', value as TemplateType)}>
                   <TabsList className="grid grid-cols-4 mb-4" style={{ display: 'table' }}>
-                    <TabsTrigger value="classic">Classic</TabsTrigger>
-                    <TabsTrigger value="modern-blue">Modern Blue</TabsTrigger>
-                    <TabsTrigger value="modern-beige">Modern Beige</TabsTrigger>
-                    <TabsTrigger value="arabic">Arabic</TabsTrigger>
+                    <TabsTrigger value="classic">Original Product</TabsTrigger>
+                    <TabsTrigger value="classic1">Original Product1</TabsTrigger>
+                    <TabsTrigger value="classic2">Original Product2</TabsTrigger>
+                    <TabsTrigger value="classic3">Original Product3</TabsTrigger>
                   </TabsList>
                   
                   <div className="mt-4 flex justify-center">
@@ -413,10 +643,6 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
                   
                   <div className="mt-4 text-center">
                     <p className="text-muted-foreground">
-                      {template === 'classic' && "Simple and clean design with solid colors"}
-                      {template === 'modern-blue' && "Modern design with blue gradient"}
-                      {template === 'modern-beige' && "Elegant design with beige gradient"}
-                      {template === 'arabic' && "Optimized for right-to-left languages"}
                     </p>
                   </div>
                 </Tabs>
