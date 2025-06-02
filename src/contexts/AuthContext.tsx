@@ -46,11 +46,94 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [session, setSession] = useState<Session | null>(null);
   const [userLimits, setUserLimits] = useState<UserLimits | null>(null);
 
+  // Fetch user profile to get role
+  const fetchUserProfile = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('role')
+        .eq('id', userId as any); // Use 'any' temporarily if type is strict UUID
+      
+      if (error) {
+        console.error('Error fetching user profile:', error);
+        setUser(prev => {
+          if (!prev) return null;
+          return { ...prev, role: 'user' };
+        });
+        return;
+      }
+      
+      // Safely check if data is an array, not empty, and has the role property
+      if (Array.isArray(data) && data.length > 0 && data[0] && 'role' in data[0]) { 
+        setUser(prev => {
+          if (!prev) return null;
+          const updatedUser = {
+            ...prev,
+            role: data[0].role as UserRole
+          };
+          localStorage.setItem('qrauth_user', JSON.stringify(updatedUser));
+          return updatedUser;
+        });
+      } else {
+         // Handle case where no profile is found or role is null/missing
+         setUser(prev => {
+          if (!prev) return null;
+          return { ...prev, role: 'user' };
+         });
+      }
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+       setUser(prev => {
+        if (!prev) return null;
+        return { ...prev, role: 'user' };
+       });
+    }
+  };
+
+  // Fetch user limits function (moved outside useEffect)
+  const fetchUserLimits = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('user_limits1')
+        .select('id, qr_limit, qr_created, qr_successful, monthly_qr_limit, monthly_qr_created, last_monthly_reset, created_at, updated_at')
+        .eq('id', userId as any); // Use 'any' temporarily if type is strict UUID
+
+      if (error) {
+        console.error('Error fetching user limits:', error.message);
+        setUserLimits(null);
+        return;
+      }
+
+      if (data && data.length > 0) { // Safely check for data
+        setUserLimits(data[0] as unknown as UserLimits); // Cast the first element
+      } else {
+        console.log('No user limits data found for user:', userId);
+        setUserLimits({
+          id: userId,
+          qr_limit: 0,
+          qr_created: 0,
+          qr_successful: 0,
+          monthly_qr_limit: 0,
+          monthly_qr_created: 0,
+          last_monthly_reset: new Date(0).toISOString(),
+          created_at: new Date(0).toISOString(),
+          updated_at: new Date(0).toISOString(),
+        });
+      }
+
+    } catch (err) {
+      console.error('Error in fetch user limits:', err);
+      setUserLimits(null);
+    }
+  };
+
   useEffect(() => {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
+        console.log('Auth state changed:', event, session);
         setSession(session);
+        
         if (session?.user) {
           const userData: User = {
             id: session.user.id,
@@ -62,15 +145,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           localStorage.setItem('qrauth_user', JSON.stringify(userData));
           
           // Fetch user profile to get role and user limits
-          setTimeout(() => {
-            fetchUserProfile(session.user.id);
-            fetchUserLimits(session.user.id);
-          }, 0);
+          await Promise.all([
+            fetchUserProfile(session.user.id),
+            fetchUserLimits(session.user.id)
+          ]);
         } else {
           setUser(null);
           setUserLimits(null);
           localStorage.removeItem('qrauth_user');
         }
+        setIsLoading(false);
       }
     );
 
@@ -91,88 +175,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           localStorage.setItem('qrauth_user', JSON.stringify(userData));
           
           // Fetch user profile to get role and user limits
-          fetchUserProfile(session.user.id);
-          fetchUserLimits(session.user.id);
-        } else {
-          // Check if user is already logged in from localStorage (for demo login)
-          const storedUser = localStorage.getItem('qrauth_user');
-          if (storedUser) {
-            setUser(JSON.parse(storedUser));
-          }
+          await Promise.all([
+            fetchUserProfile(session.user.id),
+            fetchUserLimits(session.user.id)
+          ]);
         }
         
         setIsLoading(false);
       } catch (error) {
         console.error('Error checking session:', error);
         setIsLoading(false);
-      }
-    };
-
-    // Fetch user profile to get role
-    const fetchUserProfile = async (userId: string) => {
-      try {
-        const { data, error } = await supabase
-          .from('user_profiles')
-          .select('role')
-          .eq('id', userId)
-          .single();
-        
-        if (error) {
-          console.error('Error fetching user profile:', error);
-          return;
-        }
-        
-        if (data) {
-          setUser(prev => {
-            if (!prev) return null;
-            const updatedUser = {
-              ...prev,
-              role: data.role as UserRole
-            };
-            localStorage.setItem('qrauth_user', JSON.stringify(updatedUser));
-            return updatedUser;
-          });
-        }
-      } catch (error) {
-        console.error('Error fetching user profile:', error);
-      }
-    };
-
-    // Fetch user limits
-    const fetchUserLimits = async (userId: string) => {
-      try {
-        const { data, error } = await supabase
-          .from('user_limits')
-          .select('id, qr_limit, qr_created, qr_successful, monthly_qr_limit, monthly_qr_created, last_monthly_reset, created_at, updated_at')
-          .eq('id', userId)
-          .single();
-
-        if (error) {
-          console.error('Error fetching user limits:', error.message);
-          setUserLimits(null);
-          return;
-        }
-
-        if (data) {
-          setUserLimits(data as UserLimits);
-        } else {
-          console.log('No user limits data found for user:', userId);
-          setUserLimits({
-            id: userId,
-            qr_limit: 0,
-            qr_created: 0,
-            qr_successful: 0,
-            monthly_qr_limit: 0,
-            monthly_qr_created: 0,
-            last_monthly_reset: new Date(0).toISOString(),
-            created_at: new Date(0).toISOString(),
-            updated_at: new Date(0).toISOString(),
-          });
-        }
-
-      } catch (err) {
-        console.error('Error in fetch user limits:', err);
-        setUserLimits(null);
       }
     };
 
@@ -224,7 +236,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: window.location.origin + '/dashboard'
+          redirectTo: 'https://qrified.vercel.app/dashboard',
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          }
         }
       });
       

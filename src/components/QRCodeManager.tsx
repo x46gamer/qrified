@@ -69,10 +69,10 @@ const QRCodeManager: React.FC<QRCodeManagerProps> = ({ qrCodes, onUpdateQRCode, 
       return;
     }
     
-    setLoading(true); 
+    setLoading(true);
     try {
       const { data: userLimitData, error: fetchLimitError } = await supabase
-        .from('user_limits')
+        .from('user_limits1')
         .select('qr_created, monthly_qr_created')
         .eq('id', user.id)
         .single();
@@ -124,7 +124,7 @@ const QRCodeManager: React.FC<QRCodeManagerProps> = ({ qrCodes, onUpdateQRCode, 
     try {
       // Step 1: Fetch user limits first
       const { data: userLimitData, error: fetchLimitError } = await supabase
-        .from('user_limits')
+        .from('user_limits1')
         .select('qr_created, monthly_qr_created')
         .eq('id', user.id)
         .single();
@@ -154,6 +154,22 @@ const QRCodeManager: React.FC<QRCodeManagerProps> = ({ qrCodes, onUpdateQRCode, 
         idsToDelete.forEach(id => onDeleteQRCode(id)); 
   
         toast.success(`${SucceededCount} QR code(s) deleted successfully.`);
+
+        const updatePayload: Partial<UserLimits> = { 
+          monthly_qr_created: (initialUserLimits?.monthly_qr_created || 0) - SucceededCount, 
+          qr_created: (initialUserLimits?.qr_created || 0) - SucceededCount, 
+        };
+
+        console.log('Updating user limits for user:', user.id, 'with payload:', updatePayload);
+        const { error: updateLimitError } = await supabase
+          .from('user_limits1')
+          .update(updatePayload)
+          .eq('id', user.id);
+
+        if (updateLimitError) {
+          console.error('Error updating user limits:', updateLimitError.message);
+          toast.warning('QR codes deleted but user limits failed to update.');
+        }
       }
     } catch (error: any) { // Catch any other unexpected errors during the process
         console.error('Unexpected error during batch deletion process:', error);
@@ -268,7 +284,7 @@ const QRCodeManager: React.FC<QRCodeManagerProps> = ({ qrCodes, onUpdateQRCode, 
   
   const isAllFilteredSelected = filteredQRCodes.length > 0 && selectedQrCodeIds.size === filteredQRCodes.length;
   const isSomeFilteredSelected = selectedQrCodeIds.size > 0 && selectedQrCodeIds.size < filteredQRCodes.length;
-
+  
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -407,7 +423,7 @@ const QRCodeManager: React.FC<QRCodeManagerProps> = ({ qrCodes, onUpdateQRCode, 
                         <span>{qrCode.isScanned ? 'Yes' : 'No'}</span>
                         {qrCode.isScanned && qrCode.scannedAt && (
                           <span className="ml-1 text-xs text-muted-foreground hidden sm:inline">
-                             ({new Date(qrCode.scannedAt).toLocaleDateString()})
+                                ({new Date(qrCode.scannedAt).toLocaleDateString()})
                           </span>
                         )}
                       </div>

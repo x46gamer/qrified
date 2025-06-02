@@ -49,7 +49,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   const fetchUserLimits = async () => {
     try {
       const { data, error: userLimitError } = await supabase
-        .from('user_limits')
+        .from('user_limits1')
         .select('qr_limit, qr_created, qr_successful, monthly_qr_limit, monthly_qr_created')
         .eq('id', user?.id)
         .single();
