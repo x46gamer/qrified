@@ -452,48 +452,50 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
 
                 <div>
                   <Label htmlFor="websiteUrl">Website URL</Label>
-                  {isLoadingDomains ? (
-                    <div className="flex items-center gap-2 mt-1">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      <span className="text-sm text-muted-foreground">Loading domains...</span>
-                    </div>
-                  ) : verifiedDomains.length > 0 ? (
-                    <div className="space-y-2">
-                      <Select onValueChange={handleDomainSelect}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a verified domain" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {verifiedDomains.map((domain) => (
-                            <SelectItem key={domain.id} value={domain.domain}>
-                              {domain.domain}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <Input
-                        {...register('websiteUrl')}
-                        id="websiteUrl"
-                        placeholder="https://yourwebsite.com"
-                        className="mt-1"
-                      />
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      <p className="text-sm text-muted-foreground">
-                        No verified domains found. Add and verify a domain to use it in your QR codes.
-                      </p>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => navigate('/domains')}
-                        className="w-full"
-                      >
-                        <ExternalLink className="h-4 w-4 mr-2" />
-                        Add Domain
-                      </Button>
-                    </div>
-                  )}
+                  <div className="min-h-[100px]">
+                    {isLoadingDomains ? (
+                      <div className="flex items-center gap-2 mt-1">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <span className="text-sm text-muted-foreground">Loading domains...</span>
+                      </div>
+                    ) : verifiedDomains.length > 0 ? (
+                      <div className="space-y-2">
+                        <Select onValueChange={handleDomainSelect}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a verified domain" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {verifiedDomains.map((domain) => (
+                              <SelectItem key={domain.id} value={domain.domain}>
+                                {domain.domain}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Input
+                          {...register('websiteUrl')}
+                          id="websiteUrl"
+                          placeholder="https://yourwebsite.com"
+                          className="mt-1"
+                        />
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        <p className="text-sm text-muted-foreground">
+                          No verified domains found. Add and verify a domain to use it in your QR codes.
+                        </p>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => navigate('/domains')}
+                          className="w-full"
+                        >
+                          <ExternalLink className="h-4 w-4 mr-2" />
+                          Add Domain
+                        </Button>
+                      </div>
+                    )}
+                  </div>
                   <p className="text-sm text-muted-foreground mt-1">
                     If provided, a button to visit this website will be displayed on verification page
                   </p>

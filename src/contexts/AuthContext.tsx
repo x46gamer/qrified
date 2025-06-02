@@ -3,6 +3,7 @@ import { User, UserRole } from '../types/auth';
 import { supabase } from '../integrations/supabase/client';
 import { Session } from '@supabase/supabase-js';
 import { toast } from 'sonner';
+import { UserLimits } from '@/types/userLimits';
 
 interface AuthContextType {
   user: User | null;
@@ -14,6 +15,8 @@ interface AuthContextType {
   logout: () => void;
   resetPassword: (email: string) => Promise<void>;
   signUp: (email: string, password: string, name: string) => Promise<void>;
+  userLimits: UserLimits | null;
+  refreshUserLimits: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -41,6 +44,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
+  const [userLimits, setUserLimits] = useState<UserLimits | null>(null);
 
   useEffect(() => {
     // Set up auth state listener
@@ -57,12 +61,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setUser(userData);
           localStorage.setItem('qrauth_user', JSON.stringify(userData));
           
-          // Fetch user profile to get role
+          // Fetch user profile to get role and user limits
           setTimeout(() => {
             fetchUserProfile(session.user.id);
+            fetchUserLimits(session.user.id);
           }, 0);
         } else {
           setUser(null);
+          setUserLimits(null);
           localStorage.removeItem('qrauth_user');
         }
       }
@@ -84,8 +90,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setUser(userData);
           localStorage.setItem('qrauth_user', JSON.stringify(userData));
           
-          // Fetch user profile to get role
+          // Fetch user profile to get role and user limits
           fetchUserProfile(session.user.id);
+          fetchUserLimits(session.user.id);
         } else {
           // Check if user is already logged in from localStorage (for demo login)
           const storedUser = localStorage.getItem('qrauth_user');
@@ -128,6 +135,44 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       } catch (error) {
         console.error('Error fetching user profile:', error);
+      }
+    };
+
+    // Fetch user limits
+    const fetchUserLimits = async (userId: string) => {
+      try {
+        const { data, error } = await supabase
+          .from('user_limits')
+          .select('id, qr_limit, qr_created, qr_successful, monthly_qr_limit, monthly_qr_created, last_monthly_reset, created_at, updated_at')
+          .eq('id', userId)
+          .single();
+
+        if (error) {
+          console.error('Error fetching user limits:', error.message);
+          setUserLimits(null);
+          return;
+        }
+
+        if (data) {
+          setUserLimits(data as UserLimits);
+        } else {
+          console.log('No user limits data found for user:', userId);
+          setUserLimits({
+            id: userId,
+            qr_limit: 0,
+            qr_created: 0,
+            qr_successful: 0,
+            monthly_qr_limit: 0,
+            monthly_qr_created: 0,
+            last_monthly_reset: new Date(0).toISOString(),
+            created_at: new Date(0).toISOString(),
+            updated_at: new Date(0).toISOString(),
+          });
+        }
+
+      } catch (err) {
+        console.error('Error in fetch user limits:', err);
+        setUserLimits(null);
       }
     };
 
@@ -268,6 +313,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  // Expose fetchUserLimits as refreshUserLimits
+  const refreshUserLimits = async () => {
+    if (user?.id) {
+      await fetchUserLimits(user.id);
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -280,6 +332,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         logout,
         resetPassword,
         signUp,
+        userLimits,
+        refreshUserLimits,
       }}
     >
       {children}
