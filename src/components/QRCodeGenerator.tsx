@@ -39,7 +39,7 @@ const DEFAULT_VALUES: FormValues = {
   quantity: 1,
   productData: "Your Product Name",
   template: "classic",
-  baseUrl: window.location.origin,
+  baseUrl: typeof window !== 'undefined' ? window.location.origin : '', // Handle SSR
   headerText: "Product Authentication",
   instructionText: "Scan this QR code to verify the authenticity of your product",
   footerText: "Thank you for choosing our product",
@@ -139,21 +139,24 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
     fetchVerifiedDomains();
   }, [user]);
 
-  // Set the base URL on component mount
+  // Set the base URL on component mount if window is defined
   useEffect(() => {
-    setValue('baseUrl', window.location.origin);
+    if (typeof window !== 'undefined') {
+      setValue('baseUrl', window.location.origin);
+    }
   }, [setValue]);
   
   // Generate a preview QR code whenever template or colors change
   useEffect(() => {
     const generatePreview = async () => {
+      if (typeof window === 'undefined') return; // Don't run on server
       try {
         const previewUrl = `${window.location.origin}/check?id=preview`;
         const dataUrl = await generateQRCodeImage(previewUrl, {
           template,
           primaryColor,
           secondaryColor,
-          size: 256
+          size: 256 // This is the internal QR image size, container will style it
         });
         setPreviewQRCode(dataUrl);
       } catch (error) {
@@ -191,41 +194,33 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
         .eq('id', user.id)
         .single();
 
-      let monthly_qr_limit = 0; // Default to 0 if limits not found or error
-      let monthly_qr_created = 0; // Default to 0
-      let last_monthly_reset = new Date(0).toISOString(); // Default to epoch for reset check
-      let allTimeQrCreated = 0; // Default to 0
+      let monthly_qr_limit = 0; 
+      let monthly_qr_created = 0; 
+      let last_monthly_reset = new Date(0).toISOString(); 
+      let allTimeQrCreated = 0; 
 
       if (userLimitError) {
           console.error('Error fetching user limits:', userLimitError.message);
-          // Log the error. The default/zero limits will prevent generation if quantity > 0.
-      } else if (fetchedLimitData) { // Check if data is successfully fetched and not null
-          // Safely access properties
+      } else if (fetchedLimitData) { 
           monthly_qr_limit = (fetchedLimitData as any).monthly_qr_limit;
           monthly_qr_created = (fetchedLimitData as any).monthly_qr_created;
           last_monthly_reset = (fetchedLimitData as any).last_monthly_reset;
           allTimeQrCreated = (fetchedLimitData as any).qr_created;
       } else {
-          // fetchedLimitData is null - user might not have a limits entry yet
           console.log('No user limits entry found for user:', user.id);
-          // Proceed with default/zero limits, which prevents generation.
       }
 
       const now = new Date();
-      // Ensure last_monthly_reset is a valid date string before passing to Date constructor
       const lastReset = new Date(last_monthly_reset || new Date(0).toISOString());
 
-      // Check if a month has passed since the last reset
       let resetNeeded = false;
       if (now.getFullYear() > lastReset.getFullYear() || (now.getFullYear() === lastReset.getFullYear() && now.getMonth() > lastReset.getMonth())) {
         console.log('Resetting monthly QR count for user:', user.id);
-        monthly_qr_created = 0; // Reset count
-        last_monthly_reset = now.toISOString(); // Update reset date
+        monthly_qr_created = 0; 
+        last_monthly_reset = now.toISOString(); 
         resetNeeded = true;
       }
 
-      // Check if generating this quantity exceeds the monthly limit
-      // Ensure counts are treated as numbers for the check
       const currentMonthlyCreated = typeof monthly_qr_created === 'number' ? monthly_qr_created : 0;
       const monthlyLimit = typeof monthly_qr_limit === 'number' ? monthly_qr_limit : 0;
 
@@ -236,7 +231,6 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
       }
       // --- End Monthly Limit Check and Reset ---
       
-      // Create an array of QR codes based on quantity
       const qrCodes = [];
       const { data: counterData, error: counterError } = await supabase
       .from('sequence_counters')
@@ -244,22 +238,19 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
       .eq('id', 'qr_code_sequential')
       .single();
     
-    if (counterError) {
-      toast.error('Failed to fetch sequence counter');
-      setIsGenerating(false);
-      return;
-    }
+      if (counterError) {
+        toast.error('Failed to fetch sequence counter');
+        setIsGenerating(false);
+        return;
+      }
     
-    const startingSeqNumber = (counterData?.current_value || 0) + 1;      
+      const startingSeqNumber = (counterData?.current_value || 0) + 1;       
       for (let i = 0; i < data.quantity; i++) {
         const id = uuidv4();
         const sequentialNumber = startingSeqNumber + i;
         const url = `${data.baseUrl}/check?id=${id}`;
         
-        // Log data about to be encrypted
         console.log('Encrypting product data:', data.productData);
-        
-        // Encrypt product data
         const encryptedData = await encryptData(data.productData);
         console.log('Encrypted result:', encryptedData, 'length:', encryptedData.length);
         
@@ -267,7 +258,6 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
           throw new Error('Encryption failed or produced invalid output');
         }
         
-        // Generate QR Code with the URL that contains the ID
         const dataUrl = await generateQRCodeImage(url, {
           template: data.template,
           primaryColor,
@@ -295,16 +285,14 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
           website_url: data.websiteUrl || null,
           footer_text: data.footerText || 'Thank you for choosing our product',
           direction_rtl: data.isRTL,
-          user_id: user.id // Ensure user_id is set to the current user's ID
+          user_id: user.id 
         });
       }
       
-      // Save to database
       try {
         console.log('Saving QR codes to database:', qrCodes.length, 'codes');
         console.log('QR codes user_id:', qrCodes[0]?.user_id);
         
-        // Insert into database
         const { error } = await supabase
           .from('qr_codes')
           .insert(qrCodes);
@@ -315,14 +303,13 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
           return;
         }
 
-        // --- Update Limits and Counter ---
-        const updatePayload: Partial<UserLimits> = { // Use Partial to allow updating only some fields
-          monthly_qr_created: monthly_qr_created + data.quantity, // Use the potentially reset monthly_qr_created
-          qr_created: allTimeQrCreated + data.quantity, // Update all-time count
+        const updatePayload: Partial<UserLimits> = { 
+          monthly_qr_created: monthly_qr_created + data.quantity, 
+          qr_created: allTimeQrCreated + data.quantity, 
         };
 
         if (resetNeeded) {
-          updatePayload.last_monthly_reset = last_monthly_reset; // Use the updated reset date
+          updatePayload.last_monthly_reset = last_monthly_reset; 
         }
 
         console.log('Updating user limits for user:', user.id, 'with payload:', updatePayload);
@@ -334,27 +321,22 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
         if (updateLimitError) {
           console.error('Error updating user limits:', updateLimitError.message);
           toast.warning('QR codes created but user limits failed to update.');
-          // Continue anyway, don't block generation if limit update fails
         } else {
-          // Update the displayed monthly count
           setMonthlyQrCreated(prev => prev + data.quantity);
         }
 
-        // Update sequence counter (This still uses the RPC for atomicity)
-        const newCount = startingSeqNumber + data.quantity - 1;
-        const { data: counterData, error: counterError } = await supabase.rpc('increment_counter', {
+        const { data: updatedCounterData, error: updateCounterError } = await supabase.rpc('increment_counter', {
           counter_id: 'qr_code_sequential',
           increment_by: data.quantity
         });
         
-        if (counterError) {
-          console.error('Error updating counter:', counterError);
+        if (updateCounterError) {
+          console.error('Error updating counter:', updateCounterError);
           toast.warning('QR codes created but counter update failed');
         } else {
-          console.log('Updated counter to:', counterData);
+          console.log('Updated counter to:', updatedCounterData);
         }
         
-        // Map QR codes to match the expected format for the display component
         const mappedQrCodes = qrCodes.map(qr => ({
           id: qr.id,
           sequentialNumber: qr.sequential_number,
@@ -525,7 +507,7 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
                       id="primaryColor"
                       value={primaryColor}
                       onChange={(e) => setPrimaryColor(e.target.value)}
-                      className="w-10 h-10 rounded cursor-pointer"
+                      className="w-10 h-10 rounded cursor-pointer border" // Added border for better visibility
                     />
                   </div>
                   <div className="flex items-center justify-between">
@@ -535,7 +517,7 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
                       id="secondaryColor"
                       value={secondaryColor}
                       onChange={(e) => setSecondaryColor(e.target.value)}
-                      className="w-10 h-10 rounded cursor-pointer"
+                      className="w-10 h-10 rounded cursor-pointer border" // Added border for better visibility
                     />
                   </div>
                 </div>
@@ -546,32 +528,33 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
               <CardHeader>
                 <CardTitle>Verification Page Content</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4"><div className="flex gap-2 mb-4">
-  <Button
-    type="button"
-    variant="outline"
-    onClick={() => {
-      setValue('headerText', 'Product Authentication');
-      setValue('instructionText', 'Scan this QR code to verify the authenticity of your product');
-      setValue('footerText', 'Thank you for choosing our product');
-      setValue('isRTL', false);
-    }}
-  >
-    EN
-  </Button>
-  <Button
-    type="button"
-    variant="outline"
-    onClick={() => {
-      setValue('headerText', 'توثيق المنتج');
-      setValue('instructionText', 'امسح رمز الاستجابة السريعة هذا للتحقق من أصلية منتجك');
-      setValue('footerText', 'شكرًا لاختيارك منتجنا');
-      setValue('isRTL', true);
-    }}
-  >
-    AR
-  </Button>
-</div>
+              <CardContent className="space-y-4">
+                <div className="flex gap-2 mb-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setValue('headerText', 'Product Authentication');
+                      setValue('instructionText', 'Scan this QR code to verify the authenticity of your product');
+                      setValue('footerText', 'Thank you for choosing our product');
+                      setValue('isRTL', false);
+                    }}
+                  >
+                    EN
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setValue('headerText', 'توثيق المنتج');
+                      setValue('instructionText', 'امسح رمز الاستجابة السريعة هذا للتحقق من أصلية منتجك');
+                      setValue('footerText', 'شكرًا لاختيارك منتجنا');
+                      setValue('isRTL', true);
+                    }}
+                  >
+                    AR
+                  </Button>
+                </div>
                 <div>
                   <Label htmlFor="headerText">Header Text</Label>
                   <Input
@@ -607,7 +590,7 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
                     type="checkbox"
                     id="isRTL"
                     {...register('isRTL')}
-                    className="rounded"
+                    className="rounded h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300" // Enhanced styling
                   />
                   <Label htmlFor="isRTL">Right to Left Text Direction</Label>
                 </div>
@@ -616,33 +599,41 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
           </div>
           
           <div>
-            <Card className="h-full flex flex-col">
+            <Card className="h-full flex flex-col sticky top-6"> {/* Added sticky positioning */}
               <CardHeader>
-                <CardTitle>QR Code Template</CardTitle>
+                <CardTitle>QR Code Template & Preview</CardTitle> {/* Updated title */}
               </CardHeader>
               <CardContent className="flex-1">
                 <Tabs defaultValue="classic" className="w-full" onValueChange={(value) => setValue('template', value as TemplateType)}>
-                  <TabsList className="grid grid-cols-4 mb-4" style={{ display: 'table' }}>
-                    <TabsTrigger value="classic">Original Product</TabsTrigger>
-                    <TabsTrigger value="classic1">Original Product1</TabsTrigger>
-                    <TabsTrigger value="classic2">Original Product2</TabsTrigger>
-                    <TabsTrigger value="classic3">Original Product3</TabsTrigger>
+                  <TabsList className="grid grid-cols-2 sm:grid-cols-4 mb-4"> {/* Adjusted grid for responsiveness */}
+                    <TabsTrigger value="classic">Original</TabsTrigger> {/* Simplified names */}
+                    <TabsTrigger value="classic1">Classic 1</TabsTrigger>
+                    <TabsTrigger value="classic2">Classic 2</TabsTrigger>
+                    <TabsTrigger value="classic3">Classic 3</TabsTrigger>
                   </TabsList>
                   
-                  <div className="mt-4 flex justify-center">
-                    <div className="w-64 h-64">
+                  <div className="mt-4 flex justify-center items-center"> {/* Added items-center */}
+                    {/* Changed dimensions here */}
+                    <div className="w-[250px] h-[400px] border rounded-md p-2 flex justify-center items-center bg-gray-50">
                       <QRCodeTemplatePreview
                         template={template}
                         primaryColor={primaryColor}
                         secondaryColor={secondaryColor}
-                        size={256}
+                        size={230} // Adjusted size to fit well within 250px width with padding
                         qrCodeDataUrl={previewQRCode || undefined}
+                        // Passing text props for live preview within the template itself
+                        headerText={watch('headerText')}
+                        instructionText={watch('instructionText')}
+                        websiteUrl={watch('websiteUrl')}
+                        footerText={watch('footerText')}
+                        directionRTL={watch('isRTL')}
                       />
                     </div>
                   </div>
                   
                   <div className="mt-4 text-center">
-                    <p className="text-muted-foreground">
+                    <p className="text-sm text-muted-foreground">
+                      Live preview of the selected QR code template.
                     </p>
                   </div>
                 </Tabs>
@@ -650,7 +641,7 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
               <CardFooter className="flex flex-col">
                 <Button 
                   type="submit"
-                  className="w-full bg-gradient-to-r from-blue-500 to-violet-500 hover:from-blue-600 hover:to-violet-600"
+                  className="w-full bg-gradient-to-r from-blue-500 to-violet-500 hover:from-blue-600 hover:to-violet-600 text-white" // Added text-white
                   disabled={isGenerating || !user}
                 >
                   {isGenerating ? (
@@ -659,7 +650,7 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
                     </>
                   ) : (
                     <>
-                      <QrCode className="mr-2 h-4 w-4" /> Generate QR Code{quantity > 1 ? 's' : ''}
+                      <QrCode className="mr-2 h-4 w-4" /> Generate QR Code{quantity > 1 ? 's' : ''} ({quantity})
                     </>
                   )}
                 </Button>

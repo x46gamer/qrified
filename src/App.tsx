@@ -14,7 +14,6 @@ import ProductCheck from './pages/ProductCheck';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import ForgotPassword from './pages/ForgotPassword';
-import SubscribePage from './pages/SubscribePage';
 import NotFound from './pages/NotFound';
 import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
@@ -60,7 +59,6 @@ function App() {
             <Route path="/login" element={<AppLayout><Login /></AppLayout>} />
             <Route path="/signup" element={<AppLayout><Signup /></AppLayout>} />
             <Route path="/forgot-password" element={<AppLayout><ForgotPassword /></AppLayout>} />
-            <Route path="/subscribe" element={<AppLayout><SubscribePage /></AppLayout>} />
             
             {/* Admin routes - completely separated auth system */}
             <Route path="/admin" element={<AdminLogin />} />

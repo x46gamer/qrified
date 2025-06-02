@@ -9,6 +9,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface SidebarProps {
   className?: string;
@@ -56,31 +57,50 @@ const Sidebar: React.FC<SidebarProps> = ({
       if (userLimitError) {
         console.error('Error fetching user limits:', userLimitError.message);
         // Set to default zeros on error
-        setUserLimits({ qr_limit: 0, qr_created: 0, qr_successful: 0, monthly_qr_limit: 0, monthly_qr_created: 0 });
+        setUserLimits({
+          qr_limit: 0,
+          qr_created: 0,
+          qr_successful: 0,
+          monthly_qr_limit: 0,
+          monthly_qr_created: 0
+        });
+        // Do not proceed further if there's an error
         return;
       }
       
-      // Check if data is successfully fetched and is not null
+      // If no error, data should be of the expected type or null if no row found (depending on Supabase version/config)
+      // Let's assume if no error, and data exists, it matches UserLimits structure
       if (data) {
-        // Explicitly define the expected structure and assign
         const limitsData: UserLimits = {
-            qr_limit: (data as any).qr_limit || 0,
-            qr_created: (data as any).qr_created || 0,
-            qr_successful: (data as any).qr_successful || 0,
-            monthly_qr_limit: (data as any).monthly_qr_limit || 0,
-            monthly_qr_created: (data as any).monthly_qr_created || 0,
+            qr_limit: data.qr_limit || 0,
+            qr_created: data.qr_created || 0,
+            qr_successful: data.qr_successful || 0,
+            monthly_qr_limit: data.monthly_qr_limit || 0,
+            monthly_qr_created: data.monthly_qr_created || 0,
         };
         setUserLimits(limitsData);
       } else {
-          // Data is null - user might not have a limits entry yet
+          // Data is null - user might not have a limits entry yet or no row found (PGRST116 handled by single() not returning error)
           console.log('No user limits data found for user:', user?.id);
-          setUserLimits({ qr_limit: 0, qr_created: 0, qr_successful: 0, monthly_qr_limit: 0, monthly_qr_created: 0 });
+          setUserLimits({ 
+            qr_limit: 0,
+            qr_created: 0,
+            qr_successful: 0,
+            monthly_qr_limit: 0,
+            monthly_qr_created: 0
+          });
       }
 
     } catch (err) {
       console.error('Error in fetch user limits:', err);
       // Set to default zeros on error
-      setUserLimits({ qr_limit: 0, qr_created: 0, qr_successful: 0, monthly_qr_limit: 0, monthly_qr_created: 0 });
+      setUserLimits({ 
+        qr_limit: 0,
+        qr_created: 0,
+        qr_successful: 0,
+        monthly_qr_limit: 0,
+        monthly_qr_created: 0
+      });
     }
   };
   
@@ -105,13 +125,13 @@ const Sidebar: React.FC<SidebarProps> = ({
   
   return (
     <div className={cn(
-      'flex flex-col h-full bg-white border-r transition-all duration-300', 
-      isOpen ? 'w-64' : 'w-[70px]',
+      'flex flex-col h-full bg-white border-r transition-all duration-300 ease-in-out',
+      isOpen ? 'w-72' : 'w-20 items-center',
       isMobile && 'fixed left-0 top-0 h-full z-40',
       className
     )}>
       {isMobile && (
-        <div className="flex justify-end p-2">
+        <div className="flex justify-end p-3">
           <Button
             variant="ghost"
             size="icon"
@@ -124,136 +144,190 @@ const Sidebar: React.FC<SidebarProps> = ({
         </div>
       )}
       
-      <div className="flex-1 overflow-y-clip py-6">
-        <div className="flex items-center justify-between px-3 mb-8">
+      <div className="flex-1 overflow-y-auto py-6 w-full">
+        <div className={cn("flex items-center mb-8", isOpen ? "justify-start px-4" : "justify-center px-0")}>
           <div className="flex items-center">
-            <div className={cn("w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center text-white font-bold text-xl")}>
-              QRified
+            <div className={cn("w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center text-white font-bold text-xl", !isOpen && "mx-auto")}>
+              QR
             </div>
-            <span className={cn("ml-3 text-xl font-semibold tracking-tight transition-opacity duration-300", isOpen ? "opacity-100" : "opacity-0")}>
+            <span className={cn("ml-3 text-xl font-semibold tracking-tight transition-opacity duration-300", isOpen ? "opacity-100" : "opacity-0 hidden")}>
               QRified
             </span>
           </div>
         </div>
 
-        <nav className="px-3 space-y-1">
+        <nav className={cn("space-y-1", isOpen ? "px-4" : "px-2")}>
           <NavLink to="/dashboard" className={({
             isActive
-          }) => cn("flex items-center py-2 px-3 rounded-lg text-sm", isActive ? "bg-blue-50 text-blue-600" : "text-gray-700 hover:bg-gray-100")}>
+          }) => cn("flex items-center py-2 rounded-lg text-sm transition-colors duration-200", isActive ? "bg-blue-50 text-blue-600" : "text-gray-700 hover:bg-gray-100", isOpen ? "px-3" : "px-2 justify-center")}>
             <LayoutDashboard size={20} className="shrink-0" />
-            <span className={cn("ml-3 transition-opacity duration-300", isOpen ? "opacity-100" : "opacity-0")}>
+            <span className={cn("ml-3 transition-opacity duration-300", isOpen ? "opacity-100" : "opacity-0 hidden")}>
               Dashboard
             </span>
           </NavLink>
 
           <NavLink to="/dashboard?tab=generate" className={({
             isActive
-          }) => cn("flex items-center py-2 px-3 rounded-lg text-sm", 
+          }) => cn("flex items-center py-2 rounded-lg text-sm transition-colors duration-200", 
             location.pathname === "/dashboard" && !location.search.includes("tab=") ? "bg-blue-50 text-blue-600" : "", 
             location.search.includes("tab=generate") ? "bg-blue-50 text-blue-600" : "", 
-            !isActive ? "text-gray-700 hover:bg-gray-100" : "")}>
+            !isActive && !location.search.includes("tab=generate") ? "text-gray-700 hover:bg-gray-100" : "",
+            isOpen ? "px-3" : "px-2 justify-center"
+            )}>
             <QrCode size={20} className="shrink-0" />
-            <span className={cn("ml-3 transition-opacity duration-300", isOpen ? "opacity-100" : "opacity-0")}>
+            <span className={cn("ml-3 transition-opacity duration-300", isOpen ? "opacity-100" : "opacity-0 hidden")}>
               Generate QR
             </span>
           </NavLink>
 
           {isAdmin && <NavLink to="/dashboard?tab=manage" className={({
             isActive
-          }) => cn("flex items-center py-2 px-3 rounded-lg text-sm", 
+          }) => cn("flex items-center py-2 rounded-lg text-sm transition-colors duration-200", 
             location.search.includes("tab=manage") ? "bg-blue-50 text-blue-600" : "", 
-            !isActive || !location.search.includes("tab=manage") ? "text-gray-700 hover:bg-gray-100" : "")}>
+            !isActive && !location.search.includes("tab=manage") ? "text-gray-700 hover:bg-gray-100" : "",
+            isOpen ? "px-3" : "px-2 justify-center"
+            )}>
             <Users size={20} className="shrink-0" />
-            <span className={cn("ml-3 transition-opacity duration-300", isOpen ? "opacity-100" : "opacity-0")}>
+            <span className={cn("ml-3 transition-opacity duration-300", isOpen ? "opacity-100" : "opacity-0 hidden")}>
               Manage QR
             </span>
           </NavLink>}
 
           {isAdmin && <NavLink to="/dashboard?tab=analytics" className={({
             isActive
-          }) => cn("flex items-center py-2 px-3 rounded-lg text-sm", 
+          }) => cn("flex items-center py-2 rounded-lg text-sm transition-colors duration-200", 
             location.search.includes("tab=analytics") ? "bg-blue-50 text-blue-600" : "", 
-            !isActive || !location.search.includes("tab=analytics") ? "text-gray-700 hover:bg-gray-100" : "")}>
+            !isActive && !location.search.includes("tab=analytics") ? "text-gray-700 hover:bg-gray-100" : "",
+            isOpen ? "px-3" : "px-2 justify-center"
+            )}>
             <LineChart size={20} className="shrink-0" />
-            <span className={cn("ml-3 transition-opacity duration-300", isOpen ? "opacity-100" : "opacity-0")}>
+            <span className={cn("ml-3 transition-opacity duration-300", isOpen ? "opacity-100" : "opacity-0 hidden")}>
               Analytics
             </span>
           </NavLink>}
 
           {isAdmin && <NavLink to="/dashboard?tab=customize" className={({
             isActive
-          }) => cn("flex items-center py-2 px-3 rounded-lg text-sm", 
+          }) => cn("flex items-center py-2 rounded-lg text-sm transition-colors duration-200", 
             location.search.includes("tab=customize") ? "bg-blue-50 text-blue-600" : "", 
-            !isActive || !location.search.includes("tab=customize") ? "text-gray-700 hover:bg-gray-100" : "")}>
+            !isActive && !location.search.includes("tab=customize") ? "text-gray-700 hover:bg-gray-100" : "",
+            isOpen ? "px-3" : "px-2 justify-center"
+            )}>
             <Brush size={20} className="shrink-0" />
-            <span className={cn("ml-3 transition-opacity duration-300", isOpen ? "opacity-100" : "opacity-0")}>
+            <span className={cn("ml-3 transition-opacity duration-300", isOpen ? "opacity-100" : "opacity-0 hidden")}>
               Customize
             </span>
           </NavLink>}
 
           {isAdmin && <NavLink to="/domains" className={({
             isActive
-          }) => cn("flex items-center py-2 px-3 rounded-lg text-sm", isActive ? "bg-blue-50 text-blue-600" : "text-gray-700 hover:bg-gray-100")}>
+          }) => cn("flex items-center py-2 rounded-lg text-sm transition-colors duration-200", isActive ? "bg-blue-50 text-blue-600" : "text-gray-700 hover:bg-gray-100", isOpen ? "px-3" : "px-2 justify-center")}>
             <Globe size={20} className="shrink-0" />
-            <span className={cn("ml-3 transition-opacity duration-300", isOpen ? "opacity-100" : "opacity-0")}>
+            <span className={cn("ml-3 transition-opacity duration-300", isOpen ? "opacity-100" : "opacity-0 hidden")}>
               Domains
             </span>
           </NavLink>}
 
           {isAdmin && <NavLink to="/feedback" className={({
             isActive
-          }) => cn("flex items-center py-2 px-3 rounded-lg text-sm", isActive ? "bg-blue-50 text-blue-600" : "text-gray-700 hover:bg-gray-100")}>
+          }) => cn("flex items-center py-2 rounded-lg text-sm transition-colors duration-200", isActive ? "bg-blue-50 text-blue-600" : "text-gray-700 hover:bg-gray-100", isOpen ? "px-3" : "px-2 justify-center")}>
             <MessageSquare size={20} className="shrink-0" />
-            <span className={cn("ml-3 transition-opacity duration-300", isOpen ? "opacity-100" : "opacity-0")}>
+            <span className={cn("ml-3 transition-opacity duration-300", isOpen ? "opacity-100" : "opacity-0 hidden")}>
               Feedback
             </span>
           </NavLink>}
 
           <NavLink to="/settings" className={({
             isActive
-          }) => cn("flex items-center py-2 px-3 rounded-lg text-sm", isActive ? "bg-blue-50 text-blue-600" : "text-gray-700 hover:bg-gray-100")}>
+          }) => cn("flex items-center py-2 rounded-lg text-sm transition-colors duration-200", isActive ? "bg-blue-50 text-blue-600" : "text-gray-700 hover:bg-gray-100", isOpen ? "px-3" : "px-2 justify-center")}>
             <Settings size={20} className="shrink-0" />
-            <span className={cn("ml-3 transition-opacity duration-300", isOpen ? "opacity-100" : "opacity-0")}>
+            <span className={cn("ml-3 transition-opacity duration-300", isOpen ? "opacity-100" : "opacity-0 hidden")}>
               Settings
             </span>
           </NavLink>
 
           <button
             onClick={handleLogout}
-            className={cn("flex w-full items-center py-2 px-3 rounded-lg text-sm text-gray-700 hover:bg-gray-100")}
+            className={cn("flex w-full items-center py-2 rounded-lg text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200", isOpen ? "px-3" : "px-2 justify-center")}
           >
             <LogOut size={20} className="shrink-0" />
-            <span className={cn("ml-3 transition-opacity duration-300", isOpen ? "opacity-100" : "opacity-0")}>
+            <span className={cn("ml-3 transition-opacity duration-300", isOpen ? "opacity-100" : "opacity-0 hidden")}>
               Logout
             </span>
           </button>
         </nav>
       </div>
       
-      {/* QR Code Limits */}
+      {/* User Info and QR Limits */}
       {user && userLimits && (
-        <div className={cn("px-3 py-4 border-t", isOpen ? "" : "px-2")}>
-          <div className={cn("transition-opacity duration-300", isOpen ? "opacity-100" : "opacity-0")}>
-            <div className="flex justify-between items-center mb-1">
-              <span className="text-xs font-medium text-gray-600">QR Codes Monthly</span>
-              <span className="text-xs font-medium text-gray-600">{monthlyQrCreatedCount}/{monthlyQrLimitCount}</span>
-            </div>
-          </div>
-          <Progress value={monthlyQrPercentage} className={cn("h-2", monthlyQrPercentage > 80 ? "bg-red-100" : "bg-blue-100")} />
+        <div className={cn("px-4 py-4 border-t transition-all duration-300", isOpen ? "" : "px-2 text-center")}>
+           {/* User Info */}
+           <div className={cn("flex items-center mb-3", isOpen ? "justify-start" : "justify-center flex-col")}>
+             <div className={cn("w-10 h-10 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center uppercase font-medium text-lg", !isOpen && "mb-1")}>
+               {user?.email?.charAt(0) || 'U'}
+             </div>
+             <div className={cn("transition-opacity duration-300", isOpen ? "opacity-100 ml-3" : "opacity-0 hidden")}>
+               <div className="text-sm font-semibold text-gray-800 truncate">{user?.name || 'User'}</div>
+               <div className="text-xs text-gray-600 truncate">{user?.email}</div>
+             </div>
+              {/* Tooltip for user info when collapsed */}
+              {!isOpen && (
+                <TooltipProvider delayDuration={100}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="">
+                       
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="right">
+                      <div>
+                        <div className="text-sm font-semibold text-gray-900">{user?.name || 'User'}</div>
+                        <div className="text-xs text-gray-700">{user?.email}</div>
+                      </div>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
+           </div>
+
+           {/* QR Code Limits */}
+           <div className={cn("transition-opacity duration-300", isOpen ? "opacity-100" : "opacity-0 hidden")}>
+             <div className="flex justify-between items-center mb-1">
+               <span className="text-xs font-medium text-gray-600">QR Codes Monthly</span>
+               <span className="text-xs font-medium text-gray-600">{monthlyQrCreatedCount}/{monthlyQrLimitCount}</span>
+             </div>
+             <Progress value={monthlyQrPercentage} className={cn("h-2", monthlyQrPercentage > 80 ? "bg-red-500" : "bg-gray-500", "transition-colors duration-300")} />
+           </div>
+            {/* Tooltip for QR limits when collapsed */}
+            {!isOpen && (
+              <TooltipProvider delayDuration={100}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="w-full">
+                       <Progress value={monthlyQrPercentage} className={cn("h-2", monthlyQrPercentage > 80 ? "bg-red-500" : "bg-gray-500", "transition-colors duration-300")} />
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side="right">
+                    <span>{monthlyQrCreatedCount}/{monthlyQrLimitCount} QR Codes Monthly</span>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
         </div>
       )}
-      
-      <div className={cn("border-t p-3", isOpen ? "text-left" : "text-center")}>
-        <div className="flex items-center">
-          <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center uppercase text-gray-600 font-medium">
-            {user?.email?.charAt(0)}
-          </div>
-          <div className={cn("ml-3 transition-opacity duration-300", isOpen ? "opacity-100" : "opacity-0")}>
-            <p className="text-sm font-medium">{isAdmin ? 'Admin' : 'User'}</p>
-            <p className="text-xs text-gray-500 truncate">{user?.email}</p>
-          </div>
-        </div>
+
+      {/* Sidebar Toggle Button */}
+      <div className="absolute bottom-4 right-4">
+        <Button
+          variant="secondary"
+          size="icon"
+          onClick={toggleSidebar}
+          className="rounded-full shadow-lg hidden md:flex"
+        >
+          {isOpen ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
+        </Button>
       </div>
+
     </div>
   );
 };
