@@ -118,16 +118,11 @@ const Sidebar: React.FC<SidebarProps> = ({
   const monthlyQrLimitCount = userLimits ? userLimits.monthly_qr_limit : 0;
   const monthlyQrPercentage = monthlyQrLimitCount > 0 ? (monthlyQrCreatedCount / monthlyQrLimitCount) * 100 : (monthlyQrCreatedCount > 0 ? 100 : 0);
   
-  // If on mobile and sidebar is closed, render narrow sidebar with icons only
-  if (isMobile && !openMobile) {
-    return null;
-  }
-  
   return (
     <div className={cn(
       'flex flex-col h-full bg-white border-r transition-all duration-300 ease-in-out',
       isOpen ? 'w-72' : 'w-20 items-center',
-      isMobile && 'fixed left-0 top-0 h-full z-40',
+      isMobile && (openMobile ? 'fixed left-0 top-0 h-full z-40 transform translate-x-0' : 'fixed left-0 top-0 h-full z-40 transform -translate-x-full'),
       className
     )}>
       {isMobile && (
