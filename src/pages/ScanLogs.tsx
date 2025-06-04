@@ -157,20 +157,19 @@ const ScanLogs = () => {
       return;
     }
 
-    const headers = ['Scan Time', 'QR Code ID', 'IP Address', 'ISP', 'Country', 'City', 'User Agent'];
+    const headers = ['Scan Time', 'QR Code ID', 'IP Address', 'ISP', 'Country', 'City', 'User Agent', 'Product Name'];
     // Add headers for QR code data if you decide to show them
     // headers.push('QR Code URL', 'QR Code Header', 'QR Code Instruction', ...);
 
     const rows = scanLogs.map(log => [
       format(new Date(log.created_at), 'yyyy-MM-dd HH:mm:ss'),
       `"${log.qr_code_id}"`, // Enclose in quotes to handle commas if any
-      log.ip_address,
-      log.isp,
-      log.country,
-      log.city,
-      `"${log.user_agent}"`, // Enclose in quotes
-      // Add data from QR code relationship if needed
-      // log.qr_codes?.url || '', log.qr_codes?.headerText || '', log.qr_codes?.instructionText || '', ...
+      log.ip_address || '',
+      log.isp || '',
+      log.country || '',
+      log.city || '',
+      `"${log.user_agent || ''}"`, // Enclose in quotes
+      log.qr_codes?.name || '' // Include product name
     ]);
 
     const csvContent = [headers.join(','), ...rows.map(row => row.join(','))].join('\n');
@@ -255,12 +254,9 @@ const ScanLogs = () => {
                   ))}
                 </SelectContent>
               </Select>
-              <Button variant="outline" size="icon" onClick={() => setSortOrder(sortOrder === 'ascending' ? 'descending' : 'ascending')}>
-                <ArrowUpDown className={cn("h-4 w-4", sortOrder === 'descending' ? 'rotate-180' : '')} />
-                <span className="sr-only">Toggle sort order</span>
-              </Button>
             </div>
-            <Button onClick={handleExportCsv} disabled={scanLogs.length === 0}>
+            <Button onClick={handleExportCsv} className="flex items-center gap-2">
+              <ArrowUpDown className="w-4 h-4" />
               Export CSV
             </Button>
           </div>
@@ -273,35 +269,42 @@ const ScanLogs = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Scan Time</TableHead>
-                  <TableHead>QR Code ID</TableHead>
-                  <TableHead>IP Address</TableHead>
-                  <TableHead>ISP</TableHead>
-                  <TableHead>Country</TableHead>
-                  <TableHead>City</TableHead>
-                  <TableHead>User Agent</TableHead>
-                  {/* Add columns for QR code data here later */}
+                  {sortableColumns.map(column => (
+                    <TableHead
+                      key={column.value}
+                      className="cursor-pointer hover:bg-gray-100"
+                      onClick={() => handleSortChange(column.value)}
+                    >
+                      <div className="flex items-center gap-1">
+                        {column.label}
+                        {sortBy === column.value && (
+                          <ArrowUpDown className={cn(
+                            "ml-2 h-4 w-4",
+                            sortOrder === 'descending' ? 'rotate-180' : 'rotate-0'
+                          )} />
+                        )}
+                      </div>
+                    </TableHead>
+                  ))}
+                  <TableHead>Product Name</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {scanLogs.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center h-24">
-                      No scan logs found.
-                    </TableCell>
+                {scanLogs.length > 0 ? (scanLogs.map((log) => (
+                  <TableRow key={log.id}>
+                    <TableCell>{format(new Date(log.created_at), 'yyyy-MM-dd HH:mm:ss')}</TableCell>
+                    <TableCell>{log.qr_code_id}</TableCell>
+                    <TableCell>{log.ip_address}</TableCell>
+                    <TableCell>{log.isp}</TableCell>
+                    <TableCell>{log.country}</TableCell>
+                    <TableCell>{log.city}</TableCell>
+                    <TableCell>{log.user_agent}</TableCell>
+                    <TableCell>{log.qr_codes?.name || 'N/A'}</TableCell>
                   </TableRow>
-                ) : (
-                  scanLogs.map(log => (
-                    <TableRow key={log.id}>
-                      <TableCell>{format(new Date(log.created_at), 'yyyy-MM-dd HH:mm:ss')}</TableCell>
-                      <TableCell className="font-mono text-xs truncate max-w-[120px]">{log.qr_code_id}</TableCell>
-                      <TableCell>{log.ip_address}</TableCell>
-                      <TableCell>{log.isp}</TableCell>
-                      <TableCell>{log.country}</TableCell>
-                      <TableCell>{log.city}</TableCell>
-                      <TableCell className="text-xs truncate max-w-[200px]">{log.user_agent}</TableCell>
-                    </TableRow>
-                  ))
+                ))) : (
+                  <TableRow>
+                    <TableCell colSpan={sortableColumns.length + 1} className="text-center">No scan logs found.</TableCell>
+                  </TableRow>
                 )}
               </TableBody>
             </Table>

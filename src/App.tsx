@@ -29,6 +29,7 @@ import DomainSettings from './pages/DomainSettings';
 import Settings from './pages/Settings';
 import AdminFeedback from './pages/AdminFeedback';
 import ScanLogs from './pages/ScanLogs';
+import Dashboard from './pages/Dashboard';
 
 // Public Pages
 const CookiePolicyPage = lazy(() => import('./pages/CookiePolicyPage'));
@@ -82,6 +83,18 @@ function App() {
                   <SidebarProvider>
                     <DashboardLayout>
                       <Index />
+                    </DashboardLayout>
+                  </SidebarProvider>
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="/stats"
+              element={
+                <AuthGuard>
+                  <SidebarProvider>
+                    <DashboardLayout>
+                      <Dashboard />
                     </DashboardLayout>
                   </SidebarProvider>
                 </AuthGuard>

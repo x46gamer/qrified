@@ -237,7 +237,8 @@ const QRCodeManager: React.FC<QRCodeManagerProps> = ({ qrCodes, onUpdateQRCode, 
     return (
       qr.sequentialNumber.toString().includes(searchTerm) ||
       qr.id.toLowerCase().includes(searchLower) ||
-      (qr.websiteUrl && qr.websiteUrl.toLowerCase().includes(searchLower))
+      (qr.websiteUrl && qr.websiteUrl.toLowerCase().includes(searchLower)) ||
+      (qr.product?.name && qr.product.name.toLowerCase().includes(searchLower))
     );
   });
 
@@ -342,6 +343,7 @@ const QRCodeManager: React.FC<QRCodeManagerProps> = ({ qrCodes, onUpdateQRCode, 
                   </TableHead>
                   <TableHead>ID</TableHead>
                   <TableHead>Sequence</TableHead>
+                  <TableHead>Product</TableHead>
                   <TableHead>Created</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Scanned</TableHead>
@@ -381,6 +383,7 @@ const QRCodeManager: React.FC<QRCodeManagerProps> = ({ qrCodes, onUpdateQRCode, 
                       {qrCode.id}
                     </TableCell>
                     <TableCell>{formatSequentialNumber(Number(qrCode.sequentialNumber))}</TableCell>
+                    <TableCell>{qrCode.product?.name || 'N/A'}</TableCell>
                     <TableCell>
                       {qrCode.createdAt ? new Date(qrCode.createdAt).toLocaleDateString() : 'N/A'}
                     </TableCell>
@@ -465,6 +468,7 @@ const QRCodeManager: React.FC<QRCodeManagerProps> = ({ qrCodes, onUpdateQRCode, 
               <div className="w-full space-y-1 text-sm bg-muted p-3 rounded-md">
                 <p><strong>ID:</strong> <span className="font-mono text-xs">{previewQRCode.id}</span></p>
                 <p><strong>Sequence:</strong> {formatSequentialNumber(Number(previewQRCode.sequentialNumber))}</p>
+                <p><strong>Product:</strong> {previewQRCode.product?.name || 'N/A'}</p>
                 <p><strong>Created:</strong> {previewQRCode.createdAt ? new Date(previewQRCode.createdAt).toLocaleString() : 'N/A'}</p>
                 <p><strong>Status:</strong> {previewQRCode.isEnabled ? 
                   <span className="text-green-600 font-medium">Enabled</span> : 

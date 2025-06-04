@@ -57,14 +57,14 @@ const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({ qrCodes }) => {
         toast.error('QR code data not found for printing');
         return;
       }
-
+      
       const dataUrl = qrCode.dataUrl;
       const printWindow = window.open('', '_blank');
       if (!printWindow) {
         toast.error('Pop-up blocked. Please allow pop-ups for this site to print QR codes.');
         return;
       }
-
+      
       printWindow.document.write(`
         <html>
           <head>
@@ -89,9 +89,9 @@ const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({ qrCodes }) => {
           </body>
         </html>
       `);
-
+      
       printWindow.document.close();
-
+      
       toast.success('Print window opened');
     } catch (error) {
       console.error('Error printing QR code:', error);

@@ -11,24 +11,31 @@ export type TemplateType = 'classic' | 'modern-blue' | 'modern-beige' | 'arabic'
 
 export interface QRCode {
   id: string;
-  sequentialNumber: string | number;
-  encryptedData: string;
+  sequential_number: string | number;
+  encrypted_data: string;
   url: string;
-  isScanned: boolean;
-  isEnabled: boolean;
-  createdAt: string;
-  scannedAt?: string;
-  dataUrl: string;
+  is_scanned: boolean;
+  is_enabled: boolean;
+  created_at: string;
+  scanned_at?: string;
+  data_url: string;
   template: TemplateType;
-  headerText?: string;
-  instructionText?: string;
-  websiteUrl?: string;
-  footerText?: string;
-  directionRTL?: boolean;
-  userId?: string; // Add user ID to track ownership
+  header_text?: string;
+  instruction_text?: string;
+  website_url?: string;
+  footer_text?: string;
+  direction_rtl?: boolean;
+  user_id?: string;
   scanned_ip?: string;
   scanned_isp?: string;
-  scanned_location?: string; // Could be city, region, etc. depending on IP service
+  scanned_location?: string;
   scanned_city?: string;
   scanned_country?: string;
+  text?: string;
+  product_id?: string;
+  product?: {
+    id: string;
+    name: string;
+  } | null;
+  failed_scan_attempts?: number;
 }

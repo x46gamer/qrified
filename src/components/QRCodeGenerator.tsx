@@ -34,11 +34,17 @@ interface FormValues {
   footerText: string;
   websiteUrl: string;
   isRTL: boolean;
+  productId?: string;
+}
+
+interface Product {
+  id: string;
+  name: string;
 }
 
 const DEFAULT_VALUES: FormValues = {
   quantity: 1,
-  productData: "Your Product Name",
+  productData: "",
   template: "classic",
   baseUrl: typeof window !== 'undefined' ? window.location.origin : '', // Handle SSR
   headerText: "Product Authentication",
@@ -48,14 +54,14 @@ const DEFAULT_VALUES: FormValues = {
   isRTL: false
 };
 
-const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ 
+const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
   onQRCodesGenerated,
   lastSequentialNumber
 }) => {
   const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<FormValues>({
     defaultValues: DEFAULT_VALUES
   });
-  
+
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
   const [primaryColor, setPrimaryColor] = useState<string>('#000000');
   const [secondaryColor, setSecondaryColor] = useState<string>('#ffffff');
@@ -64,7 +70,7 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
   const [isLoadingDomains, setIsLoadingDomains] = useState(false);
   const [monthlyQrLimit, setMonthlyQrLimit] = useState<number>(0);
   const [monthlyQrCreated, setMonthlyQrCreated] = useState<number>(0);
-  
+
   const { user } = useAuth();
   const navigate = useNavigate();
   const template = watch('template');
@@ -73,11 +79,16 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
 
   const templatePreviewRef = useRef<HTMLDivElement>(null);
 
+  // State for product management
+  const [newProductName, setNewProductName] = useState('');
+  const [products, setProducts] = useState<Product[]>([]);
+  const [selectedProductId, setSelectedProductId] = useState<string | undefined>(undefined);
+
   // Fetch user limits on component mount
   useEffect(() => {
     const fetchUserLimits = async () => {
       if (!user) return;
-      
+
       try {
         const { data: fetchedLimitData, error: userLimitError } = await supabase
           .from('user_limits')
@@ -93,16 +104,16 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
         if (fetchedLimitData) {
           const now = new Date();
           const lastReset = new Date((fetchedLimitData as any).last_monthly_reset);
-          
+
           // Check if a month has passed since the last reset
-          if (now.getFullYear() > lastReset.getFullYear() || 
+          if (now.getFullYear() > lastReset.getFullYear() ||
               (now.getFullYear() === lastReset.getFullYear() && now.getMonth() > lastReset.getMonth())) {
             // Reset monthly count if a new month has started
             setMonthlyQrCreated(0);
           } else {
             setMonthlyQrCreated((fetchedLimitData as any).monthly_qr_created);
           }
-          
+
           setMonthlyQrLimit((fetchedLimitData as any).monthly_qr_limit);
         }
       } catch (error) {
@@ -117,7 +128,7 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
   useEffect(() => {
     const fetchVerifiedDomains = async () => {
       if (!user) return;
-      
+
       setIsLoadingDomains(true);
       try {
         const { data, error } = await supabase
@@ -148,7 +159,39 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
       setValue('baseUrl', window.location.origin);
     }
   }, [setValue]);
-  
+
+  // Fetch user's products on component mount
+  useEffect(() => {
+    const fetchProducts = async () => {
+      if (!user) {
+        console.log('User not logged in, skipping product fetch.');
+        return;
+      }
+
+      console.log('Fetching products for user:', user.id);
+      try {
+        const { data, error } = await supabase
+          .from('products')
+          .select('id, name')
+          .eq('user_id', user.id);
+
+        if (error) {
+          console.error('Error fetching products:', error);
+          return;
+        }
+
+        console.log('Products fetched:', data);
+        setProducts(data || []);
+        console.log('Products state updated:', data || []);
+      } catch (error) {
+        console.error('Error fetching products:', error);
+      }
+    };
+
+    fetchProducts();
+  }, [user]);
+
+
   // Generate a preview QR code whenever template or colors change
   useEffect(() => {
     const generatePreview = async () => {
@@ -166,29 +209,29 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
         console.error('Error generating preview QR code:', error);
       }
     };
-    
+
     generatePreview();
   }, [template, primaryColor, secondaryColor]);
-  
+
   const onSubmit = async (data: FormValues) => {
     if (isGenerating) return;
-    
+
     if (!user) {
       toast.error('You must be logged in to generate QR codes');
       return;
     }
-    
+
     try {
       setIsGenerating(true);
       console.log('Generating QR codes with data:', data);
       console.log('Current user:', user);
-      
+
       if (!data.productData || data.productData.trim() === '') {
         toast.error('Please enter valid product data');
         setIsGenerating(false);
         return;
       }
-      
+
       // --- Monthly Limit Check and Reset ---
       console.log('Fetching user limits for user:', user.id);
       const { data: fetchedLimitData, error: userLimitError } = await supabase
@@ -197,14 +240,14 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
         .eq('id', user.id)
         .single();
 
-      let monthly_qr_limit = 0; 
-      let monthly_qr_created = 0; 
-      let last_monthly_reset = new Date(0).toISOString(); 
-      let allTimeQrCreated = 0; 
+      let monthly_qr_limit = 0;
+      let monthly_qr_created = 0;
+      let last_monthly_reset = new Date(0).toISOString();
+      let allTimeQrCreated = 0;
 
       if (userLimitError) {
           console.error('Error fetching user limits:', userLimitError.message);
-      } else if (fetchedLimitData) { 
+      } else if (fetchedLimitData) {
           monthly_qr_limit = (fetchedLimitData as any).monthly_qr_limit;
           monthly_qr_created = (fetchedLimitData as any).monthly_qr_created;
           last_monthly_reset = (fetchedLimitData as any).last_monthly_reset;
@@ -219,8 +262,8 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
       let resetNeeded = false;
       if (now.getFullYear() > lastReset.getFullYear() || (now.getFullYear() === lastReset.getFullYear() && now.getMonth() > lastReset.getMonth())) {
         console.log('Resetting monthly QR count for user:', user.id);
-        monthly_qr_created = 0; 
-        last_monthly_reset = now.toISOString(); 
+        monthly_qr_created = 0;
+        last_monthly_reset = now.toISOString();
         resetNeeded = true;
       }
 
@@ -233,37 +276,54 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
         return;
       }
       // --- End Monthly Limit Check and Reset ---
-      
-      const qrCodes = [];
+
+      const qrCodesToInsert = [];
       const { data: counterData, error: counterError } = await supabase
       .from('sequence_counters')
       .select('current_value')
       .eq('id', 'qr_code_sequential')
       .single();
-    
+
       if (counterError) {
         toast.error('Failed to fetch sequence counter');
         setIsGenerating(false);
         return;
       }
-    
-      const startingSeqNumber = (counterData?.current_value || 0) + 1;       
+
+      const startingSeqNumber = (counterData?.current_value || 0) + 1;
+
       for (let i = 0; i < data.quantity; i++) {
-        const id = uuidv4();
-        const sequentialNumber = startingSeqNumber + i;
-        const url = `${data.baseUrl}/check?id=${id}`;
-        
-        console.log('Encrypting product data:', data.productData);
-        const encryptedData = await encryptData(data.productData);
-        console.log('Encrypted result:', encryptedData, 'length:', encryptedData.length);
-        
-        if (!encryptedData || encryptedData.length < 10) {
-          throw new Error('Encryption failed or produced invalid output');
-        }
-        
-        // Generate QR code image data URL (this is just the QR code, not the template)
-        const qrCodeOnlyDataUrl = await generateQRCodeImage(url, {
+        const currentSeqNumber = startingSeqNumber + i;
+        const sequentialNumberString = String(currentSeqNumber).padStart(6, '0');
+        const qrCodeId = uuidv4(); // Generate a UUID for the QR code
+        const checkUrl = `${data.baseUrl}/check?id=${qrCodeId}`;
+        const encryptedValue = await encryptData(data.productData); // Replace with your actual key
+
+        qrCodesToInsert.push({
+          id: qrCodeId,
+          sequential_number: currentSeqNumber, // Save as number
+          encrypted_data: encryptedValue, // Corrected to snake_case
+          url: checkUrl,
+          is_scanned: false,
+          is_enabled: true, // Corrected to snake_case
+          user_id: user.id, // Associate with the logged-in user
+          data_url: '', // Will be populated after image generation
           template: data.template,
+          header_text: data.headerText,
+          instruction_text: data.instructionText,
+          website_url: data.websiteUrl,
+          footer_text: data.footerText,
+          direction_rtl: data.isRTL,
+          product_id: selectedProductId // Include the selected product ID
+        });
+      }
+
+      // Generate the QR Code images and update data_url
+      const generatedQrCodesWithImages = [];
+      for (let i = 0; i < qrCodesToInsert.length; i++) {
+        const qrCode = qrCodesToInsert[i];
+        const qrCodeOnlyDataUrl = await generateQRCodeImage(qrCode.url, {
+          template: qrCode.template,
           primaryColor,
           secondaryColor,
           size: 300,
@@ -333,32 +393,38 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
         }
 
         console.log('Generated QR code template image data URL length:', dataUrl.length);
-        
-        qrCodes.push({
-          id,
-          sequential_number: String(sequentialNumber),
-          encrypted_data: encryptedData,
-          url,
-          is_scanned: false,
-          is_enabled: true,
-          data_url: dataUrl,
-          template: data.template,
-          header_text: data.headerText || 'Product Authentication',
-          instruction_text: data.instructionText || 'Scan this QR code to verify the authenticity of your product',
-          website_url: data.websiteUrl || null,
-          footer_text: data.footerText || 'Thank you for choosing our product',
-          direction_rtl: data.isRTL,
-          user_id: user.id 
-        });
+
+        // Ensure correct properties for DB insertion
+        const qrCodeWithImage = {
+          ...qrCode, // This spread includes other properties like encrypted_data and is_enabled (now corrected)
+          // Overwrite or ensure correct properties for DB
+          data_url: dataUrl, // Use snake_case for image data
+          dataUrl: undefined, // Explicitly set camelCase to undefined
+          // encrypted_data and is_enabled should already be correct from qrCode spread
+        };
+
+        generatedQrCodesWithImages.push(qrCodeWithImage);
       }
-      
+
       try {
-        console.log('Saving QR codes to database:', qrCodes.length, 'codes');
-        console.log('QR codes user_id:', qrCodes[0]?.user_id);
-        
+        console.log('Saving QR codes to database:', generatedQrCodesWithImages.length, 'codes');
+        console.log('QR codes user_id:', generatedQrCodesWithImages[0]?.user_id);
+
+        // Filter out any undefined values before inserting
+        const cleanGeneratedQrCodes = generatedQrCodesWithImages.map(qr => {
+            const cleanQr: any = {};
+            for (const key in qr) {
+                if (qr[key] !== undefined) {
+                    cleanQr[key] = qr[key];
+                }
+            }
+            return cleanQr;
+        });
+
+
         const { error } = await supabase
           .from('qr_codes')
-          .insert(qrCodes);
+          .insert(cleanGeneratedQrCodes);
 
         if (error) {
           console.error('Error saving QR codes:', error);
@@ -366,13 +432,13 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
           return;
         }
 
-        const updatePayload: Partial<UserLimits> = { 
-          monthly_qr_created: monthly_qr_created + data.quantity, 
-          qr_created: allTimeQrCreated + data.quantity, 
+        const updatePayload: Partial<UserLimits> = {
+          monthly_qr_created: monthly_qr_created + data.quantity,
+          qr_created: allTimeQrCreated + data.quantity,
         };
 
         if (resetNeeded) {
-          updatePayload.last_monthly_reset = last_monthly_reset; 
+          updatePayload.last_monthly_reset = last_monthly_reset;
         }
 
         console.log('Updating user limits for user:', user.id, 'with payload:', updatePayload);
@@ -392,35 +458,36 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
           counter_id: 'qr_code_sequential',
           increment_by: data.quantity
         });
-        
+
         if (updateCounterError) {
           console.error('Error updating counter:', updateCounterError);
           toast.warning('QR codes created but counter update failed');
         } else {
           console.log('Updated counter to:', updatedCounterData);
         }
-        
-        const mappedQrCodes = qrCodes.map(qr => ({
+
+        const mappedQrCodes = generatedQrCodesWithImages.map(qr => ({
           id: qr.id,
           sequentialNumber: qr.sequential_number,
-          dataUrl: qr.data_url,
+          dataUrl: qr.data_url, // Use the corrected data_url
           template: qr.template,
           headerText: qr.header_text,
           instructionText: qr.instruction_text,
           websiteUrl: qr.website_url,
           footerText: qr.footer_text,
           directionRTL: qr.direction_rtl,
-          userId: qr.user_id
+          userId: qr.user_id,
+          // Include other relevant fields if needed by onQRCodesGenerated consumers
         }));
-        
+
         toast.success(`Successfully generated ${data.quantity} QR code(s)`);
         onQRCodesGenerated(mappedQrCodes);
-        
+
       } catch (err) {
         console.error('Error in QR code generation process:', err);
         toast.error('An error occurred while generating QR codes');
       }
-      
+
     } catch (err) {
       console.error('Error generating QR codes:', err);
       toast.error(`Failed to generate QR codes: ${err instanceof Error ? err.message : String(err)}`);
@@ -428,7 +495,7 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
       setIsGenerating(false);
     }
   };
-  
+
   const handleSliderChange = (value: number[]) => {
     setValue('quantity', value[0]);
   };
@@ -450,7 +517,7 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
                 <div>
                   <Label htmlFor="quantity">Quantity (1-100)</Label>
                   <div className="flex items-center gap-4 mt-2">
-                    <Slider 
+                    <Slider
                       min={1}
                       max={100}
                       step={1}
@@ -482,27 +549,114 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
                     <span className="text-sm text-red-500">{errors.quantity.message}</span>
                   )}
                 </div>
-                
-                <div>
-                  <Label htmlFor="productData">Product Data</Label>
-                  <Input
-                    {...register('productData', {
-                      required: "Product data is required"
-                    })}
-                    id="productData"
-                    placeholder="Enter product details to encrypt"
-                    className="mt-1"
-                  />
-                  {errors.productData && (
-                    <span className="text-sm text-red-500">{errors.productData.message}</span>
-                  )}
-                  <p className="text-sm text-muted-foreground mt-1">
-                    This data will be encrypted and embedded in the QR code
-                  </p>
+
+                {/* Product Management Section */}
+                <div className="space-y-2">
+                  <Label htmlFor="product">Product</Label>
+                  <div className="flex space-x-2">
+                    <Input
+                      id="newProductName"
+                      placeholder="Enter new product name"
+                      value={newProductName}
+                      onChange={(e) => setNewProductName(e.target.value)}
+                      className="flex-grow"
+                    />
+                    <Button
+                      type="button"
+                      onClick={async () => {
+                        console.log('User ID being sent:', user?.id); // Keep this log
+
+                        if (!newProductName.trim()) {
+                          toast.error('Please enter a product name.');
+                          return;
+                        }
+                        if (!user) {
+                          toast.error('You must be logged in to add a product.');
+                          return;
+                        }
+
+                        try {
+                          // Reverted to the standard insert call without .auth()
+                          const { data, error } = await supabase
+                            .from('products')
+                            .insert([{ name: newProductName.trim(), user_id: user.id }])
+                            .select('id, name')
+                            .single();
+
+                          if (error) {
+                            throw error;
+                          }
+
+                          if (data) {
+                            setProducts([...products, data]);
+                            setSelectedProductId(data.id);
+                            setValue('productId', data.id); // Set productId in form values
+                            // Optional: Clear new product input after adding and selecting
+                            setNewProductName('');
+                            toast.success('Product added successfully!');
+                          }
+                        } catch (error: any) {
+                          console.error('Error adding product:', error);
+                          // Check if the error is specifically the RLS violation
+                          if (error.code === '42501' && error.message.includes('row-level security policy')) {
+                              toast.error('Failed to add product due to security policy. Ensure you are logged in and the policy is correctly configured.');
+                          } else {
+                              toast.error(`Failed to add product: ${error.message}`);
+                          }
+                        }
+                      }}
+                    >
+                      Add Product
+                    </Button>
+                  </div>
+                  <Select
+                    value={selectedProductId}
+                    onValueChange={(value) => {
+                      setSelectedProductId(value);
+                      setValue('productId', value); // Set productId in form values
+                      // You might want to set productData here as well if it's used for display
+                      const selectedProduct = products.find(p => p.id === value);
+                      if (selectedProduct) {
+                         setValue('productData', selectedProduct.name); // Set productData to product name for encryption
+                      }
+                    }}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select or add a product" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {products.map(product => (
+                        <SelectItem key={product.id} value={product.id}>
+                          {product.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-                
-                <div>
-                  <Label htmlFor="baseUrl">Base URL</Label>
+
+
+                 {/* Product Data Input - Keep this for the data to be encrypted */}
+                 <div className="hidden">
+                   <Label htmlFor="productData">Product Data to Encrypt</Label>
+                   <Input
+                     {...register('productData', {
+                       required: "Product data is required"
+                     })}
+                     id="productData"
+                     placeholder="Enter product details to encrypt"
+                     className="mt-1"
+                   />
+                   {errors.productData && (
+                     <span className="text-sm text-red-500">{errors.productData.message}</span>
+                   )}
+                   <p className="text-sm text-muted-foreground mt-1">
+                     This data will be encrypted and embedded in the QR code. It can be the product name or other relevant details.
+                   </p>
+                 </div>
+
+
+                <div className="space-y-2">
+                  <Label htmlFor="baseUrl">Base URL for Verification</Label>
                   <Input
                     {...register('baseUrl', {
                       required: "Base URL is required"
@@ -557,7 +711,7 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
                     If provided, a button to visit this website will be displayed on verification page
                   </p>
                 </div>
-                
+
                 <div className="grid gap-2">
                   <div className="flex items-center justify-between">
                     <Label htmlFor="primaryColor">Primary Color</Label>
@@ -582,7 +736,7 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
                 </div>
               </CardContent>
             </Card>
-            
+
             <Card className="mt-6">
               <CardHeader>
                 <CardTitle>Verification Page Content</CardTitle>
@@ -623,7 +777,7 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
                     className="mt-1"
                   />
                 </div>
-                
+
                 <div>
                   <Label htmlFor="instructionText">Instruction Text</Label>
                   <Input
@@ -633,7 +787,7 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
                     className="mt-1"
                   />
                 </div>
-                
+
                 <div>
                   <Label htmlFor="footerText">Footer Text</Label>
                   <Input
@@ -643,7 +797,7 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
                     className="mt-1"
                   />
                 </div>
-                
+
                 <div className="flex items-center space-x-2">
                   <input
                     type="checkbox"
@@ -656,7 +810,7 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
               </CardContent>
             </Card>
           </div>
-          
+
           <div>
             <Card className="h-full flex flex-col sticky top-6"> {/* Added sticky positioning */}
               <CardHeader>
@@ -664,13 +818,13 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
               </CardHeader>
               <CardContent className="flex-1">
                 <Tabs defaultValue="classic" className="w-full" onValueChange={(value) => setValue('template', value as TemplateType)}>
-                  <TabsList className="grid grid-cols-2 sm:grid-cols-4 mb-4"> {/* Adjusted grid for responsiveness */}
-                    <TabsTrigger value="classic">Original</TabsTrigger> {/* Simplified names */}
-                    <TabsTrigger value="classic1">Classic 1</TabsTrigger>
-                    <TabsTrigger value="classic2">Classic 2</TabsTrigger>
-                    <TabsTrigger value="classic3">Classic 3</TabsTrigger>
+                  <TabsList className="grid grid-cols-2 sm:grid-cols-4 mb-4">
+                    <TabsTrigger value="classic">Original</TabsTrigger>
+                    <TabsTrigger value="modern-blue">Modern Blue</TabsTrigger>
+                    <TabsTrigger value="modern-beige">Modern Beige</TabsTrigger>
+                    <TabsTrigger value="arabic">Arabic</TabsTrigger>
                   </TabsList>
-                  
+
                   <div className="mt-4 flex justify-center items-center"> {/* Added items-center */}
                     {/* Changed dimensions here */}
                     <div
@@ -692,7 +846,7 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
                       />
                     </div>
                   </div>
-                  
+
                   <div className="mt-4 text-center">
                     <p className="text-sm text-muted-foreground">
                       Live preview of the selected QR code template.
@@ -701,7 +855,7 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
                 </Tabs>
               </CardContent>
               <CardFooter className="flex flex-col">
-                <Button 
+                <Button
                   type="submit"
                   className="w-full bg-gradient-to-r from-blue-500 to-violet-500 hover:from-blue-600 hover:to-violet-600 text-white" // Added text-white
                   disabled={isGenerating || !user}
@@ -716,13 +870,13 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
                     </>
                   )}
                 </Button>
-                
+
                 {!user && (
                   <p className="text-sm text-red-500 mt-2">
                     You must be logged in to generate QR codes
                   </p>
                 )}
-                
+
                 <div className="mt-4 text-center flex items-center justify-center text-sm text-muted-foreground">
                   <ShieldCheck className="h-4 w-4 mr-1 text-green-500" />
                   Your data is encrypted securely

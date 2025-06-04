@@ -28,14 +28,14 @@ export const QRCodeTemplatePreview: React.FC<QRCodeTemplatePreviewProps> = ({
 }) => {
   // Define template-specific styles
   const getTemplateStyles = () => {
-    // Base styles shared by all 'classic' variants
-    const baseClassicStyles = {
+    // Base styles shared by all templates
+    const baseStyles = {
       containerClass: 'flex flex-col items-center text-black font-sans overflow-hidden rounded-lg shadow-md w-[250px] h-[400px]',
       headerSectionClass: 'w-full bg-gray-400 text-black text-center pt-3 px-2 text-xl font-bold uppercase',
       middleSectionClass: 'flex flex-col items-center bg-gray-400 w-full pb-4 px-2',
       instructionClass: 'text-sm text-center mt-1 px-1 font-bold',
       websiteClass: 'w-full bg-black text-white text-center text-sm font-bold py-1 break-all',
-      bottomSectionClass: 'w-full bg-green-700 text-white text-center text-xs py-1 flex flex-col items-center',
+      bottomSectionClass: 'w-full text-white text-center text-xs py-1 flex flex-col items-center',
       footerTextClass: 'font-bold',
       thankYouTextClass: 'text-xs',
     };
@@ -43,28 +43,34 @@ export const QRCodeTemplatePreview: React.FC<QRCodeTemplatePreviewProps> = ({
     switch (template) {
       case 'classic':
         return {
-          ...baseClassicStyles,
-          bottomSectionClass: baseClassicStyles.bottomSectionClass.replace('bg-green-700', 'bg-green-700'),
+          ...baseStyles,
+          bottomSectionClass: baseStyles.bottomSectionClass + ' bg-green-700',
         };
-      case 'classic1': // Original Product1 - Red bottom
-          return {
-          ...baseClassicStyles,
-          bottomSectionClass: baseClassicStyles.bottomSectionClass.replace('bg-green-700', 'bg-red-700'),
-          };
-      case 'classic2': // Original Product2 - Blue bottom
-              return {
-          ...baseClassicStyles,
-          bottomSectionClass: baseClassicStyles.bottomSectionClass.replace('bg-green-700', 'bg-blue-700'),
-        };
-      case 'classic3': // Original Product3 - Black bottom
+      case 'modern-blue':
         return {
-          ...baseClassicStyles,
-          bottomSectionClass: baseClassicStyles.bottomSectionClass.replace('bg-green-700', 'bg-black'),
+          ...baseStyles,
+          headerSectionClass: baseStyles.headerSectionClass.replace('bg-gray-400', 'bg-blue-600'),
+          middleSectionClass: baseStyles.middleSectionClass.replace('bg-gray-400', 'bg-blue-100'),
+          bottomSectionClass: baseStyles.bottomSectionClass + ' bg-blue-700',
+        };
+      case 'modern-beige':
+        return {
+          ...baseStyles,
+          headerSectionClass: baseStyles.headerSectionClass.replace('bg-gray-400', 'bg-amber-700'),
+          middleSectionClass: baseStyles.middleSectionClass.replace('bg-gray-400', 'bg-amber-50'),
+          bottomSectionClass: baseStyles.bottomSectionClass + ' bg-amber-700',
+        };
+      case 'arabic':
+        return {
+          ...baseStyles,
+          headerSectionClass: baseStyles.headerSectionClass.replace('bg-gray-400', 'bg-emerald-700'),
+          middleSectionClass: baseStyles.middleSectionClass.replace('bg-gray-400', 'bg-emerald-50'),
+          bottomSectionClass: baseStyles.bottomSectionClass + ' bg-emerald-700',
         };
       default:
         return {
-          ...baseClassicStyles,
-          bottomSectionClass: baseClassicStyles.bottomSectionClass.replace('bg-green-700', 'bg-green-700'),
+          ...baseStyles,
+          bottomSectionClass: baseStyles.bottomSectionClass + ' bg-green-700',
         };
     }
   };

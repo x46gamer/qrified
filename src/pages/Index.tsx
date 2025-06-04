@@ -46,7 +46,10 @@ const Index = () => {
       // Fetch QR codes (Row Level Security will restrict to only user's codes or all for admins)
       const { data, error } = await supabase
         .from('qr_codes')
-        .select('*')
+        .select(`
+          *,
+          product:products(name)
+        `)
         .order('sequential_number', { ascending: false });
       
       if (error) {
@@ -80,6 +83,8 @@ const Index = () => {
           footerText: qr.footer_text,
           directionRTL: qr.direction_rtl,
           userId: qr.user_id,
+          product: qr.product,
+          productId: qr.product_id,
         }));
         
         setQRCodes(mappedQrCodes);

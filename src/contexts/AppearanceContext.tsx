@@ -22,6 +22,11 @@ export interface AppearanceSettings {
   logoUrl: string | null;
   primaryColor: string;
   secondaryColor: string;
+  headerText: string;
+  footerText: string;
+  instructionText: string;
+  reviewButtonText: string;
+  feedbackButtonText: string;
 }
 
 export const DEFAULT_SETTINGS: AppearanceSettings = {
@@ -42,7 +47,12 @@ export const DEFAULT_SETTINGS: AppearanceSettings = {
   enableFeedback: true,
   logoUrl: null,
   primaryColor: '#3b82f6',
-  secondaryColor: '#8b5cf6'
+  secondaryColor: '#8b5cf6',
+  headerText: 'Product Authentication',
+  footerText: 'Thank you for choosing our product',
+  instructionText: 'Scan this QR code to verify the authenticity of your product',
+  reviewButtonText: 'Leave a Review',
+  feedbackButtonText: 'Give Feedback'
 };
 
 interface AppearanceContextType extends AppearanceSettings {
