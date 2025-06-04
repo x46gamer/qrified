@@ -11,7 +11,6 @@ interface AuthContextType {
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
   loginWithGoogle: () => Promise<void>;
-  loginWithRole: (role: UserRole) => void; // Keep demo login for testing
   logout: () => void;
   resetPassword: (email: string) => Promise<void>;
   signUp: (email: string, password: string, name: string) => Promise<void>;
@@ -46,57 +45,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [session, setSession] = useState<Session | null>(null);
   const [userLimits, setUserLimits] = useState<UserLimits | null>(null);
 
-  // Fetch user profile to get role
-  const fetchUserProfile = async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('user_profiles')
-        .select('role')
-        .eq('id', userId as any); // Use 'any' temporarily if type is strict UUID
-      
-      if (error) {
-        console.error('Error fetching user profile:', error);
-        setUser(prev => {
-          if (!prev) return null;
-          return { ...prev, role: 'user' };
-        });
-        return;
-      }
-      
-      // Safely check if data is an array, not empty, and has the role property
-      if (Array.isArray(data) && data.length > 0 && data[0] && 'role' in data[0]) { 
-        setUser(prev => {
-          if (!prev) return null;
-          const updatedUser = {
-            ...prev,
-            role: data[0].role as UserRole
-          };
-          localStorage.setItem('qrauth_user', JSON.stringify(updatedUser));
-          return updatedUser;
-        });
-      } else {
-         // Handle case where no profile is found or role is null/missing
-         setUser(prev => {
-          if (!prev) return null;
-          return { ...prev, role: 'user' };
-         });
-      }
-    } catch (error) {
-      console.error('Error fetching user profile:', error);
-       setUser(prev => {
-        if (!prev) return null;
-        return { ...prev, role: 'user' };
-       });
-    }
-  };
-
   // Fetch user limits function (moved outside useEffect)
   const fetchUserLimits = async (userId: string) => {
     try {
       const { data, error } = await supabase
-        .from('user_limits1')
+        .from('user_limits')
         .select('id, qr_limit, qr_created, qr_successful, monthly_qr_limit, monthly_qr_created, last_monthly_reset, created_at, updated_at')
-        .eq('id', userId as any); // Use 'any' temporarily if type is strict UUID
+        .eq('id', userId)
+        .single();
 
       if (error) {
         console.error('Error fetching user limits:', error.message);
@@ -104,8 +60,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return;
       }
 
-      if (data && data.length > 0) { // Safely check for data
-        setUserLimits(data[0] as unknown as UserLimits); // Cast the first element
+      if (data) {
+        setUserLimits(data as unknown as UserLimits);
       } else {
         console.log('No user limits data found for user:', userId);
         setUserLimits({
@@ -130,10 +86,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('Auth state changed:', event, session);
+      (event, session) => {
         setSession(session);
-        
         if (session?.user) {
           const userData: User = {
             id: session.user.id,
@@ -145,16 +99,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           localStorage.setItem('qrauth_user', JSON.stringify(userData));
           
           // Fetch user profile to get role and user limits
-          await Promise.all([
-            fetchUserProfile(session.user.id),
-            fetchUserLimits(session.user.id)
-          ]);
+          setTimeout(() => {
+            fetchUserProfile(session.user.id);
+            fetchUserLimits(session.user.id);
+          }, 0);
         } else {
           setUser(null);
           setUserLimits(null);
           localStorage.removeItem('qrauth_user');
         }
-        setIsLoading(false);
       }
     );
 
@@ -175,10 +128,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           localStorage.setItem('qrauth_user', JSON.stringify(userData));
           
           // Fetch user profile to get role and user limits
-          await Promise.all([
-            fetchUserProfile(session.user.id),
-            fetchUserLimits(session.user.id)
-          ]);
+          fetchUserProfile(session.user.id);
+          fetchUserLimits(session.user.id);
+        } else {
+          setUser(null);
         }
         
         setIsLoading(false);
@@ -188,12 +141,42 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     };
 
+    // Fetch user profile to get role
+    const fetchUserProfile = async (userId: string) => {
+      try {
+        const { data, error } = await supabase
+          .from('user_profiles')
+          .select('role')
+          .eq('id', userId)
+          .single();
+        
+        if (error) {
+          console.error('Error fetching user profile:', error);
+          return;
+        }
+        
+        if (data) {
+          setUser(prev => {
+            if (!prev) return null;
+            const updatedUser = {
+              ...prev,
+              role: data.role as UserRole
+            };
+            localStorage.setItem('qrauth_user', JSON.stringify(updatedUser));
+            return updatedUser;
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching user profile:', error);
+      }
+    };
+
     checkSession();
     
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [session?.user?.id]); // Depend on session user ID
 
   const login = async (email: string, password: string) => {
     try {
@@ -236,11 +219,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: 'https://qrified.vercel.app/dashboard',
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'consent',
-          }
+          redirectTo: window.location.origin + '/dashboard'
         }
       });
       
@@ -249,18 +228,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       toast.error(error.message || 'Failed to login with Google');
       throw error;
     }
-  };
-
-  // Keep the old login method for testing
-  const loginWithRole = (role: UserRole) => {
-    const newUser = {
-      id: `user_${Date.now()}`,
-      role: role,
-      name: role === 'admin' ? 'Admin User' : 'Employee User',
-      email: role === 'admin' ? 'admin@example.com' : 'employee@example.com',
-    };
-    setUser(newUser);
-    localStorage.setItem('qrauth_user', JSON.stringify(newUser));
   };
 
   const logout = async () => {
@@ -344,7 +311,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isLoading,
         login,
         loginWithGoogle,
-        loginWithRole,
         logout,
         resetPassword,
         signUp,

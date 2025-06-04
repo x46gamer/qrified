@@ -49,7 +49,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   const fetchUserLimits = async () => {
     try {
       const { data, error: userLimitError } = await supabase
-        .from('user_limits1')
+        .from('user_limits')
         .select('qr_limit, qr_created, qr_successful, monthly_qr_limit, monthly_qr_created')
         .eq('id', user?.id)
         .single();
@@ -203,6 +203,15 @@ const Sidebar: React.FC<SidebarProps> = ({
             <LineChart size={20} className="shrink-0" />
             <span className={cn("ml-3 transition-opacity duration-300", isOpen ? "opacity-100" : "opacity-0 hidden")}>
               Analytics
+            </span>
+          </NavLink>}
+
+          {isAdmin && <NavLink to="/scanlogs" className={({
+            isActive
+          }) => cn("flex items-center py-2 rounded-lg text-sm transition-colors duration-200", isActive ? "bg-blue-50 text-blue-600" : "text-gray-700 hover:bg-gray-100", isOpen ? "px-3" : "px-2 justify-center")}>
+            <LineChart size={20} className="shrink-0" />
+            <span className={cn("ml-3 transition-opacity duration-300", isOpen ? "opacity-100" : "opacity-0 hidden")}>
+              Scan Logs
             </span>
           </NavLink>}
 

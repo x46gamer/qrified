@@ -1,4 +1,3 @@
-
 export interface QRCodeData {
   text: string;
   template: TemplateType;
@@ -27,4 +26,9 @@ export interface QRCode {
   footerText?: string;
   directionRTL?: boolean;
   userId?: string; // Add user ID to track ownership
+  scanned_ip?: string;
+  scanned_isp?: string;
+  scanned_location?: string; // Could be city, region, etc. depending on IP service
+  scanned_city?: string;
+  scanned_country?: string;
 }

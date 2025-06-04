@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
@@ -8,10 +8,53 @@ import { Link } from "react-router-dom";
 import { ExternalLink, Shield } from "lucide-react";
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client'; // Import supabase if needed to fetch plan info
+import { toast } from "sonner";
 
 const Settings = () => {
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
+
+  const [companyName, setCompanyName] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      if (user) {
+        const { data, error } = await supabase
+          .from('user_profiles')
+          .select('store_name')
+          .eq('id', user.id)
+          .single();
+
+        if (error) {
+          console.error('Error fetching user settings:', error);
+          toast.error('Failed to fetch settings.');
+        } else if (data) {
+          setCompanyName(data.store_name || '');
+        }
+      }
+    };
+
+    fetchSettings();
+  }, [user]);
+
+  const handleSaveSettings = async () => {
+    if (!user) return;
+
+    setIsLoading(true);
+    const { error } = await supabase
+      .from('user_profiles')
+      .update({ store_name: companyName })
+      .eq('id', user.id);
+
+    if (error) {
+      console.error('Error saving settings:', error);
+      toast.error('Failed to save settings.');
+    } else {
+      toast.success('Settings saved successfully!');
+    }
+    setIsLoading(false);
+  };
 
   // TODO: Fetch user's current plan details
   // You'll likely need a state variable and a useEffect hook here
@@ -82,8 +125,13 @@ const Settings = () => {
             <CardContent className="space-y-4">
               <div className="space-y-4">
                 <div className="border rounded-lg p-4">
-                  <Label htmlFor="company-name">Company Name</Label>
-                  <Input id="company-name" defaultValue="My Company" className="mt-1" />
+                  <Label htmlFor="company-name">Store Name</Label>
+                  <Input 
+                    id="company-name" 
+                    value={companyName}
+                    onChange={(e) => setCompanyName(e.target.value)}
+                    className="mt-1" 
+                  />
                 </div>
                 
                 <div className="border rounded-lg p-4">
@@ -99,7 +147,7 @@ const Settings = () => {
                   </select>
                 </div>
                 
-                <Button>Save Settings</Button>
+                <Button onClick={handleSaveSettings}>Save Settings</Button>
               </div>
             </CardContent>
           </Card>

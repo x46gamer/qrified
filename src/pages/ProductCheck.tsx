@@ -10,6 +10,7 @@ import ReviewForm from '@/components/ReviewForm';
 import FeedbackForm from '@/components/FeedbackForm';
 import { useAppearanceSettings, AppearanceSettings, DEFAULT_SETTINGS } from '@/contexts/AppearanceContext';
 import { TemplateType } from '@/types/qrCode';
+import { toast } from 'sonner';
 
 const ProductCheck = () => {
   const [searchParams] = useSearchParams();
@@ -171,12 +172,45 @@ const ProductCheck = () => {
           console.log('Marking QR code as scanned');
           const updateTimestamp = new Date().toISOString();
           
+          let ipData = {};
+          try {
+              // Get user's IP address
+              const ipResponse = await fetch('https://api.ipify.org?format=json');
+              const ipJson = await ipResponse.json();
+              const ipAddress = ipJson.ip;
+              console.log('Detected IP address:', ipAddress);
+
+              if (ipAddress) {
+                  // Get geolocation details using the IP
+                  const geoResponse = await fetch(`https://freeipapi.com/api/json/${ipAddress}`);
+                  const geoJson = await geoResponse.json();
+                  console.log('Geolocation data:', geoJson);
+
+                  // Prepare IP and geolocation data for update
+                  ipData = {
+                      scanned_ip: ipAddress,
+                      scanned_isp: geoJson.isp || null,
+                      scanned_location: geoJson.location || null, // freeipapi uses 'location'
+                      scanned_city: geoJson.city || null,
+                      scanned_country: geoJson.country || null,
+                  };
+              }
+          } catch (geoError) {
+              console.error('Error fetching IP or geolocation data:', geoError);
+              // Continue with the scan update even if geolocation fails
+              toast.warning('Failed to capture IP and geolocation details.');
+          }
+
+          // Prepare the update payload including scan status and geolocation data
+          const updatePayload = {
+              is_scanned: true,
+              scanned_at: updateTimestamp,
+              ...ipData, // Include the captured IP/geo data
+          };
+
           const { error: updateError, data: updateData } = await supabase
             .from('qr_codes')
-            .update({
-              is_scanned: true,
-              scanned_at: updateTimestamp
-            })
+            .update(updatePayload) // Use the combined payload
             .eq('id', qrId)
             .eq('is_scanned', false) // Race condition protection
             .select();
@@ -326,24 +360,10 @@ const ProductCheck = () => {
           
           
           {isVerified && productData && (
-            <div className="border rounded-lg p-4 bg-gray-50 text-left">
+            <div className="border border-gray-200 rounded-lg px-6 py-4 bg-gray-100 shadow-md text-left">
               <h3 className="font-medium mb-2">Product Details:</h3>
               <p className="break-all">{productData}</p>
             </div>
-          )}
-          
-          {qrCode?.websiteUrl && (
-            <Button 
-              variant="outline" 
-              className="mt-4 w-full" 
-              onClick={() => window.open(qrCode.websiteUrl, '_blank')}
-              style={{ 
-                borderColor: theme.primaryColor,
-                color: theme.primaryColor 
-              }}
-            >
-              Visit Website
-            </Button>
           )}
           
           {isVerified && theme.enableReviews && (
@@ -356,7 +376,7 @@ const ProductCheck = () => {
                     color: '#ffffff' 
                   }}
                 >
-                  Leave a Review
+                  {theme.reviewButtonText || 'Leave a Review'}
                 </Button>
               ) : (
                 <ReviewForm 
@@ -379,7 +399,7 @@ const ProductCheck = () => {
                     color: theme.secondaryColor 
                   }}
                 >
-                  Give Feedback
+                  {theme.feedbackButtonText || 'Give Feedback'}
                 </Button>
               ) : (
                 <FeedbackForm 

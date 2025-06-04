@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -18,7 +17,7 @@ type Review = {
   comment: string | null;
   image_urls: string[] | null;
   created_at: string;
-  qr_code?: {
+  qr_codes?: {
     sequential_number: string;
   };
 };
@@ -28,7 +27,7 @@ type Feedback = {
   qr_code_id: string;
   feedback: string;
   created_at: string;
-  qr_code?: {
+  qr_codes?: {
     sequential_number: string;
   };
 };
@@ -57,22 +56,24 @@ const AdminFeedback = () => {
           .from('product_reviews')
           .select(`
             *,
-            qr_code:qr_codes(sequential_number)
+            qr_codes(sequential_number)
           `)
           .order('created_at', { ascending: false });
         
         if (error) throw error;
+        console.log('Fetched reviews data:', data);
         setReviews(data as Review[]);
       } else {
         const { data, error } = await supabase
           .from('customer_feedback')
           .select(`
             *,
-            qr_code:qr_codes(sequential_number)
+            qr_code_id:qr_codes(sequential_number)
           `)
           .order('created_at', { ascending: false });
         
         if (error) throw error;
+        console.log('Fetched feedback data:', data);
         setFeedback(data as Feedback[]);
       }
     } catch (error) {
@@ -186,7 +187,7 @@ const AdminFeedback = () => {
                             </div>
                           </TableCell>
                           <TableCell>
-                            {review.qr_code?.sequential_number || 'N/A'}
+                            {review.qr_codes?.sequential_number || 'N/A'}
                           </TableCell>
                           <TableCell>
                             <div className="max-w-[200px] truncate">
@@ -263,7 +264,7 @@ const AdminFeedback = () => {
                       {feedback.map((item) => (
                         <TableRow key={item.id}>
                           <TableCell>
-                            {item.qr_code?.sequential_number || 'N/A'}
+                            {item.qr_codes?.sequential_number || 'N/A'}
                           </TableCell>
                           <TableCell>
                             <div className="max-w-[300px] truncate">
@@ -342,7 +343,7 @@ const AdminFeedback = () => {
               
               <div>
                 <h4 className="font-medium">QR Code</h4>
-                <p className="mt-1">{selectedReview.qr_code?.sequential_number || 'N/A'}</p>
+                <p className="mt-1">{selectedReview.qr_codes?.sequential_number || 'N/A'}</p>
               </div>
               
               <div>
@@ -395,7 +396,7 @@ const AdminFeedback = () => {
             <div className="space-y-4">
               <div>
                 <h4 className="font-medium">QR Code</h4>
-                <p className="mt-1">{selectedFeedback.qr_code?.sequential_number || 'N/A'}</p>
+                <p className="mt-1">{selectedFeedback.qr_codes?.sequential_number || 'N/A'}</p>
               </div>
               
               <div>

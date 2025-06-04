@@ -77,7 +77,7 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
       
       try {
         const { data: fetchedLimitData, error: userLimitError } = await supabase
-          .from('user_limits1')
+          .from('user_limits')
           .select('monthly_qr_limit, monthly_qr_created, last_monthly_reset')
           .eq('id', user.id)
           .single();
@@ -189,7 +189,7 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
       // --- Monthly Limit Check and Reset ---
       console.log('Fetching user limits for user:', user.id);
       const { data: fetchedLimitData, error: userLimitError } = await supabase
-        .from('user_limits1')
+        .from('user_limits')
         .select('monthly_qr_limit, monthly_qr_created, last_monthly_reset, qr_created')
         .eq('id', user.id)
         .single();
@@ -314,7 +314,7 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
 
         console.log('Updating user limits for user:', user.id, 'with payload:', updatePayload);
         const { error: updateLimitError } = await supabase
-          .from('user_limits1')
+          .from('user_limits')
           .update(updatePayload)
           .eq('id', user.id);
 
@@ -472,12 +472,6 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
                             ))}
                           </SelectContent>
                         </Select>
-                        <Input
-                          {...register('websiteUrl')}
-                          id="websiteUrl"
-                          placeholder="https://yourwebsite.com"
-                          className="mt-1"
-                        />
                       </div>
                     ) : (
                       <div className="space-y-2">

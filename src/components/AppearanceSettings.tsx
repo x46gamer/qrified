@@ -33,7 +33,9 @@ export const AppearanceSettings = () => {
     enableFeedback,
     logoUrl,
     primaryColor,
-    secondaryColor
+    secondaryColor,
+    reviewButtonText,
+    feedbackButtonText
   } = useAppearanceSettings();
   
   const { user } = useAuth();
@@ -60,7 +62,9 @@ export const AppearanceSettings = () => {
     logoUrl,
     isRtl,
     enableReviews,
-    enableFeedback
+    enableFeedback,
+    reviewButtonText: reviewButtonText || 'Leave a Review',
+    feedbackButtonText: feedbackButtonText || 'Give Feedback',
   });
 
   useEffect(() => {
@@ -82,7 +86,9 @@ export const AppearanceSettings = () => {
       logoUrl,
       isRtl,
       enableReviews,
-      enableFeedback
+      enableFeedback,
+      reviewButtonText: reviewButtonText || 'Leave a Review',
+      feedbackButtonText: feedbackButtonText || 'Give Feedback',
     });
   }, [
     primaryColor,
@@ -102,7 +108,9 @@ export const AppearanceSettings = () => {
     logoUrl,
     isRtl,
     enableReviews,
-    enableFeedback
+    enableFeedback,
+    reviewButtonText,
+    feedbackButtonText,
   ]);
 
   const handleLanguagePreset = (preset: 'english' | 'arabic') => {
@@ -115,7 +123,9 @@ export const AppearanceSettings = () => {
         failureTitle: 'Product NOT Verified',
         failureDescription: 'This product could not be verified as authentic. It may be counterfeit or has been previously verified.',
         failureFooterText: 'If you believe this is an error, please contact the product manufacturer.',
-        isRtl: false
+        isRtl: false,
+        reviewButtonText: 'Leave a Review',
+        feedbackButtonText: 'Give Feedback',
       }));
     } else if (preset === 'arabic') {
       setSettings(prev => ({
@@ -126,7 +136,9 @@ export const AppearanceSettings = () => {
         failureTitle: 'تعذر التحقق من المنتج',
         failureDescription: 'تعذر التحقق من أصلية هذا المنتج. قد يكون مزوراً أو تم التحقق منه مسبقاً',
         failureFooterText: 'إذا كنت تعتقد أن هذا خطأ، يرجى الاتصال بالشركة المصنعة للمنتج',
-        isRtl: true
+        isRtl: true,
+        reviewButtonText: 'اترك تعليقًا',
+        feedbackButtonText: 'قدم ملاحظات',
       }));
     }
     toast.success(`${preset === 'english' ? 'English' : 'Arabic'} preset loaded successfully`);
@@ -400,6 +412,26 @@ export const AppearanceSettings = () => {
               onCheckedChange={(checked) => updateSetting('enableFeedback', checked)}
             />
             <Label htmlFor="enableFeedback">Enable Customer Feedback</Label>
+          </div>
+
+          <div>
+            <Label htmlFor="reviewButtonText">Review Button Text</Label>
+            <Input
+              id="reviewButtonText"
+              value={settings.reviewButtonText}
+              onChange={(e) => updateSetting('reviewButtonText', e.target.value)}
+              placeholder="Leave a Review"
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="feedbackButtonText">Feedback Button Text</Label>
+            <Input
+              id="feedbackButtonText"
+              value={settings.feedbackButtonText}
+              onChange={(e) => updateSetting('feedbackButtonText', e.target.value)}
+              placeholder="Give Feedback"
+            />
           </div>
         </CardContent>
       </Card>

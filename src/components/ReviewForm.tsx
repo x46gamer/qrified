@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -55,12 +54,16 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
     const uploadPromises = files.map(async (file) => {
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}-${file.name}`;
       
-      // First, ensure the bucket exists
+      // Use the correct bucket name 'reviews'
+      const bucketName = 'reviews';
+
+      // First, ensure the bucket exists (optional, but good practice)
       const { data: buckets, error: bucketError } = await supabase.storage.listBuckets();
-      const bucketExists = buckets?.some(bucket => bucket.name === 'review-images');
+      const bucketExists = buckets?.some(bucket => bucket.name === bucketName);
       
       if (!bucketExists) {
-        const { error: createBucketError } = await supabase.storage.createBucket('review-images', {
+        // Attempt to create the bucket if it doesn't exist
+        const { error: createBucketError } = await supabase.storage.createBucket(bucketName, {
           public: true,
           allowedMimeTypes: ['image/*'],
           fileSizeLimit: 5242880 // 5MB
@@ -68,18 +71,21 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
         
         if (createBucketError) {
           console.error('Error creating bucket:', createBucketError);
-          throw createBucketError;
+          // Depending on your requirements, you might want to stop here
+          // For now, we'll let the upload attempt proceed, which will likely fail
         }
       }
       
+      // Upload to the specified bucket
       const { data, error } = await supabase.storage
-        .from('review-images')
+        .from(bucketName)
         .upload(fileName, file);
       
       if (error) throw error;
       
+      // Get public URL from the specified bucket
       const { data: urlData } = supabase.storage
-        .from('review-images')
+        .from(bucketName)
         .getPublicUrl(data.path);
       
       return urlData.publicUrl;
@@ -107,9 +113,20 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
         try {
           imageUrls = await uploadImages(images);
           console.log('Images uploaded successfully:', imageUrls);
-        } catch (uploadError) {
+
+          // Check if images were selected but none uploaded successfully
+          if (images.length > 0 && imageUrls.length === 0) {
+             console.error('Image upload failed, no URLs returned.');
+             toast.error('Failed to upload images. Please try again.');
+             setIsSubmitting(false); 
+             return; 
+          }
+
+        } catch (uploadError: any) {
           console.error('Error uploading images:', uploadError);
-          toast.error('Failed to upload images, but review will be submitted without them');
+          toast.error(`Failed to upload images: ${uploadError.message || 'Unknown error'}. Review not submitted.`);
+          setIsSubmitting(false); 
+          return; 
         }
       }
       
@@ -139,7 +156,8 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
       console.error('Error submitting review:', error);
       toast.error('An error occurred while submitting review');
     } finally {
-      setIsSubmitting(false);
+      // This finally block will not be reached if we return early in catch/if blocks above
+      // setIsSubmitting(false); 
     }
   };
 

@@ -5,8 +5,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowDown, Printer, Copy } from "lucide-react";
 import { toast } from "sonner";
-import { QRCodeTemplatePreview } from './QRCodeTemplatePreview';
-import html2canvas from 'html2canvas';
 import { formatSequentialNumber } from '@/utils/qrCodeUtils';
 
 interface QRCodeDisplayProps {
@@ -54,26 +52,19 @@ const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({ qrCodes }) => {
   
   const handlePrint = async (id: string) => {
     try {
-      const element = document.getElementById(`qr-template-${id}`);
-      if (!element) {
-        toast.error('QR code element not found');
+      const qrCode = qrCodes.find(qr => qr.id === id);
+      if (!qrCode || !qrCode.dataUrl) {
+        toast.error('QR code data not found for printing');
         return;
       }
-      
-      const canvas = await html2canvas(element, {
-        scale: 2, // Higher resolution
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: '#ffffff'
-      });
-      
-      const dataUrl = canvas.toDataURL('image/png');
+
+      const dataUrl = qrCode.dataUrl;
       const printWindow = window.open('', '_blank');
       if (!printWindow) {
         toast.error('Pop-up blocked. Please allow pop-ups for this site to print QR codes.');
         return;
       }
-      
+
       printWindow.document.write(`
         <html>
           <head>
@@ -98,9 +89,9 @@ const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({ qrCodes }) => {
           </body>
         </html>
       `);
-      
+
       printWindow.document.close();
-      
+
       toast.success('Print window opened');
     } catch (error) {
       console.error('Error printing QR code:', error);
@@ -108,11 +99,86 @@ const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({ qrCodes }) => {
     }
   };
 
+  const handleBulkPrint = async () => {
+    if (qrCodes.length === 0) {
+      toast.warning('No QR codes to print.');
+      return;
+    }
+
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      toast.error('Pop-up blocked. Please allow pop-ups for this site to print QR codes.');
+      return;
+    }
+
+    let imagesHtml = '';
+    qrCodes.forEach(qrCode => {
+      if (qrCode.dataUrl) {
+        // Basic styling for images in the print view
+        imagesHtml += `
+          <div style="margin: 10px; page-break-inside: avoid;">
+            <img src="${qrCode.dataUrl}" alt="QR Code ${formatSequentialNumber(Number(qrCode.sequentialNumber))}" style="max-width: 250px; max-height: 400px; object-fit: contain;"/>
+          </div>
+        `;
+      }
+    });
+
+    if (imagesHtml === '') {
+      toast.warning('No printable QR code images found.');
+      printWindow.close();
+      return;
+    }
+
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Print QR Codes</title>
+          <style>
+            body { margin: 0; padding: 20px; }
+            .print-container { display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; }
+            img { display: block; }
+            @media print {
+              body { margin: 0; padding: 0; }
+              .print-container { display: block; }
+              .print-container div { page-break-inside: avoid; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="print-container">
+            ${imagesHtml}
+          </div>
+          <script>
+            window.onload = function() {
+              setTimeout(function() {
+                window.print();
+                window.onafterprint = function() { window.close(); };
+              }, 500);
+            }
+          </script>
+        </body>
+      </html>
+    `);
+
+    printWindow.document.close();
+    toast.success(`Print window opened for ${qrCodes.length} QR codes`);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Generated QR Codes</h2>
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
+          {qrCodes.length > 1 && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleBulkPrint}
+              className="ml-2"
+            >
+              <Printer className="h-4 w-4 mr-1" /> Print All ({qrCodes.length})
+            </Button>
+          )}
           <Tabs value={view} onValueChange={(v) => setView(v as 'grid' | 'list')}>
             <TabsList>
               <TabsTrigger value="grid">Grid View</TabsTrigger>
@@ -135,14 +201,13 @@ const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({ qrCodes }) => {
                     id={`qr-template-${qrCode.id}`} 
                     className="w-full max-w-xs overflow-hidden rounded-lg shadow-md mx-auto"
                   >
-                    <QRCodeTemplatePreview
-                      template={qrCode.template}
-                      qrCodeDataUrl={qrCode.dataUrl}
-                      headerText={qrCode.headerText}
-                      instructionText={qrCode.instructionText}
-                      websiteUrl={qrCode.websiteUrl}
-                      footerText={qrCode.footerText}
-                      directionRTL={qrCode.directionRTL}
+                    <img
+                      src={qrCode.dataUrl}
+                      alt={`QR Code ${formatSequentialNumber(Number(qrCode.sequentialNumber))}`}
+                      className="w-full h-auto object-contain"
+                      onError={(e) => {
+                        console.error("Error loading generated QR code image:", qrCode.id);
+                      }}
                     />
                   </div>
               </div>

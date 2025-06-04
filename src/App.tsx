@@ -28,6 +28,7 @@ import { SidebarProvider } from './components/ui/sidebar';
 import DomainSettings from './pages/DomainSettings';
 import Settings from './pages/Settings';
 import AdminFeedback from './pages/AdminFeedback';
+import ScanLogs from './pages/ScanLogs';
 
 // Public Pages
 const CookiePolicyPage = lazy(() => import('./pages/CookiePolicyPage'));
@@ -129,6 +130,18 @@ function App() {
                   <SidebarProvider>
                     <DashboardLayout>
                       <AdminFeedback />
+                    </DashboardLayout>
+                  </SidebarProvider>
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="/scanlogs"
+              element={
+                <AuthGuard>
+                  <SidebarProvider>
+                    <DashboardLayout>
+                      <ScanLogs />
                     </DashboardLayout>
                   </SidebarProvider>
                 </AuthGuard>

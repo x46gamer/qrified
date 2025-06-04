@@ -70,7 +70,7 @@ const AdminDashboard = () => {
       
       // Get user limits
       const { data: limits, error: limitsError } = await supabase
-        .from('user_limits1')
+        .from('user_limits')
         .select('*');
         
       if (limitsError) throw limitsError;
@@ -112,7 +112,7 @@ const AdminDashboard = () => {
       
       // Get QR code stats
       const { data: limits, error: limitsError } = await supabase
-        .from('user_limits1')
+        .from('user_limits')
         .select('qr_created, qr_successful');
         
       if (limitsError) throw limitsError;
@@ -135,7 +135,7 @@ const AdminDashboard = () => {
   const updateUserLimit = async (userId: string) => {
     try {
       const { error } = await supabase
-        .from('user_limits1')
+        .from('user_limits')
         .update({ qr_limit: newLimit })
         .eq('id', userId);
         

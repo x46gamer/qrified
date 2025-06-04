@@ -72,7 +72,7 @@ const QRCodeManager: React.FC<QRCodeManagerProps> = ({ qrCodes, onUpdateQRCode, 
     setLoading(true);
     try {
       const { data: userLimitData, error: fetchLimitError } = await supabase
-        .from('user_limits1')
+        .from('user_limits')
         .select('qr_created, monthly_qr_created')
         .eq('id', user.id)
         .single();
@@ -124,7 +124,7 @@ const QRCodeManager: React.FC<QRCodeManagerProps> = ({ qrCodes, onUpdateQRCode, 
     try {
       // Step 1: Fetch user limits first
       const { data: userLimitData, error: fetchLimitError } = await supabase
-        .from('user_limits1')
+        .from('user_limits')
         .select('qr_created, monthly_qr_created')
         .eq('id', user.id)
         .single();
@@ -154,22 +154,6 @@ const QRCodeManager: React.FC<QRCodeManagerProps> = ({ qrCodes, onUpdateQRCode, 
         idsToDelete.forEach(id => onDeleteQRCode(id)); 
   
         toast.success(`${SucceededCount} QR code(s) deleted successfully.`);
-
-        const updatePayload: Partial<UserLimits> = { 
-          monthly_qr_created: (initialUserLimits?.monthly_qr_created || 0) - SucceededCount, 
-          qr_created: (initialUserLimits?.qr_created || 0) - SucceededCount, 
-        };
-
-        console.log('Updating user limits for user:', user.id, 'with payload:', updatePayload);
-        const { error: updateLimitError } = await supabase
-          .from('user_limits1')
-          .update(updatePayload)
-          .eq('id', user.id);
-
-        if (updateLimitError) {
-          console.error('Error updating user limits:', updateLimitError.message);
-          toast.warning('QR codes deleted but user limits failed to update.');
-        }
       }
     } catch (error: any) { // Catch any other unexpected errors during the process
         console.error('Unexpected error during batch deletion process:', error);
@@ -496,6 +480,19 @@ const QRCodeManager: React.FC<QRCodeManagerProps> = ({ qrCodes, onUpdateQRCode, 
                  {previewQRCode.websiteUrl && (
                   <p><strong>URL:</strong> <a href={previewQRCode.websiteUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline break-all">{previewQRCode.websiteUrl}</a></p>
                 )}
+
+                {/* Display Scan Details if scanned */}
+                {previewQRCode.isScanned && (
+                  <div className="mt-4 pt-4 border-t border-gray-200 space-y-1">
+                    <p className="text-base font-semibold">Scan Details:</p>
+                    {previewQRCode.scanned_ip && <p><strong>IP Address:</strong> {previewQRCode.scanned_ip}</p>}
+                    {previewQRCode.scanned_isp && <p><strong>ISP:</strong> {previewQRCode.scanned_isp}</p>}
+                    {previewQRCode.scanned_location && <p><strong>Location:</strong> {previewQRCode.scanned_location}</p>}
+                    {previewQRCode.scanned_city && <p><strong>City:</strong> {previewQRCode.scanned_city}</p>}
+                    {previewQRCode.scanned_country && <p><strong>Country:</strong> {previewQRCode.scanned_country}</p>}
+                  </div>
+                )}
+
               </div>
             </div>
           )}

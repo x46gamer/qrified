@@ -48,10 +48,10 @@ const Login = () => {
   };
 
   // Keep the demo login for testing purposes
-  const handleDemoLogin = (role: 'admin' | 'employee') => {
-    loginWithRole(role);
-    navigate('/dashboard');
-  };
+  // const handleDemoLogin = (role: 'admin' | 'employee') => {
+  //   loginWithRole(role);
+  //   navigate('/dashboard');
+  // };
 
   if (isLoading) {
     return (
@@ -186,6 +186,8 @@ const Login = () => {
             Sign in with Google
           </Button>
           
+          {/* Removed Demo Logins Section */}
+          {/*
           <Separator className="my-4" />
           
           <div className="space-y-2">
@@ -209,6 +211,7 @@ const Login = () => {
               </Button>
             </div>
           </div>
+          */}
         </CardContent>
         <CardFooter className="flex flex-col">
           <p className="text-sm text-center text-gray-500">
