@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
@@ -41,7 +40,10 @@ const QRCodeAnalytics: React.FC<QRCodeAnalyticsProps> = ({ qrCodes }) => {
         // Fetch reviews with updated RLS policies
         const { data: reviewsData, error: reviewsError } = await supabase
           .from('product_reviews')
-          .select('*')
+          .select(`
+            *,
+            qr_codes(product:products(name))
+          `)
           .order('created_at', { ascending: false });
 
         if (reviewsError) {
@@ -270,6 +272,9 @@ const QRCodeAnalytics: React.FC<QRCodeAnalyticsProps> = ({ qrCodes }) => {
                     <span className="text-sm text-muted-foreground">
                       {new Date(review.created_at).toLocaleDateString()}
                     </span>
+                  </div>
+                  <div className="text-sm font-medium mb-1">
+                    {review.qr_codes?.product?.name || 'N/A'}
                   </div>
                   {review.comment && (
                     <p className="text-sm mb-2">{review.comment}</p>

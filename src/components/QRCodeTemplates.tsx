@@ -2,14 +2,11 @@ import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-
-export type TemplateType = 'classic' | 'classic1' | 'classic2' | 'classic3';
+import { TemplateType } from '@/types/qrCode';
 
 interface TemplateOption {
   id: TemplateType;
   name: string;
-  // Removed bgColor, textColor as styles will be more complex
-  // imageUrl?: string; // Removed as we won't have a simple preview image
 }
 
 interface QRCodeTemplatesProps {
@@ -23,16 +20,16 @@ const templates: TemplateOption[] = [
     name: 'Original Product',
   },
   {
-    id: 'classic1',
-    name: 'Original Product1',
+    id: 'modern-blue',
+    name: 'Modern Blue',
   },
   {
-    id: 'classic2',
-    name: 'Original Product2',
+    id: 'modern-beige',
+    name: 'Modern Beige',
   },
   {
-    id: 'classic3',
-    name: 'Original Product3',
+    id: 'arabic',
+    name: 'Arabic',
   },
 ];
 
@@ -63,7 +60,7 @@ const QRCodeTemplates: React.FC<QRCodeTemplatesProps> = ({ selectedTemplate, onS
                   {/* Simplified preview representation */}
                   <div className="h-40 w-40 flex items-center justify-center rounded-sm border">
                     <span className="text-sm font-medium text-center">{template.name} Preview</span>
-                    </div>
+                  </div>
                 </CardContent>
               </Card>
             </Label>

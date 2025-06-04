@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,12 +11,14 @@ interface FeedbackFormProps {
   qrId: string;
   successBackground?: string;
   successText?: string;
+  onClose?: () => void;
 }
 
 const FeedbackForm: React.FC<FeedbackFormProps> = ({ 
   qrId, 
   successBackground = "#f0fdf4", 
-  successText = "#16a34a" 
+  successText = "#16a34a",
+  onClose
 }) => {
   const [feedback, setFeedback] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);

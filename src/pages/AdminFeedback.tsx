@@ -19,6 +19,9 @@ type Review = {
   created_at: string;
   qr_codes?: {
     sequential_number: string;
+    product: {
+      name: string;
+    };
   };
 };
 
@@ -56,7 +59,7 @@ const AdminFeedback = () => {
           .from('product_reviews')
           .select(`
             *,
-            qr_codes(sequential_number)
+            qr_codes(sequential_number, product:products(name))
           `)
           .order('created_at', { ascending: false });
         
@@ -171,6 +174,7 @@ const AdminFeedback = () => {
                     <TableHeader>
                       <TableRow>
                         <TableHead>Rating</TableHead>
+                        <TableHead>Product</TableHead>
                         <TableHead>QR Code</TableHead>
                         <TableHead>Comment</TableHead>
                         <TableHead>Images</TableHead>
@@ -185,6 +189,9 @@ const AdminFeedback = () => {
                             <div className="flex">
                               {renderStars(review.rating)}
                             </div>
+                          </TableCell>
+                          <TableCell>
+                            {review.qr_codes?.product?.name || 'N/A'}
                           </TableCell>
                           <TableCell>
                             {review.qr_codes?.sequential_number || 'N/A'}
@@ -339,6 +346,11 @@ const AdminFeedback = () => {
                 <div className="flex mt-1">
                   {renderStars(selectedReview.rating)}
                 </div>
+              </div>
+              
+              <div>
+                <h4 className="font-medium">Product</h4>
+                <p className="mt-1">{selectedReview.qr_codes?.product?.name || 'N/A'}</p>
               </div>
               
               <div>

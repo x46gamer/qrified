@@ -12,12 +12,14 @@ interface ReviewFormProps {
   qrId: string;
   successBackground?: string;
   successText?: string;
+  onClose?: () => void;
 }
 
 const ReviewForm: React.FC<ReviewFormProps> = ({ 
   qrId, 
   successBackground = "#f0fdf4", 
-  successText = "#16a34a" 
+  successText = "#16a34a",
+  onClose
 }) => {
   const [rating, setRating] = useState<number>(0);
   const [comment, setComment] = useState<string>('');

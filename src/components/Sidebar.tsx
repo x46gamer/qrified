@@ -166,6 +166,13 @@ const Sidebar: React.FC<SidebarProps> = ({
             </span>
           </NavLink>
 
+          <NavLink to="/stats" className={({ isActive }) => cn("flex items-center py-2 rounded-lg text-sm transition-colors duration-200", isActive ? "bg-blue-50 text-blue-600" : "text-gray-700 hover:bg-gray-100", isOpen ? "px-3" : "px-2 justify-center")}> 
+            <LineChart size={20} className="shrink-0" />
+            <span className={cn("ml-3 transition-opacity duration-300", isOpen ? "opacity-100" : "opacity-0 hidden")}> 
+              Analytics
+            </span>
+          </NavLink>
+
           <NavLink to="/dashboard?tab=generate" className={({
             isActive
           }) => cn("flex items-center py-2 rounded-lg text-sm transition-colors duration-200", 
