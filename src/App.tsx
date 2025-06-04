@@ -11,7 +11,7 @@ import RefundPolicyPage from './pages/RefundPolicyPage';
 import ContactPage from './pages/ContactPage';
 import BlogPage from './pages/BlogPage';
 import ProductCheck from './pages/ProductCheck';
-import Login from './pages/login';
+import Login from './pages/Login';
 import Signup from './pages/Signup';
 import ForgotPassword from './pages/ForgotPassword';
 import NotFound from './pages/NotFound';
