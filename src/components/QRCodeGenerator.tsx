@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,6 +17,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { UserLimits } from "@/types/userLimits";
+import { toPng } from 'html-to-image';
 
 interface QRCodeGeneratorProps {
   onQRCodesGenerated: (qrCodes: any[]) => void;
@@ -69,6 +70,8 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
   const template = watch('template');
   const quantity = watch('quantity');
   const baseUrl = watch('baseUrl');
+
+  const templatePreviewRef = useRef<HTMLDivElement>(null);
 
   // Fetch user limits on component mount
   useEffect(() => {
@@ -258,18 +261,78 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
           throw new Error('Encryption failed or produced invalid output');
         }
         
-        const dataUrl = await generateQRCodeImage(url, {
+        // Generate QR code image data URL (this is just the QR code, not the template)
+        const qrCodeOnlyDataUrl = await generateQRCodeImage(url, {
           template: data.template,
           primaryColor,
           secondaryColor,
           size: 300,
         });
-        
-        if (!dataUrl || !dataUrl.startsWith('data:image/png;base64,')) {
+
+        if (!qrCodeOnlyDataUrl || !qrCodeOnlyDataUrl.startsWith('data:image/png;base64,')) {
           throw new Error('QR code generation failed or produced invalid data URL');
         }
-        
-        console.log('Generated QR code data URL length:', dataUrl.length);
+
+        console.log('Generated QR code only data URL length:', qrCodeOnlyDataUrl.length);
+
+        // Update the preview state to show the newly generated QR code and template data
+        setPreviewQRCode(qrCodeOnlyDataUrl);
+        // We also need to ensure other preview state is updated if necessary, e.g., colors, text
+        // For now, assuming the component already watches the form data and colors via `watch` and state
+
+        // Wait for the DOM to update with the new preview and for the inner image to load
+        if (templatePreviewRef.current) {
+            await new Promise<void>((resolve, reject) => {
+                // A small timeout to allow React to update the DOM
+                setTimeout(() => {
+                    const imgElement = templatePreviewRef.current?.querySelector('img');
+                    if (imgElement) {
+                        if (imgElement.complete && imgElement.naturalHeight !== 0) {
+                            // Image is already loaded
+                            resolve();
+                        } else {
+                            imgElement.onload = () => resolve();
+                            imgElement.onerror = (e) => {
+                                console.error('Error loading inner QR code image in preview:', e);
+                                resolve(); // Resolve to attempt capture anyway
+                            };
+                        }
+                    } else {
+                        // No image found, proceed without waiting for image load
+                        console.warn('No image element found in preview div.');
+                        resolve();
+                    }
+                }, 100); // Small delay to allow DOM update
+            });
+        }
+
+        // Capture the rendered preview component as a PNG image
+        let dataUrl = '';
+        if (templatePreviewRef.current) {
+            try {
+               dataUrl = await toPng(templatePreviewRef.current, {
+                cacheBust: true,
+                skipFonts: true,
+              });
+            } catch (imgCaptureError) {
+                console.error('Error capturing preview image:', imgCaptureError);
+                // Fallback: use the QR code only if capture fails
+                dataUrl = qrCodeOnlyDataUrl;
+                toast.warning('Failed to capture full QR code template image from preview, using QR code only.');
+            }
+        } else {
+             console.error('Template preview ref is not available for capture.');
+             // Fallback if ref is not available
+             dataUrl = qrCodeOnlyDataUrl;
+             toast.warning('Template preview not available for capture, using QR code only.');
+        }
+
+        if (!dataUrl || !dataUrl.startsWith('data:image/png;base64,')) {
+          // If image capture failed and fallback didn't work or produced invalid data
+          throw new Error('Failed to generate QR code template image.');
+        }
+
+        console.log('Generated QR code template image data URL length:', dataUrl.length);
         
         qrCodes.push({
           id,
@@ -610,7 +673,10 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
                   
                   <div className="mt-4 flex justify-center items-center"> {/* Added items-center */}
                     {/* Changed dimensions here */}
-                    <div className="w-[250px] h-[400px] border rounded-md p-2 flex justify-center items-center bg-gray-50">
+                    <div
+                        className="w-[250px] h-[400px] border rounded-md flex justify-center items-center"
+                        ref={templatePreviewRef} // Attach the ref here
+                    >
                       <QRCodeTemplatePreview
                         template={template}
                         primaryColor={primaryColor}
