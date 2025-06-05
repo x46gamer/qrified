@@ -35,24 +35,41 @@ const EmployeeSignup = () => {
         // Verify the token and get the invited email
         const { data, error } = await supabase
           .from('user_invites')
-          .select('email')
+          .select('email, expires_at, accepted_at') // Select more fields for debugging
           .eq('token', token)
-          .is('accepted_at', null) // Ensure it hasn't been used
-          .gte('expires_at', new Date().toISOString()) // Ensure it hasn't expired
-          .single();
+          .single(); // Keep single to expect one result
 
-        if (error || !data) {
-          console.error('Invitation verification failed:', error);
-          setError('Invalid, expired, or already used invitation token.');
+        if (error) {
+          console.error('Invitation verification Supabase error:', error);
+          setError(`Invitation verification failed: ${error.message}`);
           setInvitationValid(false);
+        } else if (!data) {
+           console.warn('Invitation token not found:', token);
+           setError('Invalid, expired, or already used invitation token.');
+           setInvitationValid(false);
         } else {
-          setEmail(data.email);
-          setInvitationValid(true);
-          setError(null);
+           // Check if the invitation is expired or already accepted manually
+           const now = new Date();
+           const expiresAtDate = new Date(data.expires_at);
+
+           if (data.accepted_at !== null) {
+              console.warn('Invitation already accepted:', token);
+              setError('Invalid, expired, or already used invitation token.');
+              setInvitationValid(false);
+           } else if (expiresAtDate < now) {
+              console.warn('Invitation expired:', token, 'Expires at:', expiresAtDate, 'Current time:', now);
+              setError('Invalid, expired, or already used invitation token.');
+              setInvitationValid(false);
+           } else {
+              console.log('Invitation token valid:', token, 'Email:', data.email);
+              setEmail(data.email);
+              setInvitationValid(true);
+              setError(null);
+           }
         }
       } catch (err: any) {
-        console.error('Error verifying invitation:', err);
-        setError('An error occurred while verifying the invitation.');
+        console.error('Unexpected error verifying invitation:', err);
+        setError(err.message || 'An error occurred while verifying the invitation.');
         setInvitationValid(false);
       } finally {
         setIsLoading(false);
