@@ -125,7 +125,7 @@ const ProductCheck = () => {
         setQrCode(mappedQr);
         console.log('QR code status - isEnabled:', mappedQr.is_enabled, 'isScanned:', mappedQr.is_scanned);
         
-        // --- NEW LOGIC: Fetch QR Code Owner's Settings ---
+        // --- Fetch QR Code Owner's Settings ---
         if (mappedQr.user_id) {
           const { data: settingsData, error: settingsError } = await supabase
             .from('app_settings')
@@ -147,7 +147,7 @@ const ProductCheck = () => {
            console.log('QR code does not have a user_id, using default settings.');
            setLocalSettings(DEFAULT_SETTINGS);
         }
-        // --- END NEW LOGIC ---
+        // --- End Fetch Logic ---
 
         // Check if QR code is valid for verification
         if (!mappedQr.is_enabled) {
