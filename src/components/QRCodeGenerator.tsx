@@ -46,7 +46,7 @@ const DEFAULT_VALUES: FormValues = {
   quantity: 1,
   productData: "",
   template: "classic",
-  baseUrl: typeof window !== 'undefined' ? window.location.origin : '', // Handle SSR
+  baseUrl: import.meta.env.VITE_APP_BASE_URL || (typeof window !== 'undefined' ? window.location.origin : ''), // Use env var, fallback to window.location.origin
   headerText: "Product Authentication",
   instructionText: "Scan this QR code to verify the authenticity of your product",
   footerText: "Thank you for choosing our product",
@@ -153,9 +153,11 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
     fetchVerifiedDomains();
   }, [user]);
 
-  // Set the base URL on component mount if window is defined
+  // Set the base URL on component mount if window is defined or env var exists
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (import.meta.env.VITE_APP_BASE_URL) {
+       setValue('baseUrl', import.meta.env.VITE_APP_BASE_URL);
+    } else if (typeof window !== 'undefined') {
       setValue('baseUrl', window.location.origin);
     }
   }, [setValue]);
@@ -195,9 +197,10 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
   // Generate a preview QR code whenever template or colors change
   useEffect(() => {
     const generatePreview = async () => {
-      if (typeof window === 'undefined') return; // Don't run on server
+      if (typeof window === 'undefined' && !import.meta.env.VITE_APP_BASE_URL) return; // Don't run on server without env var
       try {
-        const previewUrl = `${window.location.origin}/check?id=preview`;
+        // Use environment variable for preview URL if available, otherwise fallback to window.location.origin
+        const previewUrl = `${import.meta.env.VITE_APP_BASE_URL || window.location.origin}/check?id=preview`;
         const dataUrl = await generateQRCodeImage(previewUrl, {
           template,
           primaryColor,
@@ -226,8 +229,9 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
       console.log('Generating QR codes with data:', data);
       console.log('Current user:', user);
 
-      if (!data.productData || data.productData.trim() === '') {
-        toast.error('Please enter valid product data');
+      // Check if a product is selected or a new product name is entered
+      if ((!newProductName || newProductName.trim() === '') && !selectedProductId) {
+        toast.error('Please enter or select a product.');
         setIsGenerating(false);
         return;
       }

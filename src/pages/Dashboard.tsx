@@ -157,12 +157,23 @@ const Dashboard = () => {
       },
     ],
   });
+  const [showWarningPopup, setShowWarningPopup] = useState(false);
   const { user } = useAuth();
   const [bestReviews, setBestReviews] = useState<Array<{
     product: string;
     review: string;
     rating: number;
   }>>([]);
+
+  // Add state variables for all-time statistics
+  const [totalScans, setTotalScans] = useState<number>(0);
+  const [verifiedScans, setVerifiedScans] = useState<number>(0);
+  const [declinedScans, setDeclinedScans] = useState<number>(0);
+  const [reviewedScans, setReviewedScans] = useState<number>(0);
+
+  // State for date range filter
+  const [startDate, setStartDate] = useState<string | null>(null);
+  const [endDate, setEndDate] = useState<string | null>(null);
 
   const [mostScannedQRCodes, setMostScannedQRCodes] = useState<{
     code: string;
@@ -180,26 +191,135 @@ const Dashboard = () => {
     scans: number;
   }[]>([]);
 
+  // Add state variable for most scanned products
+  const [mostScannedProducts, setMostScannedProducts] = useState<{ name: string; scans: number }[]>([]);
+
   // Fetch and process scan data for various dashboard sections
   useEffect(() => {
     const fetchAndProcessScanData = async () => {
-      if (!user) return; // Don't fetch if user is not logged in
+      if (!user) return;
 
       try {
-        // Fetch all scanned QR codes for the user
-        const { data: scannedQRCodes, error: fetchError } = await supabase
+        let totalQuery = supabase
           .from('qr_codes')
-          .select('scanned_at, scanned_city, scanned_country, sequential_number, is_scanned, id, product_id, products(name), failed_scan_attempts') // Select failed_scan_attempts
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', user.id);
+
+        if (startDate) {
+          totalQuery = totalQuery.gte('created_at', startDate);
+        }
+        if (endDate) {
+          const nextDay = new Date(endDate);
+          nextDay.setDate(nextDay.getDate() + 1);
+          totalQuery = totalQuery.lt('created_at', nextDay.toISOString());
+        }
+
+        // Fetch total count of all QR codes for the user
+        const { count: totalCount, error: totalCountError } = await totalQuery;
+
+        if (totalCountError) {
+          console.error('Error fetching total QR code count:', totalCountError);
+        } else {
+          setTotalScans(totalCount || 0);
+        }
+
+        let verifiedQuery = supabase
+          .from('qr_codes')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', user.id)
+          .eq('is_scanned', true);
+
+        if (startDate) {
+          verifiedQuery = verifiedQuery.gte('scanned_at', startDate);
+        }
+        if (endDate) {
+          const nextDay = new Date(endDate);
+          nextDay.setDate(nextDay.getDate() + 1);
+          verifiedQuery = verifiedQuery.lt('scanned_at', nextDay.toISOString());
+        }
+
+        // Fetch count of verified scans (is_scanned = true)
+        const { count: verifiedCount, error: verifiedCountError } = await verifiedQuery;
+
+        if (verifiedCountError) {
+          console.error('Error fetching verified scan count:', verifiedCountError);
+        } else {
+          setVerifiedScans(verifiedCount || 0);
+        }
+
+        // Fetch all QR codes for the user within the date range to sum failed attempts
+        let declinedQuery = supabase
+          .from('qr_codes')
+          .select('id, failed_scan_attempts') // Select data to calculate total failed attempts
+          .eq('user_id', user.id);
+
+        // Apply date filter on created_at
+        if (startDate) {
+          declinedQuery = declinedQuery.gte('created_at', startDate);
+        }
+        if (endDate) {
+          const nextDay = new Date(endDate);
+          nextDay.setDate(nextDay.getDate() + 1);
+          declinedQuery = declinedQuery.lt('created_at', nextDay.toISOString());
+        }
+
+        // Execute the query to get the data
+        const { data: declinedData, error: declinedCountError } = await declinedQuery;
+
+        if (declinedCountError) {
+          console.error('Error fetching QR code data for failed attempts:', declinedCountError);
+        } else {
+          // Calculate total failed attempts from the fetched data
+          const totalFailedAttempts = declinedData?.reduce((sum, qr) => sum + (qr.failed_scan_attempts || 0), 0) || 0;
+          setDeclinedScans(totalFailedAttempts); // Set total failed attempts as the declined count
+        }
+
+        let reviewedQuery = supabase
+          .from('product_reviews')
+          .select('id', { count: 'exact', head: true });
+          // Reviews are linked to qr_codes which are linked to users, no direct user_id on product_reviews
+          // To filter by user and date, we might need a more complex query or rethink the schema/RLS
+          // For now, filtering only by date on the review creation time
+
+        if (startDate) {
+          reviewedQuery = reviewedQuery.gte('created_at', startDate);
+        }
+        if (endDate) {
+          const nextDay = new Date(endDate);
+          nextDay.setDate(nextDay.getDate() + 1);
+          reviewedQuery = reviewedQuery.lt('created_at', nextDay.toISOString());
+        }
+
+        // Fetch count of product reviews
+        const { count: reviewedCount, error: reviewedCountError } = await reviewedQuery;
+
+        if (reviewedCountError) {
+          console.error('Error fetching reviewed scan count:', reviewedCountError);
+        } else {
+          setReviewedScans(reviewedCount || 0);
+        }
+
+        let scannedQRCodesQuery = supabase
+          .from('qr_codes')
+          .select('scanned_at, scanned_city, scanned_country, sequential_number, is_scanned, id, product_id, products(name), failed_scan_attempts')
           .eq('is_scanned', true) // Only get successfully scanned codes
           .eq('user_id', user.id); // Filter for current user's QR codes
+
+        if (startDate) {
+          scannedQRCodesQuery = scannedQRCodesQuery.gte('scanned_at', startDate);
+        }
+        if (endDate) {
+          const nextDay = new Date(endDate);
+          nextDay.setDate(nextDay.getDate() + 1);
+          scannedQRCodesQuery = scannedQRCodesQuery.lt('scanned_at', nextDay.toISOString());
+        }
+
+        // Fetch all scanned QR codes for the user
+        const { data: scannedQRCodes, error: fetchError } = await scannedQRCodesQuery;
 
         if (fetchError) {
           console.error('Error fetching scanned QR codes:', fetchError);
           // Optionally set error state for the user
-          return;
-        }
-
-        if (!scannedQRCodes) {
           setLatestScansData([]);
           // Set peak hours data to all zeros if no scans
           setPeakHoursChartData({
@@ -215,12 +335,41 @@ const Dashboard = () => {
               },
             ],
           });
+          setMostScannedQRCodes([]);
+          setMostScanningCitiesData([]);
+          setMostScanningCountriesData([]);
+          setMostScannedProducts([]);
+          setBestReviews([]); // Also clear reviews if no scan data
           return;
         }
 
+        if (!scannedQRCodes || scannedQRCodes.length === 0) {
+             setLatestScansData([]);
+             // Set peak hours data to all zeros if no scans
+             setPeakHoursChartData({
+               labels: Array.from({ length: 24 }, (_, i) => `${i}h`),
+               datasets: [
+                 {
+                   label: 'Scans',
+                   data: Array.from({ length: 24 }, () => 0),
+                   borderColor: 'rgba(59, 130, 246, 1)',
+                   borderWidth: 2,
+                   fill: true,
+                   backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                 },
+               ],
+             });
+             setMostScannedQRCodes([]);
+             setMostScanningCitiesData([]);
+             setMostScanningCountriesData([]);
+             setMostScannedProducts([]);
+             setBestReviews([]); // Also clear reviews if no scan data
+             return;
+           }
+
         // --- Process data for Latest Scans ---
         // Ensure scannedQRCodes is treated as an array of potential QR codes
-        const validScans = scannedQRCodes ? (scannedQRCodes as Partial<QRCode>[]).filter(scan => scan && scan.id) : [];
+        const validScans = scannedQRCodes ? (scannedQRCodes as Partial<QRCode>[]).filter(scan => scan && scan.id && scan.scanned_at) : []; // Filter out scans without scanned_at for date filtering
 
         const latestScans = validScans
           .sort((a, b) => new Date((b as any).scanned_at).getTime() - new Date((a as any).scanned_at).getTime())
@@ -233,7 +382,7 @@ const Dashboard = () => {
             city: scan.scanned_city || 'N/A', // Use fetched city data
             country: scan.scanned_country || 'N/A', // Use fetched country data
             time: scan.scanned_at ? new Date(scan.scanned_at).toLocaleString() : 'N/A', // Format scanned_at
-            qrCode: formattedSequentialNumber, // Use formatted sequential number for QR code display
+            qrCode: formattedSequentialNumber,
             status: scan.is_scanned ? 'success' : 'failed', // Status based on is_scanned
           };
         });
@@ -275,20 +424,19 @@ const Dashboard = () => {
         const suspiciousQRCodes = (validScans as QRCode[]) // Cast to QRCode[] after filtering
           .filter(qr => qr.failed_scan_attempts && qr.failed_scan_attempts > 0) // Filter for QRs with failed attempts
           .sort((a, b) => (b.failed_scan_attempts || 0) - (a.failed_scan_attempts || 0)) // Sort by failed attempts descending
+          .slice(0, 8) // Limit to 8 codes
           .map(qr => ({
             code: String(qr.sequential_number).padStart(6, '0'),
             unsuccessful: qr.failed_scan_attempts || 0,
-            warning: (qr.failed_scan_attempts || 0) > 10, // Set warning to true only if failed attempts > 10
+            warning: (qr.failed_scan_attempts || 0) > 10,
           }));
 
-        // Update the state for suspicious QR codes (assuming a state variable for this exists or will be added)
-        setMostScannedQRCodes(suspiciousQRCodes); // Using existing state for now
+        setMostScannedQRCodes(suspiciousQRCodes);
 
         // --- Process data for Cities and Countries ---
         const cityCounts: { [key: string]: number } = {};
         const countryCounts: { [key: string]: number } = {};
 
-        // Ensure scannedQRCodes is treated as an array of potential QR codes
         validScans.forEach(scan => {
           if (scan.scanned_city) {
             cityCounts[scan.scanned_city] = (cityCounts[scan.scanned_city] || 0) + 1;
@@ -298,7 +446,6 @@ const Dashboard = () => {
           }
         });
 
-        // Convert counts to sorted arrays
         const sortedCities = Object.entries(cityCounts)
           .map(([city, scans]) => ({ city, scans }))
           .sort((a, b) => b.scans - a.scans);
@@ -307,27 +454,56 @@ const Dashboard = () => {
           .map(([country, scans]) => ({ country, scans }))
           .sort((a, b) => b.scans - a.scans);
 
-        // Update state variables
         setMostScanningCitiesData(sortedCities);
         setMostScanningCountriesData(sortedCountries);
 
-        // Fetch best reviews for each product
-        const { data: reviewsData, error: reviewsError } = await supabase
+        let reviewsQuery = supabase
           .from('product_reviews')
           .select(`
             *,
-            qr_codes!inner(product:products!inner(name))
+            qr_codes!inner(
+              product_id,
+              products!inner(
+                name
+              )
+            )
           `)
           .order('rating', { ascending: false });
 
+        // Filter reviews by date on created_at
+        if (startDate) {
+          reviewsQuery = reviewsQuery.gte('created_at', startDate);
+        }
+        if (endDate) {
+          const nextDay = new Date(endDate);
+          nextDay.setDate(nextDay.getDate() + 1);
+          reviewsQuery = reviewsQuery.lt('created_at', nextDay.toISOString());
+        }
+
+        // Fetch best reviews for each product
+        const { data: reviewsData, error: reviewsError } = await reviewsQuery;
+
         if (reviewsError) {
           console.error('Error fetching reviews:', reviewsError);
+          // Handle the specific Supabase error if possible, or just return
+          console.error('Supabase Error Details:', reviewsError.details, reviewsError.hint, reviewsError.message);
+          setBestReviews([]); // Clear reviews on error
+          // NOTE: The linter error 'Property 'products' does not exist on type 'SelectQueryError<...>' might still persist here
+          // This indicates an issue with Supabase's type generation or the query itself when there are errors.
           return;
         }
 
         // Group reviews by product and get the best review for each
         const reviewsByProduct = reviewsData.reduce((acc: { [key: string]: any[] }, review) => {
-          const productName = review.qr_codes?.product?.name || 'Unknown Product';
+          let productName = 'Default Product';
+          // Safely access the product name using optional chaining and checks
+          // Access 'products' here based on the query alias
+          // Use a more robust check to satisfy linter
+          const productData = review.qr_codes?.products;
+          if (productData && typeof productData === 'object' && 'name' in productData && typeof productData.name === 'string') {
+               productName = productData.name;
+          }
+
           if (!acc[productName]) {
             acc[productName] = [];
           }
@@ -336,16 +512,55 @@ const Dashboard = () => {
         }, {});
 
         // Get the best review for each product
-        const bestReviewsData = Object.entries(reviewsByProduct).map(([product, reviews]) => {
-          const bestReview = reviews[0]; // Already sorted by rating
+        const bestReviewsData = Object.entries(reviewsByProduct).map(([productName, reviews]) => {
+          const bestReview = reviews[0]; // Since we ordered by rating desc, the first review is the best
           return {
-            product,
+            product: productName,
             review: bestReview.comment || 'No comment provided',
             rating: bestReview.rating
           };
         });
 
         setBestReviews(bestReviewsData);
+
+        let scannedProductsQuery = supabase
+          .from('qr_codes')
+          .select(`
+            product_id,
+            products(name),
+            is_scanned
+          `)
+          .eq('is_scanned', true)
+          .eq('user_id', user.id);
+
+        // Filter scanned products by date on scanned_at
+        if (startDate) {
+          scannedProductsQuery = scannedProductsQuery.gte('scanned_at', startDate);
+        }
+        if (endDate) {
+          const nextDay = new Date(endDate);
+          nextDay.setDate(nextDay.getDate() + 1);
+          scannedProductsQuery = scannedProductsQuery.lt('scanned_at', nextDay.toISOString());
+        }
+
+        // Fetch most scanned products
+        const { data: scannedProductsData, error: scannedProductsError } = await scannedProductsQuery;
+
+        if (scannedProductsError) {
+          console.error('Error fetching scanned products:', scannedProductsError);
+        } else if (scannedProductsData) {
+          const productScanCounts: { [key: string]: { name: string, scans: number } } = {};
+          scannedProductsData.forEach((qr: any) => {
+            const productId = qr.product_id;
+            const productName = qr.products?.name || 'Unknown Product'; // Keep Unknown for this specific count if product name is null
+            if (!productScanCounts[productId]) {
+              productScanCounts[productId] = { name: productName, scans: 0 };
+            }
+            productScanCounts[productId].scans += 1;
+          });
+          const sortedProducts = Object.values(productScanCounts).sort((a, b) => b.scans - a.scans);
+          setMostScannedProducts(sortedProducts);
+        }
 
       } catch (err) {
         console.error('Unexpected error fetching or processing scan data:', err);
@@ -354,15 +569,7 @@ const Dashboard = () => {
     };
 
     fetchAndProcessScanData();
-  }, [user]); // Re-run effect if user changes
-
-  const handleSaveLayout = () => {
-    toast.success('Layout saved successfully!');
-  };
-
-  const handleResetLayout = () => {
-    toast.success('Layout reset to default');
-  };
+  }, [user, startDate, endDate]); // Re-run effect if user or dates change
 
   const renderCardContent = (id: string) => {
     switch (id) {
@@ -500,16 +707,48 @@ const Dashboard = () => {
                 </tr>
               </thead>
               <tbody>
-                {mostScannedQRCodes.map((q) => (
+                {mostScannedQRCodes.slice(0, 8).map((q) => (
                   <tr key={q.code} className="border-b border-gray-100 hover:bg-gray-50">
                     <td className="py-2 px-4 text-sm">{q.code}</td>
                     <td className="py-2 px-4 text-sm text-right text-red-600 font-medium">{q.unsuccessful}</td>
                     <td className="py-2 px-4 text-sm text-center">
                       {q.warning && (
-                        <div className="inline-flex items-center gap-1 text-red-600">
-                          <AlertTriangle className="w-4 h-4" />
-                          <span>Warning</span>
-                        </div>
+                        <>
+                          <div 
+                            className="inline-flex items-center gap-1 text-red-600 cursor-pointer hover:text-red-700"
+                            onClick={() => setShowWarningPopup(true)}
+                          >
+                            <AlertTriangle className="w-4 h-4" />
+                            <span>Warning</span>
+                          </div>
+                          {showWarningPopup && (
+                            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center">
+                              <div className="bg-white rounded-lg p-6 max-w-md mx-4 relative">
+                                <button 
+                                  onClick={() => setShowWarningPopup(false)}
+                                  className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+                                >
+                                  <XCircle className="w-5 h-5" />
+                                </button>
+                                <div className="flex items-center gap-3 mb-4">
+                                  <AlertTriangle className="w-6 h-6 text-red-500" />
+                                  <h3 className="text-lg font-semibold text-gray-900">Suspicious Activity Detected</h3>
+                                </div>
+                                <p className="text-gray-700 mb-4">
+                                  This QR code was scanned multiple times and it's very suspicious to being copied. But QRified got you covered.
+                                </p>
+                                <div className="flex justify-end">
+                                  <button
+                                    onClick={() => setShowWarningPopup(false)}
+                                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                                  >
+                                    Got it
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </>
                       )}
                     </td>
                   </tr>
@@ -539,22 +778,47 @@ const Dashboard = () => {
         <h1 className="text-2xl font-semibold text-gray-900">
           Analytics Dashboard
         </h1>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            onClick={handleResetLayout}
-            className="flex items-center gap-2"
-          >
-            <RefreshCw className="w-4 h-4" />
-            Reset Layout
-          </Button>
-          <Button
-            onClick={handleSaveLayout}
-            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
-          >
-            <Save className="w-4 h-4" />
-            Save Layout
-          </Button>
+        <div className="flex items-center gap-4">
+          <div className="flex flex-col">
+            <label htmlFor="startDate" className="text-sm font-medium text-gray-700 mb-1">Start Date</label>
+            <input 
+              type="date" 
+              id="startDate"
+              value={startDate || ''}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2"
+            />
+          </div>
+          <div className="flex flex-col">
+            <label htmlFor="endDate" className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+            <input 
+              type="date" 
+              id="endDate"
+              value={endDate || ''}
+              onChange={(e) => setEndDate(e.target.value)}
+              className="rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* All Time Stats Band */}
+      <div className="bg-white rounded-lg shadow-sm p-6 mb-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 text-center">
+        <div>
+          <div className="text-3xl font-bold text-blue-600">{totalScans}</div>
+          <div className="text-sm text-gray-600">All Scans</div>
+        </div>
+        <div>
+          <div className="text-3xl font-bold text-blue-600">{verifiedScans}</div>
+          <div className="text-sm text-gray-600">All Verified</div>
+        </div>
+        <div>
+          <div className="text-3xl font-bold text-blue-600">{declinedScans}</div>
+          <div className="text-sm text-gray-600">All Declined</div>
+        </div>
+        <div>
+          <div className="text-3xl font-bold text-blue-600">{reviewedScans}</div>
+          <div className="text-sm text-gray-600">All Reviewed Scans</div>
         </div>
       </div>
 

@@ -13,13 +13,15 @@ interface ReviewFormProps {
   successBackground?: string;
   successText?: string;
   onClose?: () => void;
+  isRtl: boolean;
 }
 
 const ReviewForm: React.FC<ReviewFormProps> = ({ 
   qrId, 
   successBackground = "#f0fdf4", 
   successText = "#16a34a",
-  onClose
+  onClose,
+  isRtl
 }) => {
   const [rating, setRating] = useState<number>(0);
   const [comment, setComment] = useState<string>('');
@@ -33,15 +35,16 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    const validImages = files.filter(file => file.type.startsWith('image/'));
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/bmp', 'image/webp', 'image/svg+xml', 'image/tiff', 'image/x-icon']; // Common image MIME types
+    const validImages = files.filter(file => allowedTypes.includes(file.type));
     
     if (validImages.length !== files.length) {
-      toast.error('Please select only image files');
+      toast.error('Please select only valid image files (JPG, PNG, GIF, BMP, WEBP, SVG, TIFF, ICO)');
       return;
     }
     
-    if (images.length + validImages.length > 3) {
-      toast.error('Maximum 3 images allowed');
+    if (images.length + validImages.length > 2) {
+      toast.error('Maximum 2 images allowed');
       return;
     }
     
@@ -171,13 +174,14 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
           backgroundColor: successBackground, 
           color: successText 
         }}
+        dir={isRtl ? 'rtl' : 'ltr'}
       >
         <CardContent className="p-4 text-center">
           <div className="flex items-center justify-center mb-2">
             <Star className="h-6 w-6 fill-current" />
           </div>
-          <h3 className="font-medium mb-1">Review Submitted!</h3>
-          <p className="text-sm">Thank you for your feedback.</p>
+          <h3 className="font-medium mb-1">{isRtl ? 'تم إرسال التقييم!' : 'Review Submitted!'}</h3>
+          <p className="text-sm">{isRtl ? 'شكراً لك على ملاحظاتك.' : 'Thank you for your feedback.'}</p>
         </CardContent>
       </Card>
     );
@@ -186,13 +190,13 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle className="text-lg">Rate This Product</CardTitle>
+        <CardTitle className="text-lg">{isRtl ? 'قيم هذا المنتج' : 'Rate This Product'}</CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label>Rating</Label>
-            <div className="flex gap-1 mt-1">
+            <Label>{isRtl ? 'التقييم' : 'Rating'}</Label>
+            <div className="flex gap-1 mt-1 justify-center">
               {[1, 2, 3, 4, 5].map((star) => (
                 <button
                   key={star}
@@ -213,24 +217,24 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
           </div>
 
           <div>
-            <Label htmlFor="comment">Comment (Optional)</Label>
+            <Label htmlFor="comment">{isRtl ? 'تعليق (اختياري)' : 'Comment (Optional)'}</Label>
             <Textarea
               id="comment"
               value={comment}
               onChange={(e) => setComment(e.target.value)}
-              placeholder="Tell us about your experience with this product..."
+              placeholder={isRtl ? 'أخبرنا عن تجربتك مع هذا المنتج...' : 'Tell us about your experience with this product...'}
               rows={3}
               className="mt-1"
             />
           </div>
 
           <div>
-            <Label htmlFor="images">Images (Optional - Max 3)</Label>
+            <Label htmlFor="images">{isRtl ? 'الصور (اختياري - 2 كحد أقصى)' : 'Images (Optional - Max 2)'}</Label>
             <div className="mt-1">
               <Input
                 id="images"
                 type="file"
-                accept="image/*"
+                accept=".jpg,.jpeg,.png,.gif,.bmp,.webp,.svg,.tiff,.ico"
                 multiple
                 onChange={handleImageChange}
                 className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
@@ -264,7 +268,7 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
             disabled={isSubmitting || rating === 0}
             className="w-full"
           >
-            {isSubmitting ? 'Submitting...' : 'Submit Review'}
+            {isSubmitting ? (isRtl ? 'جارٍ الإرسال...' : 'Submitting...') : (isRtl ? 'إرسال التقييم' : 'Submit Review')}
           </Button>
         </form>
       </CardContent>
