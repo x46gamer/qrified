@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import ReviewForm from '@/components/ReviewForm';
 import FeedbackForm from '@/components/FeedbackForm';
-import { useAppearanceSettings, AppearanceSettings, DEFAULT_SETTINGS } from '@/contexts/AppearanceContext';
+import { AppearanceSettings, DEFAULT_SETTINGS } from '@/contexts/AppearanceContext';
 import { TemplateType } from '@/types/qrCode';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
@@ -25,64 +25,6 @@ const ProductCheck = () => {
   const [showFeedback, setShowFeedback] = useState(false);
   const [localSettings, setLocalSettings] = useState<AppearanceSettings>(DEFAULT_SETTINGS);
   const [verificationMessage, setVerificationMessage] = useState<string>('');
-  
-  // Get appearance settings
-  const themeContext = useAppearanceSettings();
-
-  // Load appearance settings from context or directly from Supabase if needed
-  useEffect(() => {
-    const loadDirectSettings = async () => {
-      try {
-        // Load settings directly from Supabase (for all users)
-        const { data, error } = await supabase
-          .from('app_settings')
-          .select('*')
-          .eq('id', 'theme')
-          .single();
-        
-        if (error && error.code !== 'PGRST116') {
-          console.error('Direct settings load error:', error);
-          return;
-        }
-        
-        if (data?.settings) {
-          const loadedSettings = data.settings as unknown as AppearanceSettings;
-          console.log('Direct loaded settings:', loadedSettings);
-          setLocalSettings(prev => ({
-            ...prev,
-            ...loadedSettings
-          }));
-        }
-      } catch (err) {
-        console.error('Error loading direct settings:', err);
-      }
-    };
-    
-    // First try to use context settings
-    if (!themeContext.isLoading) {
-      console.log('Using context settings:', themeContext);
-      setLocalSettings({
-        ...DEFAULT_SETTINGS,
-        ...themeContext
-      });
-    } else {
-      // If context is loading, try direct load
-      loadDirectSettings();
-    }
-    
-    // Listen for settings updates from other tabs
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'appearance_updated') {
-        loadDirectSettings();
-      }
-    };
-    
-    window.addEventListener('storage', handleStorageChange);
-    
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-    };
-  }, [themeContext]);
   
   // Helper function to increment failed scan attempts
   const incrementFailedAttempts = async (id: string) => {
@@ -183,11 +125,39 @@ const ProductCheck = () => {
         setQrCode(mappedQr);
         console.log('QR code status - isEnabled:', mappedQr.is_enabled, 'isScanned:', mappedQr.is_scanned);
         
+        // --- NEW LOGIC: Fetch QR Code Owner's Settings ---
+        if (mappedQr.user_id) {
+          const { data: settingsData, error: settingsError } = await supabase
+            .from('app_settings')
+            .select('settings')
+            .eq('id', mappedQr.user_id) // Fetch settings by QR code owner's user_id
+            .single();
+
+          if (settingsError && settingsError.code !== 'PGRST116') {
+            console.error('Error fetching owner\'s appearance settings:', settingsError);
+          } else if (settingsData?.settings) {
+             const ownerSettings = settingsData.settings as unknown as AppearanceSettings;
+             console.log('Loaded owner\'s appearance settings:', ownerSettings);
+             setLocalSettings(ownerSettings);
+          } else {
+             console.log('No custom settings found for owner, using defaults.');
+             setLocalSettings(DEFAULT_SETTINGS);
+          }
+        } else {
+           console.log('QR code does not have a user_id, using default settings.');
+           setLocalSettings(DEFAULT_SETTINGS);
+        }
+        // --- END NEW LOGIC ---
+
         // Check if QR code is valid for verification
         if (!mappedQr.is_enabled) {
           console.log('QR code is disabled');
           setIsVerified(false);
-          setVerificationMessage('This QR code has been disabled');
+          setVerificationMessage(
+            localSettings.isRtl 
+              ? `تم مسح رمز QR هذا بالفعل في ${mappedQr.scanned_at ? new Date(mappedQr.scanned_at).toLocaleString() : 'تاريخ غير معروف'}` 
+              : `This QR code was already scanned on ${mappedQr.scanned_at ? new Date(mappedQr.scanned_at).toLocaleString() : 'unknown date'}`
+          );
           setIsLoading(false);
           // Increment failed attempts if disabled
           console.log('Calling incrementFailedAttempts due to QR disabled.');
@@ -200,7 +170,7 @@ const ProductCheck = () => {
           console.log('QR code already scanned at:', mappedQr.scanned_at);
           setIsVerified(false);
           setVerificationMessage(
-            themeContext.isRtl 
+            localSettings.isRtl 
               ? `تم مسح رمز QR هذا بالفعل في ${mappedQr.scanned_at ? new Date(mappedQr.scanned_at).toLocaleString() : 'تاريخ غير معروف'}` 
               : `This QR code was already scanned on ${mappedQr.scanned_at ? new Date(mappedQr.scanned_at).toLocaleString() : 'unknown date'}`
           );
@@ -415,14 +385,15 @@ const ProductCheck = () => {
     <div className="min-h-screen flex flex-col items-center bg-gray-50 p-4 space-y-4">
       {/* Add the logo here */}
       {localSettings.logoUrl && (
-              <img 
-                src={localSettings.logoUrl} 
-                alt="Brand Logo" 
-                className="mx-auto mb-4" 
-                style={{ width: '10%', height: 'auto' }} 
-              />
-            )}{/* Apply RTL direction based on settings */}
-      <Card className={`w-full max-w-md shadow-lg ${getBgColor()} ${getTextColor()}`} dir={theme.isRtl ? 'rtl' : 'ltr'}>
+        <img 
+          src={localSettings.logoUrl} 
+          alt="Brand Logo" 
+          className="mx-auto mb-4" 
+          style={{ width: '70%', height: 'auto' }} // Adjusted width to 70%
+        />
+      )}
+      {/* Apply RTL direction based on settings */}
+      <Card className={`w-full max-w-md shadow-lg ${getBgColor()} ${getTextColor()}`} dir={localSettings.isRtl ? 'rtl' : 'ltr'}> {/* Use localSettings for dir */}
         <CardHeader>
           <CardTitle className="text-center text-2xl font-semibold flex items-center justify-center gap-2">
             {isLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : isVerified ? <CheckIcon className={`w-6 h-6 ${getIconColor()}`} /> : <XIcon className={`w-6 h-6 ${getIconColor()}`} />}
@@ -432,8 +403,7 @@ const ProductCheck = () => {
         <CardContent>
           {/* The main content of the verification page */}
           <div className="text-center">
-            
-
+            {/* Logo is now above the card */}
             {/* Display the description from appearance settings or specific messages */}
             <p className="text-sm mb-2">{getDescription()}</p>
 
@@ -446,23 +416,23 @@ const ProductCheck = () => {
             )}
           </div>
 
-          {isVerified === true && theme.enableReviews && theme.enableFeedback && (
+          {isVerified === true && localSettings.enableReviews && localSettings.enableFeedback && (
             <div className="flex flex-col space-y-4 mt-6">
                {/* Use button text from settings, fallback to default */}
                <Button
                  onClick={() => setShowReviews(true)}
-                 style={{ backgroundColor: theme.primaryColor, borderColor: theme.primaryColor, color: 'white' }}
+                 style={{ backgroundColor: localSettings.primaryColor, borderColor: localSettings.primaryColor, color: 'white' }}
                  className="hover:opacity-90 transition-opacity"
                >
-                 {theme.reviewButtonText || DEFAULT_SETTINGS.reviewButtonText}
+                 {localSettings.reviewButtonText || DEFAULT_SETTINGS.reviewButtonText}
                </Button>
                {/* Use button text from settings, fallback to default */}
                <Button
                  onClick={() => setShowFeedback(true)}
-                 style={{ backgroundColor: theme.primaryColor, borderColor: theme.primaryColor, color: 'white' }}
+                 style={{ backgroundColor: localSettings.primaryColor, borderColor: localSettings.primaryColor, color: 'white' }}
                  className="hover:opacity-90 transition-opacity"
                >
-                 {theme.feedbackButtonText || DEFAULT_SETTINGS.feedbackButtonText}
+                 {localSettings.feedbackButtonText || DEFAULT_SETTINGS.feedbackButtonText}
                </Button>
             </div>
           )}
@@ -470,16 +440,16 @@ const ProductCheck = () => {
       </Card>
 
       {/* Conditionally render ReviewForm below the card when verified, reviews are enabled, and the button is clicked */}
-      {isVerified === true && theme.enableReviews && showReviews && (
+      {isVerified === true && localSettings.enableReviews && showReviews && (
         <div className="w-full max-w-md transition-opacity duration-500 opacity-100">
-          <ReviewForm qrId={qrCode?.id} onClose={() => setShowReviews(false)} isRtl={theme.isRtl} />
+          <ReviewForm qrId={qrCode?.id} onClose={() => setShowReviews(false)} isRtl={localSettings.isRtl} />
         </div>
       )}
 
       {/* Conditionally render FeedbackForm below the card when verified, feedback is enabled, and the button is clicked */}
-      {isVerified === true && theme.enableFeedback && showFeedback && (
+      {isVerified === true && localSettings.enableFeedback && showFeedback && (
         <div className="w-full max-w-md transition-opacity duration-500 opacity-100">
-          <FeedbackForm qrId={qrCode?.id} onClose={() => setShowFeedback(false)} isRtl={theme.isRtl} />
+          <FeedbackForm qrId={qrCode?.id} onClose={() => setShowFeedback(false)} isRtl={localSettings.isRtl} />
         </div>
       )}
     </div>
