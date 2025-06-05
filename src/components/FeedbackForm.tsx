@@ -12,13 +12,15 @@ interface FeedbackFormProps {
   successBackground?: string;
   successText?: string;
   onClose?: () => void;
+  isRtl: boolean;
 }
 
 const FeedbackForm: React.FC<FeedbackFormProps> = ({ 
   qrId, 
   successBackground = "#f0fdf4", 
   successText = "#16a34a",
-  onClose
+  onClose,
+  isRtl
 }) => {
   const [feedback, setFeedback] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -72,13 +74,14 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({
           backgroundColor: successBackground, 
           color: successText 
         }}
+        dir={isRtl ? 'rtl' : 'ltr'}
       >
         <CardContent className="p-4 text-center">
           <div className="flex items-center justify-center mb-2">
             <MessageSquare className="h-6 w-6" />
           </div>
-          <h3 className="font-medium mb-1">Feedback Submitted!</h3>
-          <p className="text-sm">Thank you for helping us improve.</p>
+          <h3 className="font-medium mb-1">{isRtl ? 'تم إرسال الملاحظات!' : 'Feedback Submitted!'}</h3>
+          <p className="text-sm">{isRtl ? 'شكراً لمساعدتنا في التحسين.' : 'Thank you for helping us improve.'}</p>
         </CardContent>
       </Card>
     );
@@ -87,17 +90,17 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle className="text-lg">Give Feedback</CardTitle>
+        <CardTitle className="text-lg">{isRtl ? 'أعطِ ملاحظات' : 'Give Feedback'}</CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label htmlFor="feedback">Your Feedback</Label>
+            <Label htmlFor="feedback">{isRtl ? 'ملاحظاتك' : 'Your Feedback'}</Label>
             <Textarea
               id="feedback"
               value={feedback}
               onChange={(e) => setFeedback(e.target.value)}
-              placeholder="Please share your thoughts, suggestions, or report any issues..."
+              placeholder={isRtl ? 'يرجى مشاركة أفكارك أو اقتراحاتك أو الإبلاغ عن أي مشاكل...' : 'Please share your thoughts, suggestions, or report any issues...'}
               rows={4}
               className="mt-1"
               required
@@ -109,7 +112,7 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({
             disabled={isSubmitting || !feedback.trim()}
             className="w-full"
           >
-            {isSubmitting ? 'Submitting...' : 'Submit Feedback'}
+            {isSubmitting ? (isRtl ? 'جارٍ الإرسال...' : 'Submitting...') : (isRtl ? 'إرسال الملاحظات' : 'Submit Feedback')}
           </Button>
         </form>
       </CardContent>

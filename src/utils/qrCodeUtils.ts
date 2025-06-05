@@ -1,4 +1,3 @@
-
 import QRCode from 'qrcode';
 import CryptoJS from 'crypto-js';
 import { v4 as uuidv4 } from 'uuid';
@@ -113,7 +112,7 @@ export const generateQRCodeImage = async (data: string, options?: {
     // Using higher error correction for better scanning reliability
     const qrCodeDataUrl = await QRCode.toDataURL(data, {
       margin: 1,
-      width: options?.size || 300,
+      width: options?.size || 600,
       errorCorrectionLevel: 'H', // High error correction level
       color: {
         dark: options?.primaryColor || '#000000',

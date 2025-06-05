@@ -14,16 +14,14 @@ import { cn } from '@/lib/utils';
 
 interface ScanLog {
   id: string;
-  created_at: string;
-  qr_code_id: string;
-  ip_address?: string;
-  isp?: string;
-  location?: string; // Adjust if your column name is different (e.g., scanned_location)
-  city?: string;
-  country?: string;
-  user_agent?: string;
-  // Add the nested qr_codes relationship
-  qr_codes?: QRCode | null;
+  created_at: string; // Creation date of the QR code
+  scanned_at?: string; // Date of the latest scan
+  scanned_ip?: string; // IP address from the latest scan
+  scanned_isp?: string; // ISP from the latest scan
+  scanned_city?: string; // City from the latest scan
+  scanned_country?: string; // Country from the latest scan
+  product_id?: string; // Foreign key to products
+  product_name?: string; // Add the new product_name column
 }
 
 interface TopStat {
@@ -31,24 +29,26 @@ interface TopStat {
   count: number;
 }
 
-// Define sortable columns
+// Define sortable columns based on qr_codes table
 const sortableColumns = [
-  { value: 'created_at', label: 'Scan Time' },
-  { value: 'qr_code_id', label: 'QR Code ID' },
-  { value: 'ip_address', label: 'IP Address' },
-  { value: 'isp', label: 'ISP' },
-  { value: 'country', label: 'Country' },
-  { value: 'city', label: 'City' },
-  { value: 'user_agent', label: 'User Agent' },
+  { value: 'created_at', label: 'Creation Time' }, // Changed from Scan Time to Creation Time
+  { value: 'id', label: 'QR Code ID' }, // Changed from qr_code_id to id
+  { value: 'scanned_at', label: 'Latest Scan Time' }, // Added latest scan time
+  { value: 'scanned_ip', label: 'Latest Scan IP' },
+  { value: 'scanned_isp', label: 'Latest Scan ISP' },
+  { value: 'scanned_country', label: 'Latest Scan Country' },
+  { value: 'scanned_city', label: 'Latest Scan City' },
+  // user_agent is not directly on qr_codes table, remove from sortable if not available
+  // { value: 'user_agent', label: 'User Agent' }, // Removed user agent as it's not in qr_codes
 ];
 
 const ScanLogs = () => {
-  const [scanLogs, setScanLogs] = useState<ScanLog[]>([]);
+  const [qrCodesData, setQrCodesData] = useState<ScanLog[]>([]); // Renamed state to reflect QR code data
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
   // State for statistics
-  const [topDevices, setTopDevices] = useState<TopStat[]>([]);
+  const [topDevices, setTopDevices] = useState<TopStat[]>([]); // Keep for now, might remove later
   const [topCities, setTopCities] = useState<TopStat[]>([]);
   const [topCountries, setTopCountries] = useState<TopStat[]>([]);
 
@@ -64,35 +64,31 @@ const ScanLogs = () => {
     setIsLoading(true); // Set loading true before fetching
     setError(null); // Clear previous errors
     try {
+      // Fetch data from the qr_codes table
       const { data, error } = await supabase
-        .from('scan_logs')
-        .select('*, qr_codes(*)') // Select all from scan_logs and join qr_codes
+        .from('qr_codes') // Change table to qr_codes
+        .select('id, created_at, scanned_at, scanned_ip, scanned_isp, scanned_city, scanned_country, product_id, product_name') // Select new product_name column, remove products(name)
         .order(sortBy, { ascending: sortOrder === 'ascending' }); // Apply sorting
 
       if (error) {
         console.error('Error fetching scan logs:', error);
         setError(error.message);
         toast.error('Failed to load scan logs.');
-        setScanLogs([]); // Clear logs on error
+        setQrCodesData([]); // Clear data on error
       } else {
-        // Map the data to the ScanLog interface, adjusting column names if necessary
-        const mappedLogs: ScanLog[] = data.map(log => ({
-          id: log.id,
-          created_at: log.created_at,
-          qr_code_id: log.qr_code_id,
-          // Adjust these based on your actual database column names
-          ip_address: log.ip_address || log.scanned_ip || 'N/A', // Assuming one of these is used
-          isp: log.isp || log.scanned_isp || 'N/A',
-          location: log.location || log.scanned_location || 'N/A', // Assuming one of these is used
-          city: log.city || log.scanned_city || 'N/A',
-          country: log.country || log.scanned_country || 'N/A',
-          user_agent: log.user_agent || 'N/A',
-          qr_codes: log.qr_codes as QRCode | null, // Map the nested data
-        }));
-        setScanLogs(mappedLogs);
+        // Map the data to the ScanLog interface (now representing QR code data)
+        console.log('Fetched QR codes data:', data);
+        setQrCodesData(data as ScanLog[]);
+        
+        // Log product data for debugging
+        data.forEach((qrCode: any) => {
+          console.log(`QR Code ID: ${qrCode.id}, Product ID: ${qrCode.product_id}, Product Name: ${qrCode.product_name}`);
+        });
+
         // Only calculate stats if data is not empty
-        if (mappedLogs.length > 0) {
-           calculateAndSetStats(mappedLogs);
+        if (data.length > 0) {
+           // Pass the fetched QR code data for stats calculation
+           calculateAndSetStats(data as ScanLog[]);
         } else {
            // Clear stats if no data
            setTopDevices([]);
@@ -104,7 +100,7 @@ const ScanLogs = () => {
       console.error('Unexpected error fetching scan logs:', err);
       setError(err.message || 'An unexpected error occurred.');
       toast.error('An unexpected error occurred while loading scan logs.');
-      setScanLogs([]); // Clear logs on unexpected error
+      setQrCodesData([]); // Clear data on unexpected error
       setTopDevices([]); // Clear stats
       setTopCities([]);
       setTopCountries([]);
@@ -114,20 +110,16 @@ const ScanLogs = () => {
   };
 
   const calculateAndSetStats = (logs: ScanLog[]) => {
-    const deviceCounts: { [key: string]: number } = {};
     const cityCounts: { [key: string]: number } = {};
     const countryCounts: { [key: string]: number } = {};
 
-    logs.forEach(log => {
-      // Simple user agent parsing for device type (can be improved)
-      const device = log.user_agent ? (log.user_agent.includes('Mobile') ? 'Mobile' : 'Desktop') : 'Unknown';
-      deviceCounts[device] = (deviceCounts[device] || 0) + 1;
-
-      const city = log.city && log.city !== 'N/A' ? log.city : 'Unknown City';
-      cityCounts[city] = (cityCounts[city] || 0) + 1;
-
-      const country = log.country && log.country !== 'N/A' ? log.country : 'Unknown Country';
-      countryCounts[country] = (countryCounts[country] || 0) + 1;
+    logs.forEach(qrCode => {
+      if (qrCode.scanned_city) {
+        cityCounts[qrCode.scanned_city] = (cityCounts[qrCode.scanned_city] || 0) + 1;
+      }
+      if (qrCode.scanned_country) {
+        countryCounts[qrCode.scanned_country] = (countryCounts[qrCode.scanned_country] || 0) + 1;
+      }
     });
 
     const sortStats = (counts: { [key: string]: number }): TopStat[] => {
@@ -136,9 +128,10 @@ const ScanLogs = () => {
         .sort((a, b) => b.count - a.count);
     };
 
-    setTopDevices(sortStats(deviceCounts).slice(0, 5)); // Get top 5
-    setTopCities(sortStats(cityCounts).slice(0, 5)); // Get top 5
-    setTopCountries(sortStats(countryCounts).slice(0, 5)); // Get top 5
+    // Device stats are not available from qr_codes table directly, so set to empty
+    setTopDevices([]);
+    setTopCities(sortStats(cityCounts).slice(0, 5)); // Get top 5 cities
+    setTopCountries(sortStats(countryCounts).slice(0, 5)); // Get top 5 countries
   };
 
   const handleSortChange = (value: string) => {
@@ -152,24 +145,24 @@ const ScanLogs = () => {
   };
 
   const handleExportCsv = () => {
-    if (scanLogs.length === 0) {
+    if (qrCodesData.length === 0) {
       toast.info('No data to export.');
       return;
     }
 
-    const headers = ['Scan Time', 'QR Code ID', 'IP Address', 'ISP', 'Country', 'City', 'User Agent', 'Product Name'];
+    const headers = ['QR Code ID', 'Creation Time', 'Latest Scan Time', 'Latest Scan IP', 'Latest Scan ISP', 'Latest Scan Country', 'Latest Scan City', 'Product Name'];
     // Add headers for QR code data if you decide to show them
     // headers.push('QR Code URL', 'QR Code Header', 'QR Code Instruction', ...);
 
-    const rows = scanLogs.map(log => [
-      format(new Date(log.created_at), 'yyyy-MM-dd HH:mm:ss'),
-      `"${log.qr_code_id}"`, // Enclose in quotes to handle commas if any
-      log.ip_address || '',
-      log.isp || '',
-      log.country || '',
-      log.city || '',
-      `"${log.user_agent || ''}"`, // Enclose in quotes
-      log.qr_codes?.name || '' // Include product name
+    const rows = qrCodesData.map(qrCode => [
+      `"${qrCode.id}"`, // QR Code ID (keeping ID first for easier lookup in CSV)
+      format(new Date(qrCode.created_at), 'yyyy-MM-dd HH:mm:ss'),
+      qrCode.scanned_at ? format(new Date(qrCode.scanned_at), 'yyyy-MM-dd HH:mm:ss') : '', // Latest Scan Time
+      qrCode.scanned_ip || '',
+      qrCode.scanned_isp || '',
+      qrCode.scanned_country || '',
+      qrCode.scanned_city || '',
+      qrCode.product_name || '' // Use the new product_name column
     ]);
 
     const csvContent = [headers.join(','), ...rows.map(row => row.join(','))].join('\n');
@@ -184,10 +177,11 @@ const ScanLogs = () => {
     toast.success('Scan logs exported as CSV.');
   };
 
-  if (isLoading && scanLogs.length === 0) { // Show loading only on initial load
+  if (isLoading && qrCodesData.length === 0) { // Show loading only on initial load
     return (
       <div className="flex justify-center items-center h-screen">
         <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary"></div>
+        <span className="ml-4 text-lg text-gray-600">Loading scan logs...</span>
       </div>
     );
   }
@@ -254,61 +248,63 @@ const ScanLogs = () => {
                   ))}
                 </SelectContent>
               </Select>
+              {/* Add sort order indicator */}
+              {sortBy && (
+                <span className="text-sm text-gray-500 flex items-center">
+                  {sortOrder === 'ascending' ? '↑' : '↓'}
+                </span>
+              )}
             </div>
-            <Button onClick={handleExportCsv} className="flex items-center gap-2">
-              <ArrowUpDown className="w-4 h-4" />
-              Export CSV
+            <Button onClick={handleExportCsv} size="sm">
+              <ArrowUpDown className="mr-2 h-4 w-4" /> Export CSV
             </Button>
           </div>
-          {isLoading && scanLogs.length > 0 && ( // Show loading spinner above table when refreshing data
-             <div className="flex justify-center items-center py-4">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-             </div>
-          )}
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
+          
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>QR Code ID</TableHead>
+                <TableHead>Creation Time</TableHead>
+                <TableHead>Latest Scan Time</TableHead>
+                <TableHead>Latest Scan IP</TableHead>
+                <TableHead>Latest Scan ISP</TableHead>
+                <TableHead>Latest Scan Country</TableHead>
+                <TableHead>Latest Scan City</TableHead>
+                <TableHead>Product Name</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {isLoading && qrCodesData.length === 0 ? (
+                 <TableRow>
+                   <TableCell colSpan={8} className="text-center">
+                     <div className="flex justify-center items-center">
+                       <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mr-3"></div>
+                       Loading scan logs...
+                     </div>
+                   </TableCell>
+                 </TableRow>
+              ) : qrCodesData.length === 0 ? (
                 <TableRow>
-                  {sortableColumns.map(column => (
-                    <TableHead
-                      key={column.value}
-                      className="cursor-pointer hover:bg-gray-100"
-                      onClick={() => handleSortChange(column.value)}
-                    >
-                      <div className="flex items-center gap-1">
-                        {column.label}
-                        {sortBy === column.value && (
-                          <ArrowUpDown className={cn(
-                            "ml-2 h-4 w-4",
-                            sortOrder === 'descending' ? 'rotate-180' : 'rotate-0'
-                          )} />
-                        )}
-                      </div>
-                    </TableHead>
-                  ))}
-                  <TableHead>Product Name</TableHead>
+                  <TableCell colSpan={8} className="text-center">
+                    No scan logs found.
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {scanLogs.length > 0 ? (scanLogs.map((log) => (
-                  <TableRow key={log.id}>
-                    <TableCell>{format(new Date(log.created_at), 'yyyy-MM-dd HH:mm:ss')}</TableCell>
-                    <TableCell>{log.qr_code_id}</TableCell>
-                    <TableCell>{log.ip_address}</TableCell>
-                    <TableCell>{log.isp}</TableCell>
-                    <TableCell>{log.country}</TableCell>
-                    <TableCell>{log.city}</TableCell>
-                    <TableCell>{log.user_agent}</TableCell>
-                    <TableCell>{log.qr_codes?.name || 'N/A'}</TableCell>
+              ) : (
+                qrCodesData.map(qrCode => (
+                  <TableRow key={qrCode.id}>
+                    <TableCell>{qrCode.id}</TableCell>
+                    <TableCell>{format(new Date(qrCode.created_at), 'yyyy-MM-dd HH:mm:ss')}</TableCell>
+                    <TableCell>{qrCode.scanned_at ? format(new Date(qrCode.scanned_at), 'yyyy-MM-dd HH:mm:ss') : 'N/A'}</TableCell>
+                    <TableCell>{qrCode.scanned_ip || 'N/A'}</TableCell>
+                    <TableCell>{qrCode.scanned_isp || 'N/A'}</TableCell>
+                    <TableCell>{qrCode.scanned_country || 'N/A'}</TableCell>
+                    <TableCell>{qrCode.scanned_city || 'N/A'}</TableCell>
+                    <TableCell>{qrCode.product_name || 'N/A'}</TableCell>
                   </TableRow>
-                ))) : (
-                  <TableRow>
-                    <TableCell colSpan={sortableColumns.length + 1} className="text-center">No scan logs found.</TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
+                ))
+              )}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
     </div>

@@ -199,7 +199,11 @@ const ProductCheck = () => {
         if (mappedQr.is_scanned) {
           console.log('QR code already scanned at:', mappedQr.scanned_at);
           setIsVerified(false);
-          setVerificationMessage(`This QR code was already scanned on ${mappedQr.scanned_at ? new Date(mappedQr.scanned_at).toLocaleString() : 'unknown date'}`);
+          setVerificationMessage(
+            themeContext.isRtl 
+              ? `تم مسح رمز QR هذا بالفعل في ${mappedQr.scanned_at ? new Date(mappedQr.scanned_at).toLocaleString() : 'تاريخ غير معروف'}` 
+              : `This QR code was already scanned on ${mappedQr.scanned_at ? new Date(mappedQr.scanned_at).toLocaleString() : 'unknown date'}`
+          );
           setIsLoading(false);
           // Increment failed attempts if already scanned
           console.log('Calling incrementFailedAttempts due to already scanned.');
@@ -335,36 +339,39 @@ const ProductCheck = () => {
   const getTitle = () => {
     if (isLoading) return 'Verifying...';
     if (isVerified === null) return 'Checking QR Code...';
-    return isVerified ? (theme.successTitle || 'Product Verified') : (theme.failureTitle || 'Verification Failed');
+    // Use title from settings, fallback to default if not set
+    return isVerified ? (theme.successTitle || DEFAULT_SETTINGS.successTitle) : (theme.failureTitle || DEFAULT_SETTINGS.failureTitle);
   };
   
   const getDescription = () => {
     if (isLoading) return 'Please wait while we verify the QR code...';
     if (isVerified === null) return 'Connecting to server...';
-    return verificationMessage;
+    // Use description from settings for success/failure, otherwise use specific messages
+    if (isVerified === true) return theme.successDescription || DEFAULT_SETTINGS.successDescription;
+    if (isVerified === false) return theme.failureDescription || DEFAULT_SETTINGS.failureDescription;
+    return verificationMessage; // Fallback for specific error messages if needed
   };
   
   const getFooterText = () => {
-    return theme.footerText;
+    // Use footer text from settings for success/failure, otherwise maybe null or a general message?
+    // For now, let's use the success/failure footer texts based on status
+    if (isVerified === true) return theme.successFooterText || DEFAULT_SETTINGS.successFooterText;
+    if (isVerified === false) return theme.failureFooterText || DEFAULT_SETTINGS.failureFooterText;
+    return null; // No footer text when loading or pending
   };
   
   const renderTemplateContent = () => {
     if (!qrCode) return null; // Or a loading/error state
 
-    // Determine if RTL direction is needed for content
-    const contentDirection = qrCode.direction_rtl ? 'rtl' : 'ltr';
-
     return (
-      <div className="p-4" style={{ direction: contentDirection }}>
+      <div className="p-4">
         {theme.logoUrl && <img src={theme.logoUrl} alt="Logo" className="mx-auto h-12 mb-4" />}
-        <h2 className="text-center text-xl font-semibold mb-2">{qrCode.header_text || theme.headerText}</h2>
-        {qrCode.product?.name && (
-          <p className="text-center text-lg font-medium text-gray-700 mb-2">Product: {qrCode.product.name}</p>
-        )}
-        <p className="text-center text-gray-700 mb-4">{qrCode.instruction_text || theme.instructionText}</p>
+        {/* Removed hardcoded header and product name. Main title and description handled outside. */}
+        {/* Instruction text is also handled by getDescription */}
+
         {isVerified === true && productData && (
           <div className="text-center text-green-700 font-bold mb-4">
-            Authentic Product Data: {productData}
+            {theme.isRtl ? 'إسم المنتج:' : 'Authentic Product Data:'} {productData}
           </div>
         )}
         {isVerified === false && (
@@ -372,7 +379,7 @@ const ProductCheck = () => {
              {verificationMessage}
            </div>
         )}
-        {getFooterText() && <p className="text-center text-sm text-gray-600 mt-4">{getFooterText()}</p>}
+        {/* Footer text is now handled outside renderTemplateContent */}
       </div>
     );
   };
@@ -406,8 +413,9 @@ const ProductCheck = () => {
   }
   
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-      <Card className={`w-full max-w-md shadow-lg ${getBgColor()} ${getTextColor()}`}>
+    <div className="min-h-screen flex flex-col items-center bg-gray-50 p-4 space-y-4">
+      {/* Apply RTL direction based on settings */}
+      <Card className={`w-full max-w-md shadow-lg ${getBgColor()} ${getTextColor()}`} dir={theme.isRtl ? 'rtl' : 'ltr'}>
         <CardHeader>
           <CardTitle className="text-center text-2xl font-semibold flex items-center justify-center gap-2">
             {isLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : isVerified ? <CheckIcon className={`w-6 h-6 ${getIconColor()}`} /> : <XIcon className={`w-6 h-6 ${getIconColor()}`} />}
@@ -415,22 +423,55 @@ const ProductCheck = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {renderTemplateContent()}
-          {isVerified === true && (
+          {/* The main content of the verification page */}
+          <div className="text-center">
+            {/* Display the description from appearance settings or specific messages */}
+            <p className="text-sm mb-2">{getDescription()}</p>
+
+            {/* Render template-specific content if available and not loading */}
+            {!isLoading && renderTemplateContent()}
+
+            {/* Display the footer text from appearance settings when verified or failed */}
+            {(isVerified === true || isVerified === false) && getFooterText() && (
+              <p className="text-xs mt-4">{getFooterText()}</p>
+            )}
+          </div>
+
+          {isVerified === true && theme.enableReviews && theme.enableFeedback && (
             <div className="flex flex-col space-y-4 mt-6">
-               <Button onClick={() => setShowReviews(true)}>{theme.reviewButtonText || DEFAULT_SETTINGS.reviewButtonText}</Button>
-               <Button onClick={() => setShowFeedback(true)}>{theme.feedbackButtonText || DEFAULT_SETTINGS.feedbackButtonText}</Button>
+               {/* Use button text from settings, fallback to default */}
+               <Button
+                 onClick={() => setShowReviews(true)}
+                 style={{ backgroundColor: theme.primaryColor, borderColor: theme.primaryColor, color: 'white' }}
+                 className="hover:opacity-90 transition-opacity"
+               >
+                 {theme.reviewButtonText || DEFAULT_SETTINGS.reviewButtonText}
+               </Button>
+               {/* Use button text from settings, fallback to default */}
+               <Button
+                 onClick={() => setShowFeedback(true)}
+                 style={{ backgroundColor: theme.primaryColor, borderColor: theme.primaryColor, color: 'white' }}
+                 className="hover:opacity-90 transition-opacity"
+               >
+                 {theme.feedbackButtonText || DEFAULT_SETTINGS.feedbackButtonText}
+               </Button>
             </div>
           )}
         </CardContent>
       </Card>
 
-      {theme.enableReviews && (
-        <ReviewForm qrId={qrCode.id} onClose={() => setShowReviews(false)} />
+      {/* Conditionally render ReviewForm below the card when verified, reviews are enabled, and the button is clicked */}
+      {isVerified === true && theme.enableReviews && showReviews && (
+        <div className="w-full max-w-md transition-opacity duration-500 opacity-100">
+          <ReviewForm qrId={qrCode?.id} onClose={() => setShowReviews(false)} isRtl={theme.isRtl} />
+        </div>
       )}
 
-      {theme.enableFeedback && (
-        <FeedbackForm qrId={qrCode.id} onClose={() => setShowFeedback(false)} />
+      {/* Conditionally render FeedbackForm below the card when verified, feedback is enabled, and the button is clicked */}
+      {isVerified === true && theme.enableFeedback && showFeedback && (
+        <div className="w-full max-w-md transition-opacity duration-500 opacity-100">
+          <FeedbackForm qrId={qrCode?.id} onClose={() => setShowFeedback(false)} isRtl={theme.isRtl} />
+        </div>
       )}
     </div>
   );
