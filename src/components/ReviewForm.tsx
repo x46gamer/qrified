@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Star, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface ReviewFormProps {
   qrId: string;
@@ -28,6 +29,7 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
   const [images, setImages] = useState<File[]>([]);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
+  const { user } = useAuth();
 
   const handleStarClick = (selectedRating: number) => {
     setRating(selectedRating);
@@ -107,6 +109,11 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
       return;
     }
 
+    if (!user) {
+      toast.error('You must be logged in to submit a review.');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       console.log('Submitting review:', { qrId, rating, comment, imageCount: images.length });
@@ -137,6 +144,7 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
       
       const reviewData = {
         qr_code_id: qrId,
+        user_id: user.id,
         rating: rating,
         comment: comment.trim() || null,
         image_urls: imageUrls.length > 0 ? imageUrls : null
