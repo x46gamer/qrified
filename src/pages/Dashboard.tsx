@@ -462,6 +462,7 @@ const Dashboard = () => {
           .select(`
             *,
             qr_codes!inner(
+              user_id,
               product_id,
               products!inner(
                 name

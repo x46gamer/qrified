@@ -38,6 +38,7 @@ const sortableColumns = [
   { value: 'scanned_isp', label: 'Latest Scan ISP' },
   { value: 'scanned_country', label: 'Latest Scan Country' },
   { value: 'scanned_city', label: 'Latest Scan City' },
+  { value: 'product_name', label: 'Product Name' }, // Add product_name to sortable columns
   // user_agent is not directly on qr_codes table, remove from sortable if not available
   // { value: 'user_agent', label: 'User Agent' }, // Removed user agent as it's not in qr_codes
 ];
@@ -235,25 +236,7 @@ const ScanLogs = () => {
         <CardContent className="p-0">
           <div className="p-4 flex justify-between items-center">
             <div className="flex items-center gap-2">
-              <span className="text-sm">Sort by:</span>
-              <Select onValueChange={handleSortChange} value={sortBy}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Select column" />
-                </SelectTrigger>
-                <SelectContent>
-                  {sortableColumns.map(column => (
-                    <SelectItem key={column.value} value={column.value}>
-                      {column.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {/* Add sort order indicator */}
-              {sortBy && (
-                <span className="text-sm text-gray-500 flex items-center">
-                  {sortOrder === 'ascending' ? '↑' : '↓'}
-                </span>
-              )}
+              {/* Removed the sort select dropdown */}
             </div>
             <Button onClick={handleExportCsv} size="sm">
               <ArrowUpDown className="mr-2 h-4 w-4" /> Export CSV
@@ -263,14 +246,24 @@ const ScanLogs = () => {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>QR Code ID</TableHead>
-                <TableHead>Creation Time</TableHead>
-                <TableHead>Latest Scan Time</TableHead>
-                <TableHead>Latest Scan IP</TableHead>
-                <TableHead>Latest Scan ISP</TableHead>
-                <TableHead>Latest Scan Country</TableHead>
-                <TableHead>Latest Scan City</TableHead>
-                <TableHead>Product Name</TableHead>
+                {sortableColumns.map((column) => (
+                  <TableHead
+                    key={column.value}
+                    className="cursor-pointer hover:bg-gray-100" // Add hover effect
+                    onClick={() => handleSortChange(column.value)}
+                  >
+                    <div className="flex items-center">
+                      {column.label}
+                      {sortBy === column.value && (
+                        <span className="ml-1">
+                          {sortOrder === 'ascending' ? '▲' : '▼'} {/* Triangle icons */}
+                        </span>
+                      )}
+                    </div>
+                  </TableHead>
+                ))}
+                {/* Keep non-sortable headers here if any */}
+                {/* Example: <TableHead>Another Column</TableHead> */}
               </TableRow>
             </TableHeader>
             <TableBody>
