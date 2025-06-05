@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { Copy, Trash2, Edit2, Check, X } from 'lucide-react';
+import { Copy, Trash2, Edit2, Check, X, Link as LinkIcon } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -57,6 +57,8 @@ const TeamManagement = () => {
   const [isInviting, setIsInviting] = useState(false);
   const [editingMember, setEditingMember] = useState<TeamMember | null>(null);
   const [newRole, setNewRole] = useState('');
+  const [actionUrlEmail, setActionUrlEmail] = useState('');
+  const [generatedActionUrl, setGeneratedActionUrl] = useState<string | null>(null);
 
   // Fetch team members and invitations
   const fetchTeamData = async () => {
@@ -70,9 +72,7 @@ const TeamManagement = () => {
           id,
           role,
           created_at,
-          user:auth.users (
-            email
-          )
+          email
         `)
         .eq('role', 'employee');
 
@@ -81,7 +81,7 @@ const TeamManagement = () => {
       // Transform the data to match our interface
       const transformedMembers = members?.map(member => ({
         id: member.id,
-        email: member.user?.email || 'No email',
+        email: member.email || 'No email',
         role: member.role,
         created_at: member.created_at
       })) || [];
@@ -223,8 +223,112 @@ const TeamManagement = () => {
     }
   };
 
+  // Generate action URL without sending email
+  const generateActionUrl = async () => {
+    if (!actionUrlEmail) {
+      toast.error('Please enter an email address');
+      return;
+    }
+
+    if (!user?.id) {
+      toast.error('You must be logged in to generate an action URL');
+      return;
+    }
+
+    try {
+      // Generate a simple random token
+      const token = Array.from({ length: 32 }, () => 
+        Math.floor(Math.random() * 16).toString(16)
+      ).join('');
+
+      const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(); // 7 days from now
+
+      // Create invitation in database
+      const { data, error: dbError } = await supabase
+        .from('user_invites')
+        .insert({
+          email: actionUrlEmail,
+          token,
+          expires_at: expiresAt,
+          invited_by: user.id,
+          role: 'employee'
+        })
+        .select()
+        .single();
+
+      if (dbError) {
+        console.error('Database error:', dbError);
+        throw new Error(dbError.message || 'Failed to create invitation');
+      }
+
+      if (!data) {
+        throw new Error('No data returned after creating invitation');
+      }
+
+      const actionUrl = `${window.location.origin}/employeeportal?token=${data.token}`;
+      setGeneratedActionUrl(actionUrl);
+      toast.success('Action URL generated successfully');
+      setActionUrlEmail(''); // Clear input
+      fetchTeamData(); // Refresh the list to show new invitation
+
+    } catch (error: any) {
+      console.error('Error generating action URL:', error);
+      toast.error(error.message || 'Failed to generate action URL');
+    }
+  };
+
   return (
     <div className="space-y-6">
+      {/* Generate Action URL Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Generate Action URL</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="flex gap-4">
+              <div className="flex-1">
+                <Label htmlFor="action-url-email">Email Address</Label>
+                <Input
+                  id="action-url-email"
+                  type="email"
+                  value={actionUrlEmail}
+                  onChange={(e) => setActionUrlEmail(e.target.value)}
+                  placeholder="Enter email address"
+                />
+              </div>
+              <Button 
+                onClick={generateActionUrl}
+                className="self-end"
+              >
+                Generate URL
+              </Button>
+            </div>
+            
+            {generatedActionUrl && (
+              <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1 truncate mr-4">
+                    <p className="text-sm font-medium mb-1">Generated Action URL:</p>
+                    <p className="text-sm text-gray-600 truncate">{generatedActionUrl}</p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      navigator.clipboard.writeText(generatedActionUrl);
+                      toast.success('URL copied to clipboard');
+                    }}
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Invite New Member Section */}
       <Card>
         <CardHeader>
