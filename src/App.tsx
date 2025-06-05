@@ -30,6 +30,7 @@ import Settings from './pages/Settings';
 import AdminFeedback from './pages/AdminFeedback';
 import ScanLogs from './pages/ScanLogs';
 import Dashboard from './pages/Dashboard';
+import EmployeeSignup from './pages/EmployeeSignup';
 
 // Public Pages
 const CookiePolicyPage = lazy(() => import('./pages/CookiePolicyPage'));
@@ -56,6 +57,7 @@ function App() {
             <Route path="/contact" element={<AppLayout><ContactPage /></AppLayout>} />
             <Route path="/blog" element={<AppLayout><BlogPage /></AppLayout>} />
             <Route path="/check" element={<ProductCheck />} />
+            <Route path="/employeeportal" element={<AppLayout><EmployeeSignup /></AppLayout>} />
             
             {/* Authentication routes - only for non-authenticated users */}
             <Route path="/login" element={<AppLayout><Login /></AppLayout>} />
