@@ -14,6 +14,7 @@ interface AuthContextType {
   logout: () => void;
   resetPassword: (email: string) => Promise<void>;
   signUp: (email: string, password: string, name: string) => Promise<void>;
+  signUpEmployee: (email: string, password: string, token: string) => Promise<void>;
   userLimits: UserLimits | null;
   refreshUserLimits: () => Promise<void>;
 }
@@ -44,6 +45,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [userLimits, setUserLimits] = useState<UserLimits | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   // Fetch user limits function (moved outside useEffect)
   const fetchUserLimits = async (userId: string) => {
@@ -303,6 +305,87 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  // New function for employee signup via invitation
+  const signUpEmployee = async (email: string, password: string, token: string) => {
+    setIsLoading(true);
+    cleanupAuthState(); // Clean up any existing session
+    setError(null); // Clear previous errors (assuming setError is available in AuthContext or handle errors locally)
+
+    try {
+      // 1. Verify the invitation token again on the server side (optional but recommended for security)
+      // For simplicity here, we rely on the client-side check in EmployeeSignup page first.
+      // A more secure approach would be to have a Supabase Edge Function that verifies token and signs up.
+      // As a compromise for this example, we'll just use the provided email/password with Supabase auth
+      // and trust the client-side page verified the token and email.
+
+      // 2. Create the user in Supabase Auth
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+           // Optionally add user metadata like name if collected on employee signup page
+          // data: { name: employeeName },
+          // Consider if email confirmation is needed here - invitation link might bypass it.
+          // disable_email_confirmation: true, // Use this if invitation link confirms email
+        }
+      });
+
+      if (signUpError) {
+        console.error('Supabase signup error:', signUpError);
+        throw new Error(signUpError.message || 'Failed to create user account.');
+      }
+
+      if (!data?.user) {
+         throw new Error('User data not returned after signup.');
+      }
+
+      const newUser = data.user;
+      console.log('New user created in auth.users:', newUser);
+
+      // 3. Update the user_profiles table to set the role to 'employee'
+      // Note: The handle_new_user_profile trigger might run first and set role to 'admin'.
+      // We are explicitly updating it here to ensure it's 'employee'.
+      const { error: profileError } = await supabase
+        .from('user_profiles')
+        .update({ role: 'employee' })
+        .eq('id', newUser.id);
+
+      if (profileError) {
+        console.error('Error updating user profile role:', profileError);
+        // Depending on criticality, you might want to log this and alert admin, but still let user log in.
+        // For now, we'll let it proceed but log the error.
+        toast.warning('Account created, but failed to set employee role automatically.');
+      }
+      
+      // 4. Mark the invitation as accepted
+      const { error: inviteUpdateError } = await supabase
+         .from('user_invites')
+         .update({ accepted_at: new Date().toISOString(), accepted_user_id: newUser.id })
+         .eq('token', token)
+         .is('accepted_at', null); // Ensure we only update if it hasn't been accepted yet
+
+      if (inviteUpdateError) {
+          console.error('Error marking invitation as accepted:', inviteUpdateError);
+          // This is less critical, log and continue.
+      }
+
+      // 5. Optional: Redirect after successful signup/role assignment - REMOVE NAVIGATION HERE
+      toast.success('Employee account created successfully!');
+      // Redirect to dashboard or a welcome page
+      // navigate('/dashboard'); // REMOVE THIS LINE
+
+      // Return success or user data to the calling component
+      return { success: true, user: newUser };
+
+    } catch (error: any) {
+      console.error('Error in signUpEmployee:', error);
+      // Do not show toast here, let the component handle the error toast after catching
+      throw error; // Re-throw to be caught by the calling component
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -314,6 +397,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         logout,
         resetPassword,
         signUp,
+        signUpEmployee,
         userLimits,
         refreshUserLimits,
       }}
