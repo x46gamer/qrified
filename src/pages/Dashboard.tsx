@@ -197,7 +197,35 @@ const Dashboard = () => {
   // Fetch and process scan data for various dashboard sections
   useEffect(() => {
     const fetchAndProcessScanData = async () => {
-      if (!user) return;
+      if (!user) {
+        console.error('User not authenticated.');
+        // Optionally clear all displayed data if user logs out or is not authenticated
+        setLatestScansData([]);
+        setPeakHoursChartData({
+          labels: Array.from({ length: 24 }, (_, i) => `${i}h`),
+          datasets: [
+            {
+              label: 'Scans',
+              data: Array.from({ length: 24 }, () => 0),
+              borderColor: 'rgba(59, 130, 246, 1)',
+              borderWidth: 2,
+              fill: true,
+              backgroundColor: 'rgba(59, 130, 246, 0.2)',
+            },
+          ],
+        });
+        setMostScannedQRCodes([]);
+        setMostScanningCitiesData([]);
+        setMostScanningCountriesData([]);
+        setMostScannedProducts([]);
+        setBestReviews([]);
+        // Reset stats to zero or initial state
+        setTotalScans(0);
+        setVerifiedScans(0);
+        setDeclinedScans(0);
+        setReviewedScans(0);
+        return; // Exit if user is not logged in
+      }
 
       try {
         let totalQuery = supabase
@@ -272,31 +300,6 @@ const Dashboard = () => {
           // Calculate total failed attempts from the fetched data
           const totalFailedAttempts = declinedData?.reduce((sum, qr) => sum + (qr.failed_scan_attempts || 0), 0) || 0;
           setDeclinedScans(totalFailedAttempts); // Set total failed attempts as the declined count
-        }
-
-        let reviewedQuery = supabase
-          .from('product_reviews')
-          .select('id', { count: 'exact', head: true });
-          // Reviews are linked to qr_codes which are linked to users, no direct user_id on product_reviews
-          // To filter by user and date, we might need a more complex query or rethink the schema/RLS
-          // For now, filtering only by date on the review creation time
-
-        if (startDate) {
-          reviewedQuery = reviewedQuery.gte('created_at', startDate);
-        }
-        if (endDate) {
-          const nextDay = new Date(endDate);
-          nextDay.setDate(nextDay.getDate() + 1);
-          reviewedQuery = reviewedQuery.lt('created_at', nextDay.toISOString());
-        }
-
-        // Fetch count of product reviews
-        const { count: reviewedCount, error: reviewedCountError } = await reviewedQuery;
-
-        if (reviewedCountError) {
-          console.error('Error fetching reviewed scan count:', reviewedCountError);
-        } else {
-          setReviewedScans(reviewedCount || 0);
         }
 
         let scannedQRCodesQuery = supabase
@@ -469,6 +472,7 @@ const Dashboard = () => {
               )
             )
           `)
+          .eq('qr_codes.user_id', user.id) // Filter by user ID
           .order('rating', { ascending: false });
 
         // Filter reviews by date on created_at
@@ -523,6 +527,7 @@ const Dashboard = () => {
         });
 
         setBestReviews(bestReviewsData);
+        setReviewedScans(reviewsData?.length || 0); // Set reviewed count based on fetched reviews data
 
         let scannedProductsQuery = supabase
           .from('qr_codes')

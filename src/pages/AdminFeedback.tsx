@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Star, Trash2, Edit2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { useAuth } from '@/contexts/AuthContext';
 
 type Review = {
   id: string;
@@ -45,6 +46,7 @@ const AdminFeedback = () => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState<boolean>(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState<boolean>(false);
   const [itemToDelete, setItemToDelete] = useState<{id: string, type: 'review' | 'feedback'} | null>(null);
+  const { user } = useAuth();
 
   useEffect(() => {
     fetchData();
@@ -53,14 +55,24 @@ const AdminFeedback = () => {
   const fetchData = async () => {
     setLoading(true);
     
+    if (!user) {
+      console.error('User not authenticated.');
+      setLoading(false);
+      setReviews([]);
+      setFeedback([]);
+      toast.error('You must be logged in to view feedback.');
+      return;
+    }
+
     try {
       if (activeTab === 'reviews') {
         const { data, error } = await supabase
           .from('product_reviews')
           .select(`
             *,
-            qr_codes(sequential_number, product:products(name))
+            qr_codes!inner(sequential_number, product:products(name))
           `)
+          .eq('qr_codes.user_id', user.id)
           .order('created_at', { ascending: false });
         
         if (error) throw error;
@@ -73,6 +85,7 @@ const AdminFeedback = () => {
             *,
             qr_code_id:qr_codes(sequential_number)
           `)
+          .eq('qr_codes.user_id', user.id)
           .order('created_at', { ascending: false });
         
         if (error) throw error;
