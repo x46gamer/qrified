@@ -365,7 +365,6 @@ const ProductCheck = () => {
 
     return (
       <div className="p-4">
-        {theme.logoUrl && <img src={theme.logoUrl} alt="Logo" className="mx-auto h-12 mb-4" />}
         {/* Removed hardcoded header and product name. Main title and description handled outside. */}
         {/* Instruction text is also handled by getDescription */}
 
@@ -414,7 +413,15 @@ const ProductCheck = () => {
   
   return (
     <div className="min-h-screen flex flex-col items-center bg-gray-50 p-4 space-y-4">
-      {/* Apply RTL direction based on settings */}
+      {/* Add the logo here */}
+      {localSettings.logoUrl && (
+              <img 
+                src={localSettings.logoUrl} 
+                alt="Brand Logo" 
+                className="mx-auto mb-4" 
+                style={{ width: '10%', height: 'auto' }} 
+              />
+            )}{/* Apply RTL direction based on settings */}
       <Card className={`w-full max-w-md shadow-lg ${getBgColor()} ${getTextColor()}`} dir={theme.isRtl ? 'rtl' : 'ltr'}>
         <CardHeader>
           <CardTitle className="text-center text-2xl font-semibold flex items-center justify-center gap-2">
@@ -425,6 +432,8 @@ const ProductCheck = () => {
         <CardContent>
           {/* The main content of the verification page */}
           <div className="text-center">
+            
+
             {/* Display the description from appearance settings or specific messages */}
             <p className="text-sm mb-2">{getDescription()}</p>
 
