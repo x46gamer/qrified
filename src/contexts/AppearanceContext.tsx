@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { Json } from '@/integrations/supabase/types';
+import { useAuth } from '@/contexts/AuthContext';
 
 export interface AppearanceSettings {
   successBackground: string;
@@ -74,20 +75,25 @@ export const AppearanceSettingsProvider: React.FC<{
   const [settings, setSettings] = useState<AppearanceSettings>(DEFAULT_SETTINGS);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const { user } = useAuth();
 
   useEffect(() => {
     async function loadSettings() {
+      if (!user) {
+        setIsLoading(false);
+        return;
+      }
+
       try {
         setIsLoading(true);
         
-        // Load settings for everyone, regardless of authentication status
         const { data, error } = await supabase
           .from('app_settings')
           .select('*')
-          .eq('id', 'theme')
+          .eq('id', user.id)
           .single();
 
-        if (error && error.code !== 'PGRST116') { // PGRST116 is the "no rows" error
+        if (error && error.code !== 'PGRST116') {
           console.error('Error fetching appearance settings:', error);
           toast.error('Failed to load appearance settings');
           setIsLoading(false);
@@ -95,33 +101,31 @@ export const AppearanceSettingsProvider: React.FC<{
         }
 
         if (data?.settings) {
-          // Add proper type assertion to handle the conversion safely
           const storedSettings = data.settings as unknown;
           const typedSettings = storedSettings as AppearanceSettings;
           
-          console.log('Loaded appearance settings:', typedSettings);
+          console.log('Loaded appearance settings for user:', user.id, typedSettings);
           
           setSettings({
             ...DEFAULT_SETTINGS,
             ...typedSettings
           });
         } else {
-          // If no settings exist yet, create the default settings (only if authenticated)
-          const { data: { session } } = await supabase.auth.getSession();
-          if (session) {
-            console.log('No existing settings found, creating defaults');
-            const { error: insertError } = await supabase
-              .from('app_settings')
-              .upsert({
-                id: 'theme',
-                settings: DEFAULT_SETTINGS as unknown as Json
-              }, {
-                onConflict: 'id'
-              });
-              
-            if (insertError) {
-              console.error('Error creating default settings:', insertError);
-            }
+          console.log('No existing settings found for user, creating defaults:', user.id);
+          const { error: insertError } = await supabase
+            .from('app_settings')
+            .upsert({
+              id: user.id,
+              settings: DEFAULT_SETTINGS as unknown as Json
+            }, {
+              onConflict: 'id'
+            });
+            
+          if (insertError) {
+            console.error('Error creating default settings for user:', user.id, insertError);
+          } else {
+            setSettings(DEFAULT_SETTINGS);
+            console.log('Default settings created and loaded for user:', user.id);
           }
         }
       } catch (err) {
@@ -131,17 +135,18 @@ export const AppearanceSettingsProvider: React.FC<{
       }
     }
 
-    loadSettings();
-  }, []);
+    if (user) {
+      loadSettings();
+    }
+  }, [user]);
 
   const updateSettings = async (newSettings: Partial<AppearanceSettings>) => {
     try {
       setIsSaving(true);
       
-      // Check if user is authenticated for saving settings (editing still requires auth)
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
+      if (!user) {
         toast.error('You must be logged in to save settings');
+        setIsSaving(false);
         return;
       }
       
@@ -150,19 +155,19 @@ export const AppearanceSettingsProvider: React.FC<{
         ...newSettings
       };
 
-      console.log('Saving updated settings:', updatedSettings);
+      console.log('Saving updated settings for user:', user.id, updatedSettings);
 
       const { error } = await supabase
         .from('app_settings')
         .upsert({
-          id: 'theme',
+          id: user.id,
           settings: updatedSettings as unknown as Json
         }, {
           onConflict: 'id'
         });
 
       if (error) {
-        console.error('Error updating settings:', error);
+        console.error('Error updating settings for user:', user.id, error);
         toast.error('Failed to save appearance settings');
         return;
       }
@@ -170,7 +175,6 @@ export const AppearanceSettingsProvider: React.FC<{
       setSettings(updatedSettings);
       toast.success('Appearance settings saved successfully');
       
-      // Force refresh product check page if it's open in another tab
       localStorage.setItem('appearance_updated', Date.now().toString());
     } catch (err) {
       console.error('Error in updating settings:', err);
