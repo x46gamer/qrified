@@ -42,8 +42,12 @@ const QRCodeAnalytics: React.FC<QRCodeAnalyticsProps> = ({ qrCodes }) => {
           .from('product_reviews')
           .select(`
             *,
-            qr_codes(product:products(name))
+            qr_codes!inner(
+              user_id,
+              product:products(name)
+            )
           `)
+          .eq('qr_codes.user_id', user?.id)
           .order('created_at', { ascending: false });
 
         if (reviewsError) {
@@ -56,7 +60,13 @@ const QRCodeAnalytics: React.FC<QRCodeAnalyticsProps> = ({ qrCodes }) => {
         // Fetch feedback with updated RLS policies
         const { data: feedbackData, error: feedbackError } = await supabase
           .from('customer_feedback')
-          .select('*')
+          .select(`
+            *,
+            qr_codes!inner(
+              user_id
+            )
+          `)
+          .eq('qr_codes.user_id', user?.id)
           .order('created_at', { ascending: false });
 
         if (feedbackError) {
