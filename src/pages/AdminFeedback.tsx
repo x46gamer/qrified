@@ -6,7 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from "sonner";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Star, Trash2, Edit2 } from "lucide-react";
+import { Star, Trash2, Edit2, ChevronLeft, ChevronRight } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from '@/contexts/AuthContext';
@@ -33,6 +33,9 @@ type Feedback = {
   created_at: string;
   qr_codes?: {
     sequential_number: string;
+    product?: {
+      name: string;
+    };
   };
 };
 
@@ -47,6 +50,8 @@ const AdminFeedback = () => {
   const [isViewDialogOpen, setIsViewDialogOpen] = useState<boolean>(false);
   const [itemToDelete, setItemToDelete] = useState<{id: string, type: 'review' | 'feedback'} | null>(null);
   const { user } = useAuth();
+  const [isImageViewerOpen, setIsImageViewerOpen] = useState<boolean>(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState<number>(0);
 
   useEffect(() => {
     fetchData();
@@ -83,14 +88,25 @@ const AdminFeedback = () => {
           .from('customer_feedback')
           .select(`
             *,
-            qr_code_id:qr_codes(sequential_number)
+            qr_codes:customer_feedback_qr_code_id_fkey(sequential_number, product:products(name))
           `)
-          .eq('qr_codes.user_id', user.id)
+          .eq('customer_feedback_qr_code_id_fkey.user_id', user.id)
           .order('created_at', { ascending: false });
         
         if (error) throw error;
         console.log('Fetched feedback data:', data);
-        setFeedback(data as Feedback[]);
+        const mappedFeedback: Feedback[] = data.map((item: any) => ({
+          id: item.id,
+          qr_code_id: item.qr_code_id,
+          feedback: item.feedback,
+          created_at: item.created_at,
+          qr_codes: item.qr_codes ? {
+            sequential_number: item.qr_codes.sequential_number,
+            product: item.qr_codes.product ? { name: item.qr_codes.product.name } : undefined
+          } : undefined,
+        }));
+
+        setFeedback(mappedFeedback as Feedback[]);
       }
     } catch (error) {
       console.error(`Error fetching ${activeTab}:`, error);
@@ -143,6 +159,27 @@ const AdminFeedback = () => {
       setSelectedFeedback(item as Feedback);
     }
     setIsViewDialogOpen(true);
+  };
+
+  const openImageViewer = (review: Review, index: number) => {
+    setSelectedReview(review);
+    setCurrentImageIndex(index);
+    setIsImageViewerOpen(true);
+  };
+
+  const closeImageViewer = () => {
+    setIsImageViewerOpen(false);
+    setCurrentImageIndex(0);
+  };
+
+  const goToPreviousImage = () => {
+    setCurrentImageIndex(prevIndex => Math.max(0, prevIndex - 1));
+  };
+
+  const goToNextImage = () => {
+    if (selectedReview?.image_urls) {
+      setCurrentImageIndex(prevIndex => Math.min(selectedReview.image_urls.length - 1, prevIndex + 1));
+    }
   };
 
   const renderStars = (rating: number) => {
@@ -274,6 +311,7 @@ const AdminFeedback = () => {
                   <Table>
                     <TableHeader>
                       <TableRow>
+                        <TableHead>Product</TableHead>
                         <TableHead>QR Code</TableHead>
                         <TableHead>Feedback</TableHead>
                         <TableHead>Date</TableHead>
@@ -283,6 +321,9 @@ const AdminFeedback = () => {
                     <TableBody>
                       {feedback.map((item) => (
                         <TableRow key={item.id}>
+                          <TableCell>
+                            {item.qr_codes?.product?.name || 'N/A'}
+                          </TableCell>
                           <TableCell>
                             {item.qr_codes?.sequential_number || 'N/A'}
                           </TableCell>
@@ -385,13 +426,13 @@ const AdminFeedback = () => {
                   <h4 className="font-medium">Images</h4>
                   <div className="grid grid-cols-3 gap-2 mt-2">
                     {selectedReview.image_urls.map((url, index) => (
-                      <a href={url} target="_blank" rel="noopener noreferrer" key={index}>
+                      <button key={index} onClick={() => openImageViewer(selectedReview, index)} className="focus:outline-none">
                         <img 
                           src={url} 
                           alt={`Review image ${index + 1}`} 
-                          className="h-32 w-full object-cover rounded-md border" 
+                          className="h-32 w-full object-cover rounded-md border cursor-pointer"
                         />
-                      </a>
+                      </button>
                     ))}
                   </div>
                 </div>
@@ -437,6 +478,45 @@ const AdminFeedback = () => {
                 <h4 className="font-medium">Submitted on</h4>
                 <p className="mt-1">{formatDate(selectedFeedback.created_at)}</p>
               </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Image Viewer Dialog */}
+      <Dialog open={isImageViewerOpen} onOpenChange={closeImageViewer}>
+        <DialogContent className="max-w-full w-auto h-auto flex items-center justify-center bg-transparent backdrop-filter backdrop-blur-lg">
+          {selectedReview && selectedReview.image_urls && selectedReview.image_urls.length > 0 && (
+            <div className="relative flex items-center justify-center">
+              <img
+                src={selectedReview.image_urls[currentImageIndex]}
+                alt={`Review image ${currentImageIndex + 1}`}
+                className="max-h-screen max-w-screen object-contain"
+              />
+              {selectedReview.image_urls.length > 1 && (
+                <>
+                  {currentImageIndex > 0 && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="absolute left-2 top-1/2 transform -translate-y-1/2 text-white hover:text-gray-200"
+                      onClick={goToPreviousImage}
+                    >
+                      <ChevronLeft className="h-10 w-10" />
+                    </Button>
+                  )}
+                  {currentImageIndex < selectedReview.image_urls.length - 1 && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-2 top-1/2 transform -translate-y-1/2 text-white hover:text-gray-200"
+                      onClick={goToNextImage}
+                    >
+                      <ChevronRight className="h-10 w-10" />
+                    </Button>
+                  )}
+                </>
+              )}
             </div>
           )}
         </DialogContent>

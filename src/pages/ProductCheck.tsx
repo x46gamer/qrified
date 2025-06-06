@@ -148,7 +148,7 @@ const ProductCheck = () => {
            setLocalSettings(DEFAULT_SETTINGS);
         }
         // --- End Fetch Logic ---
-
+        
         // Check if QR code is valid for verification
         if (!mappedQr.is_enabled) {
           console.log('QR code is disabled');

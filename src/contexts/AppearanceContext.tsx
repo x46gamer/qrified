@@ -112,16 +112,16 @@ export const AppearanceSettingsProvider: React.FC<{
           });
         } else {
           console.log('No existing settings found for user, creating defaults:', user.id);
-          const { error: insertError } = await supabase
-            .from('app_settings')
-            .upsert({
+            const { error: insertError } = await supabase
+              .from('app_settings')
+              .upsert({
               id: user.id,
-              settings: DEFAULT_SETTINGS as unknown as Json
-            }, {
-              onConflict: 'id'
-            });
-            
-          if (insertError) {
+                settings: DEFAULT_SETTINGS as unknown as Json
+              }, {
+                onConflict: 'id'
+              });
+              
+            if (insertError) {
             console.error('Error creating default settings for user:', user.id, insertError);
           } else {
             setSettings(DEFAULT_SETTINGS);
@@ -136,7 +136,7 @@ export const AppearanceSettingsProvider: React.FC<{
     }
 
     if (user) {
-      loadSettings();
+    loadSettings();
     }
   }, [user]);
 

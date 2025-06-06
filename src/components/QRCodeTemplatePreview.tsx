@@ -88,7 +88,7 @@ export const QRCodeTemplatePreview: React.FC<QRCodeTemplatePreviewProps> = ({
       {/* Middle Section: QR Code, Instruction Text */}
       <div className={`${styles.middleSectionClass} flex-grow`}>
         {qrCodeDataUrl && (
-          <div className="w-full flex justify-center">
+          <div className="w-full flex justify-center relative">
             <img 
               src={qrCodeDataUrl} 
               alt="QR Code" 
@@ -98,6 +98,10 @@ export const QRCodeTemplatePreview: React.FC<QRCodeTemplatePreviewProps> = ({
                 (e.target as HTMLImageElement).src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2YwZjBmMCIgLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1zaXplPSIxNiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iIGZpbGw9IiM5OTkiPlFSIENvZGUgRXJyb3I8L3RleHQ+PC9zdmc+';
               }}
             />
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white p-2 rounded-md flex flex-col items-center justify-center leading-none">
+              <p className="text-black text-sm font-bold">QR</p>
+              <p className="text-black text-sm font-bold">FD</p>
+            </div>
           </div>
         )}
         
