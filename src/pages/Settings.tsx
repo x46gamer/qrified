@@ -9,8 +9,6 @@ import { ExternalLink, Shield } from "lucide-react";
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client'; // Import supabase if needed to fetch plan info
 import { toast } from "sonner";
-import { v4 as uuidv4 } from 'uuid'; // Import uuid for token generation
-import TeamManagement from '@/components/TeamManagement';
 
 const Settings = () => {
   const { user } = useAuth();
@@ -18,9 +16,6 @@ const Settings = () => {
 
   const [companyName, setCompanyName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [inviteEmail, setInviteEmail] = useState(''); // State for invite email input
-  const [invitationLink, setInvitationLink] = useState<string | null>(null); // State for generated link
-  const [isSendingInvite, setIsSendingInvite] = useState(false); // State for invite loading
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -74,56 +69,6 @@ const Settings = () => {
     // if (data?.url) { window.location.href = data.url; }
   };
 
-  // Handle sending invitation
-  const handleSendInvitation = async () => {
-    if (!user?.id) {
-      toast.error('You must be logged in to send invitations.');
-      return;
-    }
-    if (!inviteEmail) {
-      toast.error('Please enter an email address to invite.');
-      return;
-    }
-
-    setIsSendingInvite(true);
-    setInvitationLink(null); // Clear previous link
-
-    try {
-      const token = uuidv4(); // Generate a unique token
-      const expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + 1); // Link expires in 24 hours
-      const expiresAtISO = expiresAt.toISOString();
-
-      // Insert invitation into user_invites table
-      const { data, error } = await supabase
-        .from('user_invites')
-        .insert({
-          email: inviteEmail,
-          role: 'employee', // Always invite as employee from here
-          token: token,
-          invited_by: user.id,
-          expires_at: expiresAtISO,
-        });
-
-      if (error) {
-        console.error('Error sending invitation:', error);
-        toast.error(error.message || 'Failed to send invitation.');
-      } else {
-        // Construct the invitation link (replace with your actual domain)
-        const inviteUrl = `${window.location.origin}/employeeportal?token=${token}`;
-        setInvitationLink(inviteUrl);
-        toast.success('Invitation created! Copy the link below.');
-        setInviteEmail(''); // Clear input
-      }
-
-    } catch (err: any) {
-      console.error('Unexpected error sending invitation:', err);
-      toast.error(err.message || 'An error occurred while sending invitation.');
-    } finally {
-      setIsSendingInvite(false);
-    }
-  };
-
   return (
     <div className="container mx-auto py-8">
       <header className="mb-8">
@@ -142,7 +87,33 @@ const Settings = () => {
         </TabsList>
         
         <TabsContent value="team">
-          <TeamManagement />
+          <Card>
+            <CardHeader>
+              <CardTitle>Team Management</CardTitle>
+              <CardDescription>Add, edit or remove team members</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-4">
+                <div className="border rounded-lg p-4">
+                  <div className="flex justify-between items-center mb-2">
+                    <div>
+                      <h3 className="font-medium">Employee User</h3>
+                      <p className="text-sm text-gray-500">employee@example.com</p>
+                    </div>
+                    <Button variant="outline" size="sm">Manage</Button>
+                  </div>
+                </div>
+                
+                <div className="border rounded-lg p-4">
+                  <Label htmlFor="new-member">Add Team Member</Label>
+                  <div className="flex gap-2 mt-1">
+                    <Input id="new-member" placeholder="Email address" />
+                    <Button>Add</Button>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
         
         <TabsContent value="system">

@@ -215,7 +215,7 @@ const Login = () => {
         </CardContent>
         <CardFooter className="flex flex-col">
           <p className="text-sm text-center text-gray-500">
-            Don't have an account? <Link to="/signup" className="text-blue-600 hover:underline font-medium">Sign up</Link>
+            Don't have an account? <Link to="/signup" className="text-blue-600 hover:underline font-medium">Sign upp</Link>
           </p>
           <p className="text-sm text-center text-gray-500 mt-4">
             <Link to="/" className="text-blue-600 hover:underline">Back to Home</Link>

@@ -4,6 +4,16 @@
 
 @layer base {
   :root {
+    --primary-50: #E6EDFF;
+    --primary-100: #CCDAFF;
+    --primary-200: #99B6FF;
+    --primary-300: #6691FF;
+    --primary-400: #336DFF;
+    --primary-500: #0049FF;
+    --primary-600: #003ACC;
+    --primary-700: #002C99;
+    --primary-800: #001D66;
+    --primary-900: #000F33;
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
 
@@ -50,7 +60,20 @@
 
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
-
+  :root:not(.light-mode) {
+    --bg-primary: #030712;
+    --bg-secondary: #111827;
+    --text-primary: #ffffff;
+    --text-secondary: #9ca3af;
+    --border-color: #1f2937;
+  }
+  .light-mode {
+    --bg-primary: #ffffff;
+    --bg-secondary: #f9fafb;
+    --text-primary: #111827;
+    --text-secondary: #4b5563;
+    --border-color: #e5e7eb;
+  }
   .dark {
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
@@ -96,6 +119,9 @@
   }
 
   body {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    transition: background-color 0.3s ease-in-out, color 0.3s ease-in-out;
     @apply bg-background text-foreground;
   }
 }
