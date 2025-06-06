@@ -199,7 +199,6 @@ const ScanLogs = () => {
     <div className="container mx-auto py-8">
       <Card className="mb-8">
         <CardHeader>
-          <CardTitle>Scan Statistics</CardTitle>
         </CardHeader>
         <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div>
@@ -229,20 +228,15 @@ const ScanLogs = () => {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>All Scan Logs</CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          <div className="p-4 flex justify-between items-center">
-            <div className="flex items-center gap-2">
-              {/* Removed the sort select dropdown */}
-            </div>
-            <Button onClick={handleExportCsv} size="sm">
-              <ArrowUpDown className="mr-2 h-4 w-4" /> Export CSV
-            </Button>
+      <Card >
+        
+      <div className="flex m-5">
+                    <text className="text-2xl text-lg font-semibold mb-2">All Scan Logs</text>
+                    <Button onClick={handleExportCsv} size="sm" className="ml-auto mr-1 h-10 w-50">
+            <ArrowUpDown className="mr-2 h-4 w-4" /> Export CSV
+          </Button>
           </div>
-          
+        <CardContent className="p-0">
           <Table>
             <TableHeader>
               <TableRow>
@@ -285,8 +279,8 @@ const ScanLogs = () => {
               ) : (
                 qrCodesData.map(qrCode => (
                   <TableRow key={qrCode.id}>
-                    <TableCell>{qrCode.id}</TableCell>
                     <TableCell>{format(new Date(qrCode.created_at), 'yyyy-MM-dd HH:mm:ss')}</TableCell>
+                    <TableCell>{qrCode.id}</TableCell>
                     <TableCell>{qrCode.scanned_at ? format(new Date(qrCode.scanned_at), 'yyyy-MM-dd HH:mm:ss') : 'N/A'}</TableCell>
                     <TableCell>{qrCode.scanned_ip || 'N/A'}</TableCell>
                     <TableCell>{qrCode.scanned_isp || 'N/A'}</TableCell>

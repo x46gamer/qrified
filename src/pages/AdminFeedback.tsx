@@ -485,7 +485,9 @@ const AdminFeedback = () => {
 
       {/* Image Viewer Dialog */}
       <Dialog open={isImageViewerOpen} onOpenChange={closeImageViewer}>
-        <DialogContent className="max-w-full w-auto h-auto flex items-center justify-center bg-transparent backdrop-filter backdrop-blur-lg">
+        <DialogContent 
+          className="max-w-full w-auto h-auto flex items-center justify-center bg-transparent backdrop-filter backdrop-blur-lg p-0 border-none text-white"
+        >
           {selectedReview && selectedReview.image_urls && selectedReview.image_urls.length > 0 && (
             <div className="relative flex items-center justify-center">
               <img
