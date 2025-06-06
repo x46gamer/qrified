@@ -40,6 +40,18 @@ const CaseStudiesPage = lazy(() => import('./pages/CaseStudiesPage'));
 const CommunityForumPage = lazy(() => import('./pages/CommunityForumPage'));
 const PartnersPage = lazy(() => import('./pages/PartnersPage'));
 
+// Helper component to handle root route navigation based on authentication status
+const RootRouteHandler = () => {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    // Optionally return a loading spinner or null while checking auth status
+    return <div className="flex items-center justify-center min-h-screen"><div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div></div>; // Example loading spinner
+  }
+
+  return isAuthenticated ? <Navigate to="/stats" replace /> : <LandingPage />;
+};
+
 function App() {
   return (
     <AuthProvider>
@@ -47,7 +59,7 @@ function App() {
         <BrowserRouter>
           <Routes>
             {/* Public routes - accessible to all users */}
-            <Route path="/" element={<LandingPage />} />
+            <Route path="/" element={<RootRouteHandler />} />
             <Route path="/about" element={<AppLayout><AboutPage /></AppLayout>} />
             <Route path="/faq" element={<AppLayout><FAQPage /></AppLayout>} />
             <Route path="/privacy" element={<AppLayout><PrivacyPolicyPage /></AppLayout>} />

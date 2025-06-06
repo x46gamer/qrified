@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { useSidebar } from '@/components/ui/sidebar';
 import { NavLink, useLocation } from 'react-router-dom';
-import { LayoutDashboard, QrCode, Brush, Settings, Users, Globe, LineChart, MessageSquare, ChevronLeft, ChevronRight, LogOut, X } from 'lucide-react';
+import { LayoutDashboard, QrCode, Brush, Settings, Users, Globe, LineChart, MessageSquare, ChevronLeft, ChevronRight, LogOut, X, FileText, FolderCog } from 'lucide-react';
 import { Button } from './ui/button';
 import { Progress } from './ui/progress';
 import { useAuth } from '@/contexts/AuthContext';
@@ -157,19 +157,10 @@ const Sidebar: React.FC<SidebarProps> = ({
         </div>
 
         <nav className={cn("space-y-1", isOpen ? "px-4" : "px-2")}>
-          <NavLink to="/dashboard" className={({
-            isActive
-          }) => cn("flex items-center py-2 rounded-lg text-sm transition-colors duration-200", isActive ? "bg-blue-50 text-blue-600" : "text-gray-700 hover:bg-gray-100", isOpen ? "px-3" : "px-2 justify-center")}>
-            <LayoutDashboard size={20} className="shrink-0" />
-            <span className={cn("ml-3 transition-opacity duration-300", isOpen ? "opacity-100" : "opacity-0 hidden")}>
-              Dashboard
-            </span>
-          </NavLink>
-
           <NavLink to="/stats" className={({ isActive }) => cn("flex items-center py-2 rounded-lg text-sm transition-colors duration-200", isActive ? "bg-blue-50 text-blue-600" : "text-gray-700 hover:bg-gray-100", isOpen ? "px-3" : "px-2 justify-center")}> 
-            <LineChart size={20} className="shrink-0" />
+            <LayoutDashboard size={20} className="shrink-0" />
             <span className={cn("ml-3 transition-opacity duration-300", isOpen ? "opacity-100" : "opacity-0 hidden")}> 
-              Analytics
+              Dashboard
             </span>
           </NavLink>
 
@@ -194,7 +185,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             !isActive && !location.search.includes("tab=manage") ? "text-gray-700 hover:bg-gray-100" : "",
             isOpen ? "px-3" : "px-2 justify-center"
             )}>
-            <Users size={20} className="shrink-0" />
+            <FolderCog size={20} className="shrink-0" />
             <span className={cn("ml-3 transition-opacity duration-300", isOpen ? "opacity-100" : "opacity-0 hidden")}>
               Manage QR
             </span>
@@ -216,7 +207,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           {isAdmin && <NavLink to="/scanlogs" className={({
             isActive
           }) => cn("flex items-center py-2 rounded-lg text-sm transition-colors duration-200", isActive ? "bg-blue-50 text-blue-600" : "text-gray-700 hover:bg-gray-100", isOpen ? "px-3" : "px-2 justify-center")}>
-            <LineChart size={20} className="shrink-0" />
+            <FileText size={20} className="shrink-0" />
             <span className={cn("ml-3 transition-opacity duration-300", isOpen ? "opacity-100" : "opacity-0 hidden")}>
               Scan Logs
             </span>
