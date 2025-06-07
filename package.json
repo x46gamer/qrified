@@ -1,5 +1,5 @@
 {
-  "name": "vite_react_shadcn_ts",
+  "name": "qrified-landing",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -84,7 +84,11 @@
     "tailwindcss-animate": "^1.0.7",
     "uuid": "^10.0.0",
     "vaul": "^0.9.3",
-    "zod": "^3.23.8"
+    "zod": "^3.23.8",
+    "@react-three/drei": "^9.92.7",
+    "@react-three/fiber": "^8.15.12",
+    "gsap": "^3.12.4",
+    "three": "^0.159.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.0",
@@ -106,6 +110,7 @@
     "tailwindcss": "^3.4.11",
     "typescript": "^5.5.3",
     "typescript-eslint": "^8.0.1",
-    "vite": "^5.4.1"
+    "vite": "^5.4.1",
+    "@types/three": "^0.159.0"
   }
 }

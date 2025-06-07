@@ -1,5 +1,5 @@
 import React, { lazy, Suspense, useState, createContext, useContext } from 'react';
-import { BrowserRouter, Route, Routes, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import LandingPage from './pages/LandingPage';
 import Index from './pages/Index';
 import CustomizeApp from './pages/CustomizeApp';
@@ -32,6 +32,20 @@ import ScanLogs from './pages/ScanLogs';
 import Dashboard from './pages/Dashboard';
 import MyAccount from './pages/MyAccount';
 import MyAccountDialog from './components/MyAccountDialog';
+import Navbar from './components/Navbar';
+import HeroSection from './components/HeroSection';
+import WhyQrifiedSection from './components/WhyQrifiedSection';
+import SecurityCoreSection from './components/SecurityCoreSection';
+import ProductFlowSection from './components/ProductFlowSection';
+import LiveDemoSection from './components/LiveDemoSection';
+import SmartDashboardSection from './components/SmartDashboardSection';
+import UserVoicesSection from './components/UserVoicesSection';
+import PricingSection from './components/PricingSection';
+import FinalCTASection from './components/FinalCTASection';
+import Footer from './components/Footer';
+import { ScrollProgress } from './components/ScrollProgress';
+import Cursor from './components/Cursor';
+
 // Public Pages
 const CookiePolicyPage = lazy(() => import('./pages/CookiePolicyPage'));
 const CareersPage = lazy(() => import('./pages/CareersPage'));
@@ -43,30 +57,50 @@ const PartnersPage = lazy(() => import('./pages/PartnersPage'));
 
 export const MyAccountDialogContext = createContext<{ openMyAccount: () => void }>({ openMyAccount: () => {} });
 
-// Helper component to handle root route navigation based on authentication status
-const RootRouteHandler = () => {
-  const { isAuthenticated, isLoading } = useAuth();
-
-  if (isLoading) {
-    // Optionally return a loading spinner or null while checking auth status
-    return <div className="flex items-center justify-center min-h-screen"><div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div></div>; // Example loading spinner
-  }
-
-  return isAuthenticated ? <Navigate to="/stats" replace /> : <LandingPage />;
-};
-
 function App() {
   const [myAccountOpen, setMyAccountOpen] = useState(false);
   const openMyAccount = () => setMyAccountOpen(true);
+
+  const LandingPageContent = () => (
+    <div className="relative bg-gradient-to-b from-neutral-950 to-neutral-900 text-white overflow-hidden">
+      <Cursor />
+      <ScrollProgress />
+      <Navbar />
+      <main>
+        <HeroSection />
+        <WhyQrifiedSection />
+        <SecurityCoreSection />
+        <ProductFlowSection />
+        <LiveDemoSection />
+        <SmartDashboardSection />
+        <UserVoicesSection />
+        <PricingSection />
+        <FinalCTASection />
+      </main>
+      <Footer />
+    </div>
+  );
+
+  // Helper component to handle root route navigation based on authentication status
+  const RootRouteHandler = () => {
+    const { isAuthenticated, isLoading } = useAuth();
+
+    if (isLoading) {
+      return <div className="flex items-center justify-center min-h-screen"><div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div></div>;
+    }
+
+    return isAuthenticated ? <Navigate to="/stats" replace /> : <LandingPageContent />;
+  };
 
   return (
     <AuthProvider>
       <AppearanceSettingsProvider>
         <MyAccountDialogContext.Provider value={{ openMyAccount }}>
-          <BrowserRouter>
+          <Router>
             <Routes>
               {/* Public routes - accessible to all users */}
               <Route path="/" element={<RootRouteHandler />} />
+              <Route path="/landing" element={<LandingPageContent />} />
               <Route path="/about" element={<AppLayout><AboutPage /></AppLayout>} />
               <Route path="/faq" element={<AppLayout><FAQPage /></AppLayout>} />
               <Route path="/privacy" element={<AppLayout><PrivacyPolicyPage /></AppLayout>} />
@@ -77,8 +111,8 @@ function App() {
               <Route path="/check" element={<ProductCheck />} />
               <Route path="/myaccount" element={<MyAccount />} />
               {/* Authentication routes - only for non-authenticated users */}
-              <Route path="/login" element={<AppLayout><Login /></AppLayout>} />
-              <Route path="/signup" element={<AppLayout><Signup /></AppLayout>} />
+              <Route path="/login" element={<AppLayout showFooter={false}><Login /></AppLayout>} />
+              <Route path="/signup" element={<AppLayout showFooter={false}><Signup /></AppLayout>} />
               <Route path="/forgot-password" element={<AppLayout><ForgotPassword /></AppLayout>} />
               
               {/* Admin routes - completely separated auth system */}
@@ -191,7 +225,7 @@ function App() {
             </Routes>
             <MyAccountDialog open={myAccountOpen} onOpenChange={setMyAccountOpen} />
             <Toaster position="top-right" />
-          </BrowserRouter>
+          </Router>
         </MyAccountDialogContext.Provider>
       </AppearanceSettingsProvider>
     </AuthProvider>
