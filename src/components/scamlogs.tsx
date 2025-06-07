@@ -67,8 +67,20 @@ const ScanLogs = () => {
     try {
       // Fetch data from the qr_codes table
       const { data, error } = await supabase
-        .from('qr_codes') // Change table to qr_codes
-        .select('id, created_at, scanned_at, scanned_ip, scanned_isp, scanned_city, scanned_country, product_id, product_name') // Select new product_name column, remove products(name)
+        .from('qr_codes')
+        .select(`
+          id, 
+          created_at, 
+          scanned_at, 
+          scanned_ip, 
+          scanned_isp, 
+          scanned_city, 
+          scanned_country, 
+          product_id,
+          products (
+            name
+          )
+        `)
         .order(sortBy, { ascending: sortOrder === 'ascending' }); // Apply sorting
 
       if (error) {
@@ -76,8 +88,12 @@ const ScanLogs = () => {
         toast.error('Failed to load scan logs.');
         setQrCodesData([]); // Clear data on error
       } else {
-        // Map the data to the ScanLog interface (now representing QR code data)
-        setQrCodesData(data as ScanLog[]);
+        // Map the data to include product name from the joined products table
+        const mappedData = data.map(item => ({
+          ...item,
+          product_name: item.products?.name || null
+        }));
+        setQrCodesData(mappedData as ScanLog[]);
         
         // Only calculate stats if data is not empty
         if (data.length > 0) {
@@ -223,7 +239,7 @@ const ScanLogs = () => {
       <Card >
         
       <div className="flex m-5">
-                    <text className="text-2xl text-lg font-semibold mb-2">All Scan Logs</text>
+                    <span className="text-2xl text-lg font-semibold mb-2">All Scan Logs</span>
                     <Button onClick={handleExportCsv} size="sm" className="ml-auto mr-1 h-10 w-50">
             <ArrowUpDown className="mr-2 h-4 w-4" /> Export CSV
           </Button>

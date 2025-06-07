@@ -774,7 +774,7 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
 
             <Card className="mt-6">
               <CardHeader>
-                <CardTitle>Verification Page Content</CardTitle>
+                <CardTitle>QR Code Content</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex gap-2 mb-4">
@@ -858,6 +858,8 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
                     <TabsTrigger value="modern-blue">Modern Blue</TabsTrigger>
                     <TabsTrigger value="modern-beige">Modern Beige</TabsTrigger>
                     <TabsTrigger value="arabic">Arabic</TabsTrigger>
+                    <TabsTrigger value="content">QR Code Content</TabsTrigger>
+                    <TabsTrigger value="design">Design & Layout</TabsTrigger>
                   </TabsList>
 
                   <div className="mt-4 flex justify-center items-center"> {/* Added items-center */}
