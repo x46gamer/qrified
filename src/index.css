@@ -168,6 +168,27 @@ input#name {
 input#confirm-password {
   COLOR: BLACK;
 }
+button#radix-\:rb\:-trigger-arabic {
+  WIDTH: 50%;
+}
+button#radix-\:rb\:-trigger-modern-beige {
+  WIDTH: 50%;
+}button#radix-\:rb\:-trigger-modern-blue {
+  WIDTH: 50%;
+}button#radix-\:rb\:-trigger-classic {
+  WIDTH: 50%;
+}button.inline-flex.items-center.justify-center.gap-2.whitespace-nowrap.rounded-md.text-sm.font-medium.ring-offset-background.transition-colors.focus-visible\:outline-none.focus-visible\:ring-2.focus-visible\:ring-ring.focus-visible\:ring-offset-2.disabled\:pointer-events-none.disabled\:opacity-50.\[\&_svg\]\:pointer-events-none.\[\&_svg\]\:size-4.\[\&_svg\]\:shrink-0.bg-primary.text-primary-foreground.hover\:bg-primary\/90.h-10.px-4.py-2.w-full {
+  BACKGROUND-COLOR: black;
+}button.inline-flex.items-center.justify-center.gap-2.whitespace-nowrap.rounded-md.text-sm.font-medium.ring-offset-background.transition-colors.focus-visible\:outline-none.focus-visible\:ring-2.focus-visible\:ring-ring.focus-visible\:ring-offset-2.disabled\:pointer-events-none.disabled\:opacity-50.\[\&_svg\]\:pointer-events-none.\[\&_svg\]\:size-4.\[\&_svg\]\:shrink-0.border.border-input.bg-background.hover\:bg-accent.hover\:text-accent-foreground.h-10.px-4.py-2.w-full {
+  BACKGROUND-COLOR: GAINSBORO;
+  COLOR: BLACK;
+}button.peer.inline-flex.h-6.w-11.shrink-0.cursor-pointer.items-center.rounded-full.border-2.border-transparent.transition-colors.focus-visible\:outline-none.focus-visible\:ring-2.focus-visible\:ring-ring.focus-visible\:ring-offset-2.focus-visible\:ring-offset-background.disabled\:cursor-not-allowed.disabled\:opacity-50.data-\[state\=checked\]\:bg-primary.data-\[state\=unchecked\]\:bg-input {
+  BACKGROUND-COLOR: #16a34a;
+}
+.h-10.items-center.justify-center.rounded-md.bg-muted.p-1.text-muted-foreground.grid.grid-cols-2.sm\:grid-cols-4.mb-4 {
+  DISPLAY: inline-table;
+  BACKGROUND-COLOR: GAINSBORO;
+}
 button.items-center.justify-center.gap-2.whitespace-nowrap.text-sm.font-medium.ring-offset-background.transition-colors.focus-visible\:outline-none.focus-visible\:ring-2.focus-visible\:ring-ring.focus-visible\:ring-offset-2.disabled\:pointer-events-none.disabled\:opacity-50.\[\&_svg\]\:pointer-events-none.\[\&_svg\]\:size-4.\[\&_svg\]\:shrink-0.bg-secondary.text-secondary-foreground.hover\:bg-secondary\/80.h-10.w-10.rounded-full.shadow-lg.hidden.md\:flex {
   display: none;
 }
