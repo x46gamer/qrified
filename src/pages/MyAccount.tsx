@@ -21,11 +21,13 @@ const MyAccount = () => {
   const [profile, setProfile] = useState<any>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [hasProfileChanges, setHasProfileChanges] = useState(false);
   const [profileData, setProfileData] = useState({
     full_name: '',
     timezone: 'UTC',
     language: 'en',
   });
+  const [initialProfileData, setInitialProfileData] = useState<typeof profileData | null>(null);
   const [authData, setAuthData] = useState({
     email: '',
     current_password: '',
@@ -46,21 +48,29 @@ const MyAccount = () => {
       .single();
     if (!error && data) {
       setProfile(data);
-      setProfileData({
-        full_name: data.full_name || '',
+      // Use full_name from profile if available, otherwise fallback to user.name from AuthContext
+      const fetchedFullName = data.full_name || user?.name || ''; 
+      const newProfileData = {
+        full_name: fetchedFullName,
         timezone: data.timezone || 'UTC',
         language: data.language || 'en',
-      });
-      setAuthData((prev) => ({ ...prev, email: data.email || '' }));
+      };
+      setProfileData(newProfileData);
+      setInitialProfileData(newProfileData); // Set initial data
+      setAuthData((prev) => ({ ...prev, email: data.email || user?.email || '' }));
     }
   };
 
   const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setProfileData({ ...profileData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    const updatedData = { ...profileData, [name]: value };
+    setProfileData(updatedData);
+    setHasProfileChanges(true);
   };
 
   const handleProfileUpdate = async () => {
     setIsUpdating(true);
+    console.log('Attempting to update profile with data:', profileData);
     const { error } = await supabase
       .from('user_profiles')
       .update(profileData)
@@ -68,8 +78,10 @@ const MyAccount = () => {
     setIsUpdating(false);
     if (!error) {
       toast.success('Profile updated');
-      fetchProfile();
+      setInitialProfileData(profileData); // Update initial data to current saved data
+      setHasProfileChanges(false); // Reset hasProfileChanges after successful save
     } else {
+      console.error('Failed to update profile:', error);
       toast.error('Failed to update profile');
     }
   };
@@ -108,12 +120,12 @@ const MyAccount = () => {
       console.log('Upload response data:', uploadData);
 
       // Get public URL
-      const { data: publicUrlData, error: publicUrlError } = supabase.storage
+      const { data: publicUrlData } = supabase.storage
         .from('avatars')
         .getPublicUrl(fileName);
 
-      if (publicUrlError) {
-        console.error('Error getting public URL:', publicUrlError);
+      if (!publicUrlData || !publicUrlData.publicUrl) {
+        console.error('Failed to get public URL: Data or publicUrl is null');
         setIsUploading(false);
         toast.error('Failed to get avatar URL');
         return;
@@ -249,7 +261,7 @@ const MyAccount = () => {
           ))}
         </select>
       </div>
-      <Button onClick={handleProfileUpdate} disabled={isUpdating} className="mb-12">{isUpdating ? 'Saving...' : 'Save changes'}</Button>
+      <Button onClick={handleProfileUpdate} disabled={isUpdating || !hasProfileChanges} className="mb-12">{isUpdating ? 'Saving...' : 'Save changes'}</Button>
 
       <h2 className="text-2xl font-semibold mb-6">Authentication</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">

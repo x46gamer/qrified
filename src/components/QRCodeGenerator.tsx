@@ -858,8 +858,6 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
                     <TabsTrigger value="modern-blue">Modern Blue</TabsTrigger>
                     <TabsTrigger value="modern-beige">Modern Beige</TabsTrigger>
                     <TabsTrigger value="arabic">Arabic</TabsTrigger>
-                    <TabsTrigger value="content">QR Code Content</TabsTrigger>
-                    <TabsTrigger value="design">Design & Layout</TabsTrigger>
                   </TabsList>
 
                   <div className="mt-4 flex justify-center items-center"> {/* Added items-center */}

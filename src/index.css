@@ -144,8 +144,23 @@ a.flex.items-center.py-2.rounded-lg.text-sm.transition-colors.duration-200.text-
 .h-full.w-full.flex-1.bg-primary.transition-all {
   background-color: #3b82f6;
 }
+button.inline-flex.items-center.justify-center.gap-2.whitespace-nowrap.rounded-md.text-sm.font-medium.ring-offset-background.transition-colors.focus-visible\:outline-none.focus-visible\:ring-2.focus-visible\:ring-ring.focus-visible\:ring-offset-2.disabled\:pointer-events-none.disabled\:opacity-50.\[\&_svg\]\:pointer-events-none.\[\&_svg\]\:size-4.\[\&_svg\]\:shrink-0.bg-destructive.text-destructive-foreground.hover\:bg-destructive\/90.h-10.px-4.py-2 {
+  background-color: red;
+  color: white;
+}
+button.inline-flex.items-center.justify-center.gap-2.whitespace-nowrap.rounded-md.text-sm.font-medium.ring-offset-background.transition-colors.focus-visible\:outline-none.focus-visible\:ring-2.focus-visible\:ring-ring.focus-visible\:ring-offset-2.disabled\:pointer-events-none.disabled\:opacity-50.\[\&_svg\]\:pointer-events-none.\[\&_svg\]\:size-4.\[\&_svg\]\:shrink-0.bg-primary.text-primary-foreground.hover\:bg-primary\/90.h-10.px-4.py-2.mb-12 {
+  background-color: #3b82f6;
+  color: white;
+}
 button.items-center.justify-center.gap-2.whitespace-nowrap.text-sm.font-medium.ring-offset-background.transition-colors.focus-visible\:outline-none.focus-visible\:ring-2.focus-visible\:ring-ring.focus-visible\:ring-offset-2.disabled\:pointer-events-none.disabled\:opacity-50.\[\&_svg\]\:pointer-events-none.\[\&_svg\]\:size-4.\[\&_svg\]\:shrink-0.bg-secondary.text-secondary-foreground.hover\:bg-secondary\/80.h-10.w-10.rounded-full.shadow-lg.hidden.md\:flex {
   display: none;
+}
+.border-gray-200 {
+  --tw-border-opacity: 1;
+  margin-bottom: 10px;
+}
+.border-2 {
+  border-width: 3px;
 }
 header.sticky.top-0.w-full.z-50.transition-all.duration-300.bg-white\/80.backdrop-blur-sm.border-b.border-gray-100.py-4 {
   display: flex !important;

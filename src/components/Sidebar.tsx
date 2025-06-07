@@ -39,14 +39,40 @@ const Sidebar: React.FC<SidebarProps> = ({
   const { user, logout } = useAuth();
   const isAdmin = user?.role === 'admin';
   const [userLimits, setUserLimits] = useState<UserLimits | null>(null);
+  const [userFullName, setUserFullName] = useState<string | null>(null);
   const isMobile = useIsMobile();
   const { openMyAccount } = React.useContext(MyAccountDialogContext);
   
   useEffect(() => {
     if (user?.id) {
       fetchUserLimits();
+      fetchUserFullName();
     }
   }, [user?.id]);
+  
+  const fetchUserFullName = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('full_name')
+        .eq('id', user?.id)
+        .single();
+
+      if (error) {
+        console.error('Error fetching user full name:', error.message);
+        setUserFullName(user?.email || null);
+        return;
+      }
+      if (data) {
+        setUserFullName(data.full_name || user?.email || null);
+      } else {
+        setUserFullName(user?.email || null);
+      }
+    } catch (err) {
+      console.error('Error in fetchUserFullName:', err);
+      setUserFullName(user?.email || null);
+    }
+  };
   
   const fetchUserLimits = async () => {
     try {
@@ -270,22 +296,31 @@ const Sidebar: React.FC<SidebarProps> = ({
       {user && userLimits && (
         <div className={cn("px-4 py-4 border-t transition-all duration-300", isOpen ? "" : "px-2 text-center")}> 
           {/* Profile Button */}
-          <button
-            onClick={openMyAccount}
-            className={cn(
-              "flex items-center w-full gap-3 p-3 mb-3 border border-gray-200 rounded-lg bg-white hover:bg-gray-50 transition-all duration-200",
-              openMyAccount ? "ring-2 ring-blue-500 bg-blue-50" : ""
-            )}
-            style={{ cursor: 'pointer' }}
-          >
-            <div className="w-10 h-10 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center uppercase font-medium text-lg">
-              {user?.email?.charAt(0) || 'U'}
-            </div>
-            <div className="flex flex-col items-start overflow-hidden">
-              <span className="text-sm font-semibold text-gray-800 truncate">{user?.name || 'User'}</span>
-              <span className="text-xs text-gray-600 truncate">{user?.email}</span>
-            </div>
-          </button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div
+                  className="flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-gray-200 transition-all duration-300 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800"
+                  onClick={openMyAccount}
+                >
+                  <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold text-lg shrink-0">
+                    {userFullName ? userFullName[0].toUpperCase() : user?.email?.[0]?.toUpperCase() || 'U'}
+                  </div>
+                  <div className={cn("flex flex-col overflow-hidden", !isOpen && "hidden")}>
+                    <span className="font-semibold text-gray-800 dark:text-white truncate">
+                      {userFullName || user?.email || 'User'}
+                    </span>
+                    <span className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                      {user?.email}
+                    </span>
+                  </div>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="right" className={cn("md:hidden", isOpen && "hidden")}>
+                <p>My Account</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
           {/* QR Code Limits */}
           <div className={cn("transition-opacity duration-300", isOpen ? "opacity-100" : "opacity-0 hidden")}> 
             <div className="flex justify-between items-center mb-1">
