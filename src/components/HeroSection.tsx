@@ -106,7 +106,7 @@ const HeroSection = () => {
         </motion.div>
 
         <motion.div
-          className="absolute bottom-[1px] mt-60 left-1/2 transform -translate-x-1/2 z-10"
+          className="absolute bottom-[-1px] transform -translate-x-1/2 z-10"
           animate={{ y: [0, 10, 0] }}
           transition={{ repeat: Infinity, duration: 2 }}
         >

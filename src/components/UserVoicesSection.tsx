@@ -98,7 +98,7 @@ const UserVoicesSection = () => {
             <span>Trusted by Innovators</span>
           </div>
           <h2 className="text-3xl md:text-5xl font-bold tracking-tighter mb-6">
-            Think About <span className="text-primary-400">It</span>
+            Think<span className="text-primary-400">About It</span>
           </h2>
           <p className="max-w-3xl mx-auto text-lg text-neutral-400">
             From luxury fashion to pharmaceuticals, leading brands worldwide trust
