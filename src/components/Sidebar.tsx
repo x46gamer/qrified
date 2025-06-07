@@ -40,37 +40,42 @@ const Sidebar: React.FC<SidebarProps> = ({
   const isAdmin = user?.role === 'admin';
   const [userLimits, setUserLimits] = useState<UserLimits | null>(null);
   const [userFullName, setUserFullName] = useState<string | null>(null);
+  const [userAvatarUrl, setUserAvatarUrl] = useState<string | null>(null);
   const isMobile = useIsMobile();
   const { openMyAccount } = React.useContext(MyAccountDialogContext);
   
   useEffect(() => {
     if (user?.id) {
       fetchUserLimits();
-      fetchUserFullName();
+      fetchUserProfileData();
     }
   }, [user?.id]);
   
-  const fetchUserFullName = async () => {
+  const fetchUserProfileData = async () => {
     try {
       const { data, error } = await supabase
         .from('user_profiles')
-        .select('full_name')
+        .select('full_name, avatar_url')
         .eq('id', user?.id)
         .single();
 
       if (error) {
-        console.error('Error fetching user full name:', error.message);
+        console.error('Error fetching user profile data:', error.message);
         setUserFullName(user?.email || null);
+        setUserAvatarUrl(null);
         return;
       }
       if (data) {
         setUserFullName(data.full_name || user?.email || null);
+        setUserAvatarUrl(data.avatar_url || null);
       } else {
         setUserFullName(user?.email || null);
+        setUserAvatarUrl(null);
       }
     } catch (err) {
-      console.error('Error in fetchUserFullName:', err);
+      console.error('Error in fetchUserProfileData:', err);
       setUserFullName(user?.email || null);
+      setUserAvatarUrl(null);
     }
   };
   
@@ -303,8 +308,12 @@ const Sidebar: React.FC<SidebarProps> = ({
                   className="flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-gray-200 transition-all duration-300 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800"
                   onClick={openMyAccount}
                 >
-                  <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold text-lg shrink-0">
-                    {userFullName ? userFullName[0].toUpperCase() : user?.email?.[0]?.toUpperCase() || 'U'}
+                  <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold text-lg shrink-0 overflow-hidden">
+                    {userAvatarUrl ? (
+                      <img src={userAvatarUrl} alt="User Avatar" className="w-full h-full object-cover" />
+                    ) : (
+                      userFullName ? userFullName[0].toUpperCase() : user?.email?.[0]?.toUpperCase() || 'U'
+                    )}
                   </div>
                   <div className={cn("flex flex-col overflow-hidden", !isOpen && "hidden")}>
                     <span className="font-semibold text-gray-800 dark:text-white truncate">
