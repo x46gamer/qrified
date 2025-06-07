@@ -202,7 +202,6 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
     fetchProducts();
   }, [user]);
 
-
   // Generate a preview QR code whenever template or colors change
   useEffect(() => {
     const generatePreview = async () => {
@@ -242,7 +241,16 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
 
       // Check if a product is selected or a new product name is entered
       if ((!newProductName || newProductName.trim() === '') && !selectedProductId) {
-        toast.error('Please enter or select a product.');
+        console.log('No product selected/entered. Checking products array:');
+        console.log('  newProductName:', newProductName);
+        console.log('  selectedProductId:', selectedProductId);
+        console.log('  products.length:', products.length);
+
+        if (products.length === 0) {
+          toast.info('You need to add a product to create QR codes.');
+        } else {
+          toast.error('Please enter or select a product.');
+        }
         setIsGenerating(false);
         return;
       }
