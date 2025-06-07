@@ -18,6 +18,7 @@ import { useNavigate } from 'react-router-dom';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { UserLimits } from "@/types/userLimits";
 import { toPng } from 'html-to-image';
+import { useAppearanceSettings } from '@/contexts/AppearanceContext';
 
 interface QRCodeGeneratorProps {
   onQRCodesGenerated: (qrCodes: any[]) => void;
@@ -35,11 +36,16 @@ interface FormValues {
   websiteUrl: string;
   isRTL: boolean;
   productId?: string;
+  showLogo?: boolean;
 }
 
 interface Product {
   id: string;
   name: string;
+  footerText: "Thank you for choosing our product";
+  websiteUrl: "";
+  isRTL: false;
+  showLogo: false;
 }
 
 const DEFAULT_VALUES: FormValues = {
@@ -51,7 +57,8 @@ const DEFAULT_VALUES: FormValues = {
   instructionText: "Scan this QR code to verify the authenticity of your product",
   footerText: "Thank you for choosing our product",
   websiteUrl: "",
-  isRTL: false
+  isRTL: false,
+  showLogo: false
 };
 
 const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
@@ -76,6 +83,8 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
   const template = watch('template');
   const quantity = watch('quantity');
   const baseUrl = watch('baseUrl');
+  const showLogo = watch('showLogo');
+  const { logoUrl } = useAppearanceSettings();
 
   const templatePreviewRef = useRef<HTMLDivElement>(null);
 
@@ -205,7 +214,9 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
           template,
           primaryColor,
           secondaryColor,
-          size: 256 // This is the internal QR image size, container will style it
+          size: 256, // This is the internal QR image size, container will style it
+          showLogo: showLogo,
+          logoUrl: showLogo ? logoUrl : null,
         });
         setPreviewQRCode(dataUrl);
       } catch (error) {
@@ -214,7 +225,7 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
     };
 
     generatePreview();
-  }, [template, primaryColor, secondaryColor]);
+  }, [template, primaryColor, secondaryColor, showLogo, logoUrl]);
 
   const onSubmit = async (data: FormValues) => {
     if (isGenerating) return;
@@ -318,7 +329,9 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
           website_url: data.websiteUrl,
           footer_text: data.footerText,
           direction_rtl: data.isRTL,
-          product_id: selectedProductId // Include the selected product ID
+          product_id: selectedProductId, // Include the selected product ID
+          show_logo: data.showLogo, // Changed from showLogo to show_logo
+          logo_url: data.showLogo ? logoUrl : null,
         });
       }
 
@@ -331,6 +344,8 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
           primaryColor,
           secondaryColor,
           size: 300,
+          showLogo: qrCode.show_logo,
+          logoUrl: qrCode.logo_url,
         });
 
         if (!qrCodeOnlyDataUrl || !qrCodeOnlyDataUrl.startsWith('data:image/png;base64,')) {
@@ -404,6 +419,10 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
           // Overwrite or ensure correct properties for DB
           data_url: dataUrl, // Use snake_case for image data
           dataUrl: undefined, // Explicitly set camelCase to undefined
+          logo_url: qrCode.logo_url, // Ensure logo_url is used (snake_case)
+          logoUrl: undefined, // Explicitly set camelCase to undefined
+          show_logo: qrCode.show_logo, // Ensure show_logo is used (snake_case)
+          showLogo: undefined, // Explicitly set camelCase to undefined
           // encrypted_data and is_enabled should already be correct from qrCode spread
         };
 
@@ -481,6 +500,8 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
           footerText: qr.footer_text,
           directionRTL: qr.direction_rtl,
           userId: qr.user_id,
+          showLogo: qr.show_logo, // Map show_logo back to showLogo for frontend use
+          logoUrl: qr.logo_url, // Map logo_url back to logoUrl for frontend use
           // Include other relevant fields if needed by onQRCodesGenerated consumers
         }));
 
@@ -738,6 +759,16 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
                     />
                   </div>
                 </div>
+
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="showLogo"
+                    {...register('showLogo')}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                  <Label htmlFor="showLogo">Show Logo in QR Code</Label>
+                </div>
               </CardContent>
             </Card>
 
@@ -847,6 +878,7 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
                         websiteUrl={watch('websiteUrl')}
                         footerText={watch('footerText')}
                         directionRTL={watch('isRTL')}
+                        showLogo={showLogo}
                       />
                     </div>
                   </div>

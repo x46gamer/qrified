@@ -12,6 +12,7 @@ export interface QRCodeTemplatePreviewProps {
   websiteUrl?: string;
   footerText?: string;
   directionRTL?: boolean;
+  showLogo?: boolean;
 }
 
 export const QRCodeTemplatePreview: React.FC<QRCodeTemplatePreviewProps> = ({
@@ -24,7 +25,8 @@ export const QRCodeTemplatePreview: React.FC<QRCodeTemplatePreviewProps> = ({
   instructionText,
   websiteUrl,
   footerText,
-  directionRTL = false
+  directionRTL = false,
+  showLogo = false
 }) => {
   // Define template-specific styles
   const getTemplateStyles = () => {

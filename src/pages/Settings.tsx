@@ -82,8 +82,6 @@ const Settings = () => {
           <TabsTrigger value="system">System Settings</TabsTrigger>
           <TabsTrigger value="domains">Domains</TabsTrigger>
           <TabsTrigger value="help">Help & Resources</TabsTrigger>
-          {/* Add Plan & Billing Tab */}
-          {!isAdmin && <TabsTrigger value="plan">Plan & Billing</TabsTrigger>}
         </TabsList>
         
         <TabsContent value="team">
@@ -217,40 +215,6 @@ const Settings = () => {
             </CardContent>
           </Card>
         </TabsContent>
-
-        {/* Add Plan & Billing TabsContent */}
-        {!isAdmin && (
-          <TabsContent value="plan">
-            <Card>
-              <CardHeader>
-                <CardTitle>Plan & Billing</CardTitle>
-                <CardDescription>Manage your subscription and view billing information.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* TODO: Display current plan details */}
-                <div className="border rounded-lg p-4">
-                  <h3 className="font-medium mb-2">Your Current Plan</h3>
-                  <p className="text-sm text-gray-600">{/* Display plan name here */}
-                    {/* Example: {currentPlan ? currentPlan.name : 'Loading plan...'} */}
-                    Loading plan...
-                  </p>
-                </div>
-                
-                <div className="border rounded-lg p-4 bg-blue-50">
-                  <h3 className="font-medium mb-2">Manage Subscription</h3>
-                  <p className="text-sm text-gray-600 mb-4">
-                    Update your payment method, change your plan, or cancel your subscription.
-                  </p>
-                  <Button onClick={handleManagePlan} className="bg-blue-600 hover:bg-blue-700">
-                    Go to Billing Portal
-                  </Button>
-                </div>
-                
-                {/* TODO: Optionally add billing history section */}
-              </CardContent>
-            </Card>
-          </TabsContent>
-        )}
 
       </Tabs>
     </div>
