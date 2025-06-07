@@ -128,8 +128,9 @@ const Sidebar: React.FC<SidebarProps> = ({
   return (
     <div className={cn(
       'flex flex-col h-full bg-white border-r transition-all duration-300 ease-in-out',
-      isOpen ? 'w-72' : 'w-20 items-center',
+      isOpen ? 'w-72 translate-x-0' : 'w-20 items-center translate-x-0',
       isMobile && 'fixed left-0 top-0 h-full z-40',
+      !openMobile && isMobile ? '-translate-x-full' : 'translate-x-0',
       className
     )}>
       {isMobile && (

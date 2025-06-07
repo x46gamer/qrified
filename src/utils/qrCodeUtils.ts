@@ -177,6 +177,18 @@ export const generateQRCodeImage = async (data: string, options?: {
         console.error('Error during logo embedding process:', imgError);
         // Continue without logo
       }
+    } else {
+      // If no logo is shown, add the custom text "QRFD"
+      const fontSize = qrSize * 0.07; // Adjust font size as needed, slightly smaller than logo for text
+      const fontName = 'Noto Sans Arabic'; // Use the Arabic font if available, or a fallback
+      ctx.font = `bold ${fontSize}px ${fontName}, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+
+      const qrCodeCenter = qrSize / 2;
+      const textBlockHeight = fontSize * 2.2; // Height for two lines of text with some spacing
+      const textBlockWidth = qrSize * 0.3; // Adjust width as needed
+      
     }
 
     const qrCodeDataUrl = canvas.toDataURL('image/png');
