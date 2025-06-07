@@ -73,6 +73,7 @@
     --text-primary: #111827;
     --text-secondary: #4b5563;
     --border-color: #e5e7eb;
+    
   }
   .dark {
     --background: 222.2 84% 4.9%;
@@ -111,13 +112,52 @@
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
+  * {
+    @apply border-neutral-200 dark:border-neutral-800;
+  }
+  body {
+    @apply bg-background text-foreground;
+    
+  }
+}
+main.flex-1.overflow-x-hidden.p-4 {
+  color: black;
+}
+button.inline-flex.items-center.justify-center.gap-2.whitespace-nowrap.text-sm.font-medium.ring-offset-background.transition-colors.focus-visible\:outline-none.focus-visible\:ring-2.focus-visible\:ring-ring.focus-visible\:ring-offset-2.disabled\:pointer-events-none.disabled\:opacity-50.\[\&_svg\]\:pointer-events-none.\[\&_svg\]\:size-4.\[\&_svg\]\:shrink-0.bg-primary.text-primary-foreground.hover\:bg-primary\/90.rounded-md.px-3.ml-auto.mr-1.h-10.w-50 {
+  background-color: #2563eb;
+  color: white;
+}
+label.text-sm.font-medium.leading-none.peer-disabled\:cursor-not-allowed.peer-disabled\:opacity-70 {
+  color: black;
 }
 
+header.sticky.top-0.w-full.z-50.transition-all.duration-300.bg-white\/80.backdrop-blur-sm.border-b.border-gray-100.py-4 {
+  display: none;
+}
+main.flex-1.overflow-x-hidden.p-4 {
+  background-color: white;
+}
+span.absolute.h-full.bg-primary {
+  background-color: #2563eb;
+}
+span.relative.flex.w-full.touch-none.select-none.items-center.flex-1 {
+  background-color: gray;
+  border-radius: 20px;
+}
+.flex-1.overflow-y-auto.py-6.w-full {
+  color: black;
+}
 @layer base {
   * {
     @apply border-border;
+ 
   }
+  .text-white {
+    color: #ffffff;
 
+
+
+  }
   body {
     background-color: var(--bg-primary);
     color: var(--text-primary);
@@ -151,3 +191,38 @@
 }
 .animate-fadeSlideOutDown {
   animation: fadeSlideOutDown 0.4s cubic-bezier(0.4,0,0.2,1);}
+
+  :root {
+    --primary-50: #E6EDFF;
+    --primary-100: #CCDAFF;
+    --primary-200: #99B6FF;
+    --primary-300: #6691FF;
+    --primary-400: #336DFF;
+    --primary-500: #0049FF;
+    --primary-600: #003ACC;
+    --primary-700: #002C99;
+    --primary-800: #001D66;
+    --primary-900: #000F33;
+  }
+  
+  .light-mode {
+    --bg-primary: #ffffff;
+    --bg-secondary: #f9fafb;
+    --text-primary: #111827;
+    --text-secondary: #4b5563;
+    --border-color: #e5e7eb;
+  }
+  
+  :root:not(.light-mode) {
+    --bg-primary: #030712;
+    --bg-secondary: #111827;
+    --text-primary: #ffffff;
+    --text-secondary: #9ca3af;
+    --border-color: #1f2937;
+  }
+  
+  body {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    transition: background-color 0.3s ease-in-out, color 0.3s ease-in-out;
+  }

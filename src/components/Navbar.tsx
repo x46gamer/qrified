@@ -1,137 +1,118 @@
-import React, { useState, useRef } from 'react';
-import { motion, useScroll, useTransform, easeInOut } from 'framer-motion';
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { QrCode, Menu, X } from 'lucide-react';
 
-export const Navbar: React.FC = () => {
-  const [isOpen, setIsOpen] = useState(false);
-  const ref = useRef<HTMLElement>(null);
+const Navbar = () => {
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const { scrollYProgress } = useScroll({
-    target: ref,
-    offset: ['start start', 'end start'],
-  });
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 50);
+    };
 
-  // Interpolate width based on scroll with easeInOut easing
-  const width = useTransform(scrollYProgress, [0, 0.5], ['1200px', '950px'], { ease: easeInOut });
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
-  const scrollToSection = (id: string) => {
-    if (id === 'testimonials') {
-      const testimonialSection = document.querySelector('.animate-marquee'); // Assuming .animate-marquee is on the testimonials section
-      if (testimonialSection) {
-        const yOffset = -100; // Adjust offset as needed
-        const y = testimonialSection.getBoundingClientRect().top + window.pageYOffset + yOffset;
-        window.scrollTo({ top: y, behavior: 'smooth' });
-      }
-    } else {
-      const element = document.getElementById(id);
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth' });
-      }
-    }
-    setIsOpen(false); // Close mobile menu after clicking a link
-  };
-
-  const toggleMenu = () => {
-    setIsOpen(!isOpen);
-  };
+  const navLinks = [
+    { name: 'Why Qrified', href: '#why' },
+    { name: 'Security', href: '#security' },
+    { name: 'How It Works', href: '#product-flow' },
+    { name: 'Dashboard', href: '#dashboard' },
+    { name: 'Pricing', href: '#pricing' },
+  ];
 
   return (
-    <header ref={ref} className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 backdrop-filter backdrop-blur-md bg-gray-100 bg-opacity-70 rounded-[100px] overflow-hidden">
-      <motion.div style={{ width }} className="mx-auto px-4 sm:px-6 lg:px-8 py-2">
-        <div className="flex items-center justify-between">
-          <a href="#" className="flex items-center" onClick={() => scrollToSection('')}>
-            <QrCode className="h-8 w-8 text-primary-600 mr-2" />
-            <span className="font-bold text-xl text-gray-900">Qrified</span>
-          </a>
+    <motion.header
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
+        isScrolled ? 'bg-neutral-900/90 backdrop-blur-md py-3' : 'bg-transparent py-5'
+      }`}
+      initial={{ y: -100 }}
+      animate={{ y: 0 }}
+      transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+    >
+      <div className="container mx-auto px-4 md:px-6 flex justify-between items-center">
+        <motion.a 
+          href="#" 
+          className="flex items-center gap-2 text-white"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          <QrCode className="h-8 w-8 text-primary-500" />
+          <span className="font-mono text-xl font-bold tracking-tighter">QRIFIED</span>
+        </motion.a>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden md:flex space-x-8">
-            <a href="#why" className="text-gray-700 hover:text-primary-600 transition-colors" onClick={() => scrollToSection('why')}>
-              Why Qrified
-            </a>
-            <a href="#security" className="text-gray-700 hover:text-primary-600 transition-colors" onClick={() => scrollToSection('security')}>
-              Security
-            </a>
-            <a href="#product" className="text-gray-700 hover:text-primary-600 transition-colors" onClick={() => scrollToSection('product')}>
-              How It Works
-            </a>
-            <a href="#dashboard" className="text-gray-700 hover:text-primary-600 transition-colors" onClick={() => scrollToSection('dashboard')}>
-              Dashboard
-            </a>
-            <a href="#pricing" className="text-gray-700 hover:text-primary-600 transition-colors" onClick={() => scrollToSection('pricing')}>
-              Pricing
-            </a>
-          </nav>
-
-          <div className="hidden md:block">
-            <a
-              href="#cta"
-              className="inline-flex items-center justify-center px-5 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 transition-colors"
-              onClick={() => scrollToSection('cta')}
+        {/* Desktop Navigation */}
+        <nav className="hidden md:flex items-center space-x-8">
+          {navLinks.map((link) => (
+            <motion.a
+              key={link.name}
+              href={link.href}
+              className="text-sm font-medium text-neutral-300 hover:text-white transition-colors"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
             >
-              Get Started
-            </a>
-          </div>
-
-          {/* Mobile menu button */}
-          <button
-            className="md:hidden text-gray-700 focus:outline-none"
-            onClick={toggleMenu}
+              {link.name}
+            </motion.a>
+          ))}
+          <motion.a
+            href="/signup"
+            className="inline-flex h-10 items-center justify-center rounded-md bg-primary-500 px-6 text-sm font-medium text-white shadow-md transition-colors hover:bg-primary-600 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-neutral-950"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
           >
-            {isOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
-        </div>
-      </motion.div>
+            Get Started
+          </motion.a>
+        </nav>
 
-      {/* Mobile Navigation */}
-      {isOpen && (
-        <div className="md:hidden bg-white">
-          <div className="px-4 pt-2 pb-4 space-y-4">
-            <a
-              href="#why"
-              className="block text-gray-700 hover:text-primary-600 transition-colors"
-              onClick={() => scrollToSection('why')}
-            >
-              Why Qrified
-            </a>
-            <a
-              href="#security"
-              className="block text-gray-700 hover:text-primary-600 transition-colors"
-              onClick={() => scrollToSection('security')}
-            >
-              Security
-            </a>
-            <a
-              href="#product"
-              className="block text-gray-700 hover:text-primary-600 transition-colors"
-              onClick={() => scrollToSection('product')}
-            >
-              How It Works
-            </a>
-            <a
-              href="#dashboard"
-              className="block text-gray-700 hover:text-primary-600 transition-colors"
-              onClick={() => scrollToSection('dashboard')}
-            >
-              Dashboard
-            </a>
-            <a
-              href="#pricing"
-              className="block text-gray-700 hover:text-primary-600 transition-colors"
-              onClick={() => scrollToSection('pricing')}
-            >
-              Pricing
-            </a>
-            <a
-              href="#cta"
-              className="block w-full text-center px-5 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 transition-colors"
-              onClick={() => scrollToSection('cta')}
-            >
-              Request Demo
-            </a>
-          </div>
-        </div>
-      )}
-    </header>
+        {/* Mobile menu button */}
+        <button 
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)} 
+          className="md:hidden p-2"
+          aria-label="Toggle menu"
+        >
+          {mobileMenuOpen ? 
+            <X className="h-6 w-6 text-white" /> : 
+            <Menu className="h-6 w-6 text-white" />
+          }
+        </button>
+      </div>
+
+      {/* Mobile menu */}
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <motion.div
+            className="fixed inset-0 top-16 z-40 bg-neutral-900 md:hidden"
+            initial={{ opacity: 1, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 1, y: -10 }}
+            transition={{ duration: 0.2 }}
+          >
+            <nav className="container mx-auto px-4 py-8 flex flex-col space-y-6">
+              {navLinks.map((link) => (
+                <a
+                  key={link.name}
+                  href={link.href}
+                  className="text-lg font-medium text-white py-2 border-b border-neutral-800"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  {link.name}
+                </a>
+              ))}
+              <a
+                href="/signup"
+                className="inline-flex h-12 items-center justify-center rounded-md bg-primary-500 px-6 text-base font-medium text-white shadow-md transition-colors hover:bg-primary-600 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-neutral-950 mt-4"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Get Started
+              </a>
+            </nav>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.header>
   );
 };
+
+export default Navbar;
