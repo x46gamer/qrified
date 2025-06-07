@@ -1,4 +1,4 @@
-import React, { lazy, Suspense } from 'react';
+import React, { lazy, Suspense, useState, createContext, useContext } from 'react';
 import { BrowserRouter, Route, Routes, Navigate } from 'react-router-dom';
 import LandingPage from './pages/LandingPage';
 import Index from './pages/Index';
@@ -30,7 +30,8 @@ import Settings from './pages/Settings';
 import AdminFeedback from './pages/AdminFeedback';
 import ScanLogs from './pages/ScanLogs';
 import Dashboard from './pages/Dashboard';
-
+import MyAccount from './pages/MyAccount';
+import MyAccountDialog from './components/MyAccountDialog';
 // Public Pages
 const CookiePolicyPage = lazy(() => import('./pages/CookiePolicyPage'));
 const CareersPage = lazy(() => import('./pages/CareersPage'));
@@ -39,6 +40,8 @@ const SupportCenterPage = lazy(() => import('./pages/SupportCenterPage'));
 const CaseStudiesPage = lazy(() => import('./pages/CaseStudiesPage'));
 const CommunityForumPage = lazy(() => import('./pages/CommunityForumPage'));
 const PartnersPage = lazy(() => import('./pages/PartnersPage'));
+
+export const MyAccountDialogContext = createContext<{ openMyAccount: () => void }>({ openMyAccount: () => {} });
 
 // Helper component to handle root route navigation based on authentication status
 const RootRouteHandler = () => {
@@ -53,136 +56,143 @@ const RootRouteHandler = () => {
 };
 
 function App() {
+  const [myAccountOpen, setMyAccountOpen] = useState(false);
+  const openMyAccount = () => setMyAccountOpen(true);
+
   return (
     <AuthProvider>
       <AppearanceSettingsProvider>
-        <BrowserRouter>
-          <Routes>
-            {/* Public routes - accessible to all users */}
-            <Route path="/" element={<RootRouteHandler />} />
-            <Route path="/about" element={<AppLayout><AboutPage /></AppLayout>} />
-            <Route path="/faq" element={<AppLayout><FAQPage /></AppLayout>} />
-            <Route path="/privacy" element={<AppLayout><PrivacyPolicyPage /></AppLayout>} />
-            <Route path="/terms" element={<AppLayout><TermsOfServicePage /></AppLayout>} />
-            <Route path="/refund" element={<AppLayout><RefundPolicyPage /></AppLayout>} />
-            <Route path="/contact" element={<AppLayout><ContactPage /></AppLayout>} />
-            <Route path="/blog" element={<AppLayout><BlogPage /></AppLayout>} />
-            <Route path="/check" element={<ProductCheck />} />
-            
-            {/* Authentication routes - only for non-authenticated users */}
-            <Route path="/login" element={<AppLayout><Login /></AppLayout>} />
-            <Route path="/signup" element={<AppLayout><Signup /></AppLayout>} />
-            <Route path="/forgot-password" element={<AppLayout><ForgotPassword /></AppLayout>} />
-            
-            {/* Admin routes - completely separated auth system */}
-            <Route path="/admin" element={<AdminLogin />} />
-            <Route
-              path="/admin/dashboard"
-              element={
-                <AuthGuard requiredRole="admin">
-                  <AdminLayout>
-                    <AdminDashboard />
-                  </AdminLayout>
-                </AuthGuard>
-              }
-            />
-            
-            {/* Dashboard routes - for authenticated users */}
-            <Route
-              path="/dashboard"
-              element={
-                <AuthGuard>
-                  <SidebarProvider>
-                    <DashboardLayout>
-                      <Index />
-                    </DashboardLayout>
-                  </SidebarProvider>
-                </AuthGuard>
-              }
-            />
-            <Route
-              path="/stats"
-              element={
-                <AuthGuard>
-                  <SidebarProvider>
-                    <DashboardLayout>
-                      <Dashboard />
-                    </DashboardLayout>
-                  </SidebarProvider>
-                </AuthGuard>
-              }
-            />
-            <Route
-              path="/customize"
-              element={
-                <AuthGuard>
-                  <SidebarProvider>
-                    <DashboardLayout>
-                      <CustomizeApp />
-                    </DashboardLayout>
-                  </SidebarProvider>
-                </AuthGuard>
-              }
-            />
-            <Route
-              path="/settings"
-              element={
-                <AuthGuard>
-                  <SidebarProvider>
-                    <DashboardLayout>
-                      <Settings />
-                    </DashboardLayout>
-                  </SidebarProvider>
-                </AuthGuard>
-              }
-            />
-            <Route
-              path="/domains"
-              element={
-                <AuthGuard>
-                  <SidebarProvider>
-                    <DashboardLayout>
-                      <DomainSettings />
-                    </DashboardLayout>
-                  </SidebarProvider>
-                </AuthGuard>
-              }
-            />
-            <Route
-              path="/feedback"
-              element={
-                <AuthGuard>
-                  <SidebarProvider>
-                    <DashboardLayout>
-                      <AdminFeedback />
-                    </DashboardLayout>
-                  </SidebarProvider>
-                </AuthGuard>
-              }
-            />
-            <Route
-              path="/scanlogs"
-              element={
-                <AuthGuard>
-                  <SidebarProvider>
-                    <DashboardLayout>
-                      <ScanLogs />
-                    </DashboardLayout>
-                  </SidebarProvider>
-                </AuthGuard>
-              }
-            />
-            <Route path="/cookie-policy" element={<CookiePolicyPage />} />
-            <Route path="/careers" element={<CareersPage />} />
-            <Route path="/docs" element={<DocumentationPage />} />
-            <Route path="/support" element={<SupportCenterPage />} />
-            <Route path="/case-studies" element={<CaseStudiesPage />} />
-            <Route path="/community" element={<CommunityForumPage />} />
-            <Route path="/partners" element={<PartnersPage />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-          <Toaster position="top-right" />
-        </BrowserRouter>
+        <MyAccountDialogContext.Provider value={{ openMyAccount }}>
+          <BrowserRouter>
+            <Routes>
+              {/* Public routes - accessible to all users */}
+              <Route path="/" element={<RootRouteHandler />} />
+              <Route path="/about" element={<AppLayout><AboutPage /></AppLayout>} />
+              <Route path="/faq" element={<AppLayout><FAQPage /></AppLayout>} />
+              <Route path="/privacy" element={<AppLayout><PrivacyPolicyPage /></AppLayout>} />
+              <Route path="/terms" element={<AppLayout><TermsOfServicePage /></AppLayout>} />
+              <Route path="/refund" element={<AppLayout><RefundPolicyPage /></AppLayout>} />
+              <Route path="/contact" element={<AppLayout><ContactPage /></AppLayout>} />
+              <Route path="/blog" element={<AppLayout><BlogPage /></AppLayout>} />
+              <Route path="/check" element={<ProductCheck />} />
+              <Route path="/myaccount" element={<MyAccount />} />
+              {/* Authentication routes - only for non-authenticated users */}
+              <Route path="/login" element={<AppLayout><Login /></AppLayout>} />
+              <Route path="/signup" element={<AppLayout><Signup /></AppLayout>} />
+              <Route path="/forgot-password" element={<AppLayout><ForgotPassword /></AppLayout>} />
+              
+              {/* Admin routes - completely separated auth system */}
+              <Route path="/admin" element={<AdminLogin />} />
+              <Route
+                path="/admin/dashboard"
+                element={
+                  <AuthGuard requiredRole="admin">
+                    <AdminLayout>
+                      <AdminDashboard />
+                    </AdminLayout>
+                  </AuthGuard>
+                }
+              />
+              
+              {/* Dashboard routes - for authenticated users */}
+              <Route
+                path="/dashboard"
+                element={
+                  <AuthGuard>
+                    <SidebarProvider>
+                      <DashboardLayout>
+                        <Index />
+                      </DashboardLayout>
+                    </SidebarProvider>
+                  </AuthGuard>
+                }
+              />
+              <Route
+                path="/stats"
+                element={
+                  <AuthGuard>
+                    <SidebarProvider>
+                      <DashboardLayout>
+                        <Dashboard />
+                      </DashboardLayout>
+                    </SidebarProvider>
+                  </AuthGuard>
+                }
+              />
+              <Route
+                path="/customize"
+                element={
+                  <AuthGuard>
+                    <SidebarProvider>
+                      <DashboardLayout>
+                        <CustomizeApp />
+                      </DashboardLayout>
+                    </SidebarProvider>
+                  </AuthGuard>
+                }
+              />
+              <Route
+                path="/settings"
+                element={
+                  <AuthGuard>
+                    <SidebarProvider>
+                      <DashboardLayout>
+                        <Settings />
+                      </DashboardLayout>
+                    </SidebarProvider>
+                  </AuthGuard>
+                }
+              />
+              <Route
+                path="/domains"
+                element={
+                  <AuthGuard>
+                    <SidebarProvider>
+                      <DashboardLayout>
+                        <DomainSettings />
+                      </DashboardLayout>
+                    </SidebarProvider>
+                  </AuthGuard>
+                }
+              />
+              <Route
+                path="/feedback"
+                element={
+                  <AuthGuard>
+                    <SidebarProvider>
+                      <DashboardLayout>
+                        <AdminFeedback />
+                      </DashboardLayout>
+                    </SidebarProvider>
+                  </AuthGuard>
+                }
+              />
+              <Route
+                path="/scanlogs"
+                element={
+                  <AuthGuard>
+                    <SidebarProvider>
+                      <DashboardLayout>
+                        <ScanLogs />
+                      </DashboardLayout>
+                    </SidebarProvider>
+                  </AuthGuard>
+                }
+              />
+              
+              <Route path="/cookie-policy" element={<CookiePolicyPage />} />
+              <Route path="/careers" element={<CareersPage />} />
+              <Route path="/docs" element={<DocumentationPage />} />
+              <Route path="/support" element={<SupportCenterPage />} />
+              <Route path="/case-studies" element={<CaseStudiesPage />} />
+              <Route path="/community" element={<CommunityForumPage />} />
+              <Route path="/partners" element={<PartnersPage />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+            <MyAccountDialog open={myAccountOpen} onOpenChange={setMyAccountOpen} />
+            <Toaster position="top-right" />
+          </BrowserRouter>
+        </MyAccountDialogContext.Provider>
       </AppearanceSettingsProvider>
     </AuthProvider>
   );

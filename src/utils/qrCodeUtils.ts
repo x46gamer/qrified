@@ -2,6 +2,11 @@ import QRCode from 'qrcode';
 import CryptoJS from 'crypto-js';
 import { v4 as uuidv4 } from 'uuid';
 
+// Function to draw an image onto a canvas
+const drawImageOnCanvas = (ctx: CanvasRenderingContext2D, img: HTMLImageElement, x: number, y: number, width: number, height: number) => {
+  ctx.drawImage(img, x, y, width, height);
+};
+
 // Secret key for encryption - in a real app, this would be stored securely
 const SECRET_KEY = 'qrcode-secret-key-improved';
 
@@ -100,6 +105,8 @@ export const generateQRCodeImage = async (data: string, options?: {
   primaryColor?: string;
   secondaryColor?: string;
   size?: number;
+  showLogo?: boolean;
+  logoUrl?: string | null;
 }): Promise<string> => {
   try {
     if (!data || typeof data !== 'string') {
@@ -110,15 +117,69 @@ export const generateQRCodeImage = async (data: string, options?: {
     console.log('Generating QR code with template for data:', data);
     
     // Using higher error correction for better scanning reliability
-    const qrCodeDataUrl = await QRCode.toDataURL(data, {
-      margin: 1,
-      width: options?.size || 600,
-      errorCorrectionLevel: 'H', // High error correction level
-      color: {
-        dark: options?.primaryColor || '#000000',
-        light: '#ffffff',
-      },
+    const canvas = document.createElement('canvas');
+    const qrSize = options?.size || 600;
+    canvas.width = qrSize;
+    canvas.height = qrSize;
+    const ctx = canvas.getContext('2d');
+
+    if (!ctx) {
+      throw new Error('Failed to get canvas context');
+    }
+
+    await new Promise<void>((resolve, reject) => {
+      QRCode.toCanvas(canvas, data, {
+        margin: 4, // Increased margin for logo
+        width: qrSize,
+        errorCorrectionLevel: 'H', // High error correction level
+        color: {
+          dark: options?.primaryColor || '#000000',
+          light: options?.secondaryColor || '#ffffff', // Use secondary color for background
+        },
+      }, (error) => {
+        if (error) reject(error);
+        resolve();
+      });
     });
+
+    // Embed logo if showLogo is true and logoUrl is provided
+    if (options?.showLogo && options.logoUrl) {
+      console.log('Attempting to embed logo:', options.logoUrl);
+      try {
+        const logoImg = new Image();
+        logoImg.crossOrigin = 'anonymous'; // Needed if logo is from a different origin
+        logoImg.src = options.logoUrl;
+
+        await new Promise<void>((resolve, reject) => {
+          logoImg.onload = () => {
+            const qrCodeCenter = qrSize / 2;
+            const logoSize = qrSize * 0.2; // Logo size is 20% of QR code size
+            const logoX = qrCodeCenter - logoSize / 2;
+            const logoY = qrCodeCenter - logoSize / 2;
+
+            // Draw a white background circle for the logo (optional, but helps scanning)
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(qrCodeCenter, qrCodeCenter, logoSize / 2 + 5, 0, Math.PI * 2, false); // Add a small border
+            ctx.fill();
+
+            drawImageOnCanvas(ctx, logoImg, logoX, logoY, logoSize, logoSize);
+            console.log('Logo embedded successfully.');
+            resolve();
+          };
+          logoImg.onerror = (err) => {
+            console.error('Error loading logo image:', err);
+            // Resolve anyway, so QR code is still returned without logo
+            resolve();
+          };
+        });
+      } catch (imgError) {
+        console.error('Error during logo embedding process:', imgError);
+        // Continue without logo
+      }
+    }
+
+    const qrCodeDataUrl = canvas.toDataURL('image/png');
     
     if (!qrCodeDataUrl || !qrCodeDataUrl.startsWith('data:image/png;base64,')) {
       console.error('Generated QR code with template is invalid');

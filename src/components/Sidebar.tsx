@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { useSidebar } from '@/components/ui/sidebar';
 import { NavLink, useLocation } from 'react-router-dom';
-import { LayoutDashboard, QrCode, Brush, Settings, Users, Globe, LineChart, MessageSquare, ChevronLeft, ChevronRight, LogOut, X, FileText, FolderCog } from 'lucide-react';
+import { LayoutDashboard, QrCode, Brush, Settings, Users, Globe, LineChart, MessageSquare, ChevronLeft, ChevronRight, LogOut, X, FileText, FolderCog, User } from 'lucide-react';
 import { Button } from './ui/button';
 import { Progress } from './ui/progress';
 import { useAuth } from '@/contexts/AuthContext';
@@ -10,6 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { MyAccountDialogContext } from '@/App';
 
 interface SidebarProps {
   className?: string;
@@ -39,6 +40,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   const isAdmin = user?.role === 'admin';
   const [userLimits, setUserLimits] = useState<UserLimits | null>(null);
   const isMobile = useIsMobile();
+  const { openMyAccount } = React.useContext(MyAccountDialogContext);
   
   useEffect(() => {
     if (user?.id) {
@@ -246,80 +248,58 @@ const Sidebar: React.FC<SidebarProps> = ({
 
           <NavLink to="/settings" className={({
             isActive
-          }) => cn("flex items-center py-2 rounded-lg text-sm transition-colors duration-200", isActive ? "bg-blue-50 text-blue-600" : "text-gray-700 hover:bg-gray-100", isOpen ? "px-3" : "px-2 justify-center")}>
+          }) => cn("flex items-center py-2 rounded-lg text-sm transition-colors duration-200", isActive ? "bg-blue-50 text-blue-600" : "text-gray-700 hover:bg-gray-100", isOpen ? "px-3" : "px-2 justify-center")}> 
             <Settings size={20} className="shrink-0" />
-            <span className={cn("ml-3 transition-opacity duration-300", isOpen ? "opacity-100" : "opacity-0 hidden")}>
+            <span className={cn("ml-3 transition-opacity duration-300", isOpen ? "opacity-100" : "opacity-0 hidden")}> 
               Settings
             </span>
           </NavLink>
-
-          <button
-            onClick={handleLogout}
-            className={cn("flex w-full items-center py-2 rounded-lg text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200", isOpen ? "px-3" : "px-2 justify-center")}
-          >
-            <LogOut size={20} className="shrink-0" />
-            <span className={cn("ml-3 transition-opacity duration-300", isOpen ? "opacity-100" : "opacity-0 hidden")}>
-              Logout
-            </span>
-          </button>
         </nav>
       </div>
       
       {/* User Info and QR Limits */}
       {user && userLimits && (
-        <div className={cn("px-4 py-4 border-t transition-all duration-300", isOpen ? "" : "px-2 text-center")}>
-           {/* User Info */}
-           <div className={cn("flex items-center mb-3", isOpen ? "justify-start" : "justify-center flex-col")}>
-             <div className={cn("w-10 h-10 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center uppercase font-medium text-lg", !isOpen && "mb-1")}>
-               {user?.email?.charAt(0) || 'U'}
-             </div>
-             <div className={cn("transition-opacity duration-300", isOpen ? "opacity-100 ml-3" : "opacity-0 hidden")}>
-               <div className="text-sm font-semibold text-gray-800 truncate">{user?.name || 'User'}</div>
-               <div className="text-xs text-gray-600 truncate">{user?.email}</div>
-             </div>
-              {/* Tooltip for user info when collapsed */}
-              {!isOpen && (
-                <TooltipProvider delayDuration={100}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <div className="">
-                       
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent side="right">
-                      <div>
-                        <div className="text-sm font-semibold text-gray-900">{user?.name || 'User'}</div>
-                        <div className="text-xs text-gray-700">{user?.email}</div>
-                      </div>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              )}
-           </div>
-
-           {/* QR Code Limits */}
-           <div className={cn("transition-opacity duration-300", isOpen ? "opacity-100" : "opacity-0 hidden")}>
-             <div className="flex justify-between items-center mb-1">
-               <span className="text-xs font-medium text-gray-600">QR Codes Monthly</span>
-               <span className="text-xs font-medium text-gray-600">{monthlyQrCreatedCount}/{monthlyQrLimitCount}</span>
-             </div>
-             <Progress value={monthlyQrPercentage} className={cn("h-2", monthlyQrPercentage > 80 ? "bg-red-500" : "bg-gray-500", "transition-colors duration-300")} />
-           </div>
-            {/* Tooltip for QR limits when collapsed */}
-            {!isOpen && (
-              <TooltipProvider delayDuration={100}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="w-full">
-                       <Progress value={monthlyQrPercentage} className={cn("h-2", monthlyQrPercentage > 80 ? "bg-red-500" : "bg-gray-500", "transition-colors duration-300")} />
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent side="right">
-                    <span>{monthlyQrCreatedCount}/{monthlyQrLimitCount} QR Codes Monthly</span>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+        <div className={cn("px-4 py-4 border-t transition-all duration-300", isOpen ? "" : "px-2 text-center")}> 
+          {/* Profile Button */}
+          <button
+            onClick={openMyAccount}
+            className={cn(
+              "flex items-center w-full gap-3 p-3 mb-3 border border-gray-200 rounded-lg bg-white hover:bg-gray-50 transition-all duration-200",
+              openMyAccount ? "ring-2 ring-blue-500 bg-blue-50" : ""
             )}
+            style={{ cursor: 'pointer' }}
+          >
+            <div className="w-10 h-10 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center uppercase font-medium text-lg">
+              {user?.email?.charAt(0) || 'U'}
+            </div>
+            <div className="flex flex-col items-start overflow-hidden">
+              <span className="text-sm font-semibold text-gray-800 truncate">{user?.name || 'User'}</span>
+              <span className="text-xs text-gray-600 truncate">{user?.email}</span>
+            </div>
+          </button>
+          {/* QR Code Limits */}
+          <div className={cn("transition-opacity duration-300", isOpen ? "opacity-100" : "opacity-0 hidden")}> 
+            <div className="flex justify-between items-center mb-1">
+              <span className="text-xs font-medium text-gray-600">QR Codes Monthly</span>
+              <span className="text-xs font-medium text-gray-600">{monthlyQrCreatedCount}/{monthlyQrLimitCount}</span>
+            </div>
+            <Progress value={monthlyQrPercentage} className={cn("h-2", monthlyQrPercentage > 80 ? "bg-red-500" : "bg-gray-500", "transition-colors duration-300")} />
+          </div>
+          {/* Tooltip for QR limits when collapsed */}
+          {!isOpen && (
+            <TooltipProvider delayDuration={100}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="w-full">
+                    <Progress value={monthlyQrPercentage} className={cn("h-2", monthlyQrPercentage > 80 ? "bg-red-500" : "bg-gray-500", "transition-colors duration-300")} />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="right">
+                  <span>{monthlyQrCreatedCount}/{monthlyQrLimitCount} QR Codes Monthly</span>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
         </div>
       )}
 

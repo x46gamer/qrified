@@ -125,3 +125,29 @@
     @apply bg-background text-foreground;
   }
 }
+
+@keyframes fadeSlideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes fadeSlideOutDown {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+}
+.animate-fadeSlideInUp {
+  animation: fadeSlideInUp 0.4s cubic-bezier(0.4,0,0.2,1);
+}
+.animate-fadeSlideOutDown {
+  animation: fadeSlideOutDown 0.4s cubic-bezier(0.4,0,0.2,1);}

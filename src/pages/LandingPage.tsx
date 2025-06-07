@@ -130,10 +130,6 @@ const translations = {
         blog1Category: "Security", blog1Title: "The Future of Anti-Counterfeiting with QR Codes", blog1Excerpt: "Learn how advanced QR code technology is revolutionizing brand protection and supply chain integrity...", blog1Meta: "By Alex Chen • May 28, 2025 • 5 min read",
         blog2Category: "Customer Engagement", blog2Title: "Beyond Verification: Using QR Codes to Build Customer Loyalty", blog2Excerpt: "Discover innovative ways to leverage QR code interactions for feedback, exclusive content, and enhanced...", blog2Meta: "By Sarah Miller • May 22, 2025 • 7 min read",
         blog3Category: "Tech Insights", blog3Title: "Understanding AES Encryption in QRified's Secure System", blog3Excerpt: "A deep dive into the cryptographic methods that keep your product data safe and secure with QRified...", blog3Meta: "By Dr. Emily Carter • May 15, 2025 • 8 min read",
-        pricingTitleLead: "Transparent", pricingTitleAccent: "Pricing", pricingTitleEnd: "for Every Scale", pricingSubtitle: "Choose a plan that aligns with your business needs. Simple, scalable, and powerful.", planPerMonth: "/mo",
-        plan1Name: "Starter", plan1Desc: "Ideal for small businesses & startups.", plan1Feat1: "Up to 1,000 QR codes", plan1Feat2: "Basic Analytics Dashboard", plan1Feat3: "Standard QR Templates", plan1Feat4: "Email Support", plan1Cta: "Choose Starter",
-        planPopularBadge: "Most Popular", plan2Name: "Pro", plan2Desc: "For growing businesses needing more power.", plan2Feat1: "Up to 10,000 QR codes", plan2Feat2: "Advanced Analytics & Reporting", plan2Feat3: "All Templates + Customization", plan2Feat4: "Feedback & Review System", plan2Feat5: "Priority Email & Chat Support", plan2Cta: "Choose Pro",
-        plan3Name: "Enterprise", plan3Price: "Custom", plan3Desc: "Tailored solutions for large-scale needs.", plan3Feat1: "Unlimited QR codes", plan3Feat2: "Full API Access & Integrations", plan3Feat3: "Dedicated Account Manager", plan3Feat4: "Custom SLA & Premium Support", plan3Cta: "Contact Sales",
         ctaTitle: "Elevate Your Brand's Security with <span class='hero-gradient-text'>QRified</span>.", ctaSubtitle: "Step into the future of product authentication. Protect your brand, engage customers, and unlock growth.", ctaButton: "Request a Demo",
         footerBrandName: "QRified", footerTagline: "The Future of Secure Authentication.", footerCompanyName: "QRified Technologies Ltd (15374908)", footerAddr1: "275 New N Rd, London, N1 7AA", footerCountry: "United Kingdom",
         footerProductColTitle: "Product", footerProductLink1: "Core Features", footerProductLink2: "Tool Suite", footerProductLink3: "Pricing", footerProductLink4: "Security", footerProductLink5: "Integrations", footerProductLink6: "API (Coming Soon)",
@@ -173,10 +169,6 @@ const translations = {
         blog1Category: "الأمان", blog1Title: "مستقبل مكافحة التزييف باستخدام رموز QR code", blog1Excerpt: "تعرف على كيف تُحدث تقنية QR code المتقدمة ثورة في حماية العلامة التجارية وسلامة سلسلة التوريد...", blog1Meta: "بقلم أليكس تشين • ٢٨ مايو ٢٠٢٥ • ٥ دقائق قراءة",
         blog2Category: "مشاركة العملاء", blog2Title: "ما بعد التحقق: استخدام رموز QR code لبناء ولاء العملاء", blog2Excerpt: "اكتشف طرقًا مبتكرة للاستفادة من تفاعلات QR code للحصول على الآراء والمحتوى الحصري وتعزيز...", blog2Meta: "بقلم سارة ميلر • ٢٢ مايو ٢٠٢٥ • ٧ دقائق قراءة",
         blog3Category: "رؤى تقنية", blog3Title: "فهم تشفير AES في نظام QRified الآمن", blog3Excerpt: "نظرة عميقة على الأساليب التشفيرية التي تحافظ على أمان بيانات منتجك مع QRified...", blog3Meta: "بقلم د. إميلي كارتر • ١٥ مايو ٢٠٢٥ • ٨ دقائق قراءة",
-        pricingTitleLead: "أسعار", pricingTitleAccent: "شفافة", pricingTitleEnd: "لكل نطاق", pricingSubtitle: "اختر الخطة التي تناسب احتياجات عملك. بسيطة وقابلة للتطوير وقوية.", planPerMonth: "/شهريًا",
-        plan1Name: "مبتدئ", plan1Desc: "مثالية للشركات الصغيرة والناشئة.", plan1Feat1: "حتى ١٠٠٠ QR code", plan1Feat2: "لوحة تحكم تحليلات أساسية", plan1Feat3: "قوالب QR code قياسية", plan1Feat4: "دعم عبر البريد الإلكتروني", plan1Cta: "اختر خطة المبتدئين",
-        planPopularBadge: "الأكثر شيوعًا", plan2Name: "احترافي", plan2Desc: "للشركات النامية التي تحتاج إلى المزيد من القوة.", plan2Feat1: "حتى ١٠٠٠٠ QR code", plan2Feat2: "تحليلات وتقارير متقدمة", plan2Feat3: "جميع القوالب + التخصيص", plan2Feat4: "نظام الآراء والتقييمات", plan2Feat5: "دعم ذو أولوية عبر البريد الإلكتروني والدردشة", plan2Cta: "اختر الخطة الاحترافية",
-        plan3Name: "مؤسسات", plan3Price: "مخصص", plan3Desc: "حلول مصممة خصيصًا للاحتياجات واسعة النطاق.", plan3Feat1: "عدد غير محدود من رموز QR code", plan3Feat2: "وصول كامل إلى API والتكاملات", plan3Feat3: "مدير حساب مخصص", plan3Feat4: "اتفاقية مستوى خدمة مخصصة ودعم متميز", plan3Cta: "اتصل بالمبيعات",
         ctaTitle: "ارتقِ بأمان علامتك التجارية مع <span class='hero-gradient-text'>QRified</span>.", ctaSubtitle: "ادخل إلى مستقبل مصادقة المنتجات. احمِ علامتك التجارية، وأشرك العملاء، وحقق النمو.", ctaButton: "اطلب عرضًا توضيحيًا",
         footerBrandName: "QRified", footerTagline: "مستقبل المصادقة الآمنة.", footerCompanyName: "QRified Technologies Ltd (15374908)", footerAddr1: "275 طريق إن الجديد، لندن، N1 7AA", footerCountry: "المملكة المتحدة",
         footerProductColTitle: "المنتج", footerProductLink1: "الميزات الأساسية", footerProductLink2: "مجموعة الأدوات", footerProductLink3: "الأسعار", footerProductLink4: "الأمان", footerProductLink5: "التكاملات", footerProductLink6: "API (قريبًا)",
@@ -583,52 +575,6 @@ const BlogSection = ({ lang, t }) => {
     );
 };
 
-const PricingSection = ({ lang, t }) => {
-    const plans = [
-        { nameKey: "plan1Name", price: "$29", descKey: "plan1Desc", featuresKeys: ["plan1Feat1", "plan1Feat2", "plan1Feat3", "plan1Feat4"], ctaKey: "plan1Cta", popular: false, color: "text-indigo-400" },
-        { nameKey: "plan2Name", price: "$79", descKey: "plan2Desc", featuresKeys: ["plan2Feat1", "plan2Feat2", "plan2Feat3", "plan2Feat4", "plan2Feat5"], ctaKey: "plan2Cta", popular: true, color: "text-pink-400", popularBadgeKey: "planPopularBadge" },
-        { nameKey: "plan3Name", priceKey: "plan3Price", descKey: "plan3Desc", featuresKeys: ["plan3Feat1", "plan3Feat2", "plan3Feat3", "plan3Feat4"], ctaKey: "plan3Cta", popular: false, color: "text-sky-400" },
-    ];
-    return (
-        <section id="pricing" className="py-16 sm:py-24 bg-black bg-opacity-30">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="text-center mb-16">
-                    <h2 className="text-3xl sm:text-4xl font-extrabold mb-3 section-title-underline centered-section-title-underline text-gray-50">
-                        <TranslatedText translationKey="pricingTitleLead" lang={lang} options={{}} as="span" />{' '}
-                        <span className="accent-gradient-text"><TranslatedText translationKey="pricingTitleAccent" lang={lang} options={{}} as="span" /></span>{' '}
-                        <TranslatedText translationKey="pricingTitleEnd" lang={lang} options={{}} as="span" />
-                    </h2>
-                    <TranslatedText translationKey="pricingSubtitle" lang={lang} options={{}} as="p" className="text-lg text-gray-400 max-w-2xl mx-auto mt-6" />
-                </div>
-                <div className="grid lg:grid-cols-3 gap-8 items-stretch">
-                    {plans.map(plan => (
-                        <div key={plan.nameKey} className={`pricing-card p-8 flex flex-col card-bg ${plan.popular ? "popular ring-2 shadow-2xl shadow-pink-500/20" : ""}`}>
-                            {plan.popular && <span className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-pink-500 text-white text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-wider"><TranslatedText translationKey={plan.popularBadgeKey} lang={lang} options={{}} as="span" /></span>}
-                            <h3 className={`text-xl font-semibold mb-1 ${plan.color}`}><TranslatedText translationKey={plan.nameKey} lang={lang} options={{}} as="span" /></h3>
-                            <p className="text-3xl font-extrabold mb-1 text-gray-50">
-                                {plan.price ? plan.price : <TranslatedText translationKey={plan.priceKey} lang={lang} options={{}} as="span" />}
-                                {plan.price && <span className="text-lg font-normal text-gray-400"><TranslatedText translationKey="planPerMonth" lang={lang} options={{}} as="span" /></span>}
-                            </p>
-                            <TranslatedText translationKey={plan.descKey} lang={lang} options={{}} as="p" className="text-xs text-gray-500 mb-6" />
-                            <ul className="space-y-3 text-gray-300 mb-8 flex-grow text-sm">
-                                {plan.featuresKeys.map(featKey => (
-                                    <li key={featKey} className="flex items-center">
-                                        <Check className="w-4 h-4 text-green-400 mr-2 shrink-0" />
-                                        <TranslatedText translationKey={featKey} lang={lang} options={{}} as="span" />
-                                    </li>
-                                ))}
-                            </ul>
-                            <Button href="/Signup" variant={plan.popular ? "primary" : "secondary"} className="mt-auto w-full text-center">
-                                <TranslatedText translationKey={plan.ctaKey} lang={lang} options={{}} as="span" />
-                            </Button>
-                        </div>
-                    ))}
-                </div>
-            </div>
-        </section>
-    );
-};
-
 const CallToActionSection = ({ lang, t }) => {
     return (
         <section className="py-20 sm:py-28">
@@ -1011,7 +957,6 @@ const App = () => {
                 <ToolsSection lang={currentLang} t={t} />
                 <PerksSection lang={currentLang} t={t} />
                 <BlogSection lang={currentLang} t={t} />
-                <PricingSection lang={currentLang} t={t} />
                 <CallToActionSection lang={currentLang} t={t} />
             </main>
             <Footer lang={currentLang} t={t} currentYear={currentYear} onToggleLang={handleToggleLang} />
