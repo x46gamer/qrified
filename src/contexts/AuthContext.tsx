@@ -286,6 +286,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
       
       if (error) throw error;
+
+      // Grant 100 QR codes to the new user
+      if (data.user) {
+        const { error: limitsError } = await supabase
+          .from('user_limits')
+          .insert({
+            id: data.user.id,
+            qr_limit: 0, // Initial value
+            qr_created: 0, // Initial value
+            qr_successful: 0, // Initial value
+            monthly_qr_limit: 100, // Grant 100 monthly QR codes
+            monthly_qr_created: 0, // Initial value
+            last_monthly_reset: new Date().toISOString(),
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          });
+
+        if (limitsError) {
+          console.error('Error setting initial user limits:', limitsError.message);
+          // Optionally, you might want to handle this error more gracefully, e.g., send an alert to an admin
+        }
+      }
       
       toast.success('Signup successful! Please check your email for verification.');
     } catch (error: any) {
