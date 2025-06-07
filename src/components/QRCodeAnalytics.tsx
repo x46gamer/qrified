@@ -35,8 +35,6 @@ const QRCodeAnalytics: React.FC<QRCodeAnalyticsProps> = ({ qrCodes }) => {
     const fetchAnalyticsData = async () => {
       setIsLoading(true);
       try {
-        console.log('Fetching analytics data...');
-
         // Fetch reviews with updated RLS policies
         const { data: reviewsData, error: reviewsError } = await supabase
           .from('product_reviews')
@@ -53,7 +51,6 @@ const QRCodeAnalytics: React.FC<QRCodeAnalyticsProps> = ({ qrCodes }) => {
         if (reviewsError) {
           console.error('Error fetching reviews:', reviewsError);
         } else {
-          console.log('Fetched reviews:', reviewsData);
           setReviews(reviewsData || []);
         }
 
@@ -72,7 +69,6 @@ const QRCodeAnalytics: React.FC<QRCodeAnalyticsProps> = ({ qrCodes }) => {
         if (feedbackError) {
           console.error('Error fetching feedback:', feedbackError);
         } else {
-          console.log('Fetched feedback:', feedbackData);
           setFeedback(feedbackData || []);
         }
       } catch (error) {
@@ -92,7 +88,6 @@ const QRCodeAnalytics: React.FC<QRCodeAnalyticsProps> = ({ qrCodes }) => {
         schema: 'public', 
         table: 'product_reviews' 
       }, (payload) => {
-        console.log('Review change received:', payload);
         fetchAnalyticsData(); // Refresh data on any change
       })
       .subscribe();
@@ -104,7 +99,6 @@ const QRCodeAnalytics: React.FC<QRCodeAnalyticsProps> = ({ qrCodes }) => {
         schema: 'public', 
         table: 'customer_feedback' 
       }, (payload) => {
-        console.log('Feedback change received:', payload);
         fetchAnalyticsData(); // Refresh data on any change
       })
       .subscribe();

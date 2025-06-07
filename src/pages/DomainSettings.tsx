@@ -41,15 +41,12 @@ const DomainSettings = () => {
   const fetchDomains = async () => {
     setIsLoading(true);
     try {
-      console.log('Fetching domains for user:', user?.id);
-      
       const { data, error } = await supabase
         .from('custom_domains')
         .select('*')
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error fetching domains:', error);
         toast.error('Failed to fetch domains');
         return;
       }
@@ -60,10 +57,8 @@ const DomainSettings = () => {
         dns_type: domain.dns_type || 'cname' // Default to 'cname' if not set
       }));
 
-      console.log('Fetched domains:', domainsWithType);
       setDomains(domainsWithType);
     } catch (error) {
-      console.error('Error fetching domains:', error);
       toast.error('An error occurred while fetching domains');
     } finally {
       setIsLoading(false);
@@ -94,17 +89,14 @@ const DomainSettings = () => {
         .single();
 
       if (error) {
-        console.error('Error adding domain:', error);
         toast.error('Failed to add domain');
         return;
       }
 
-      console.log('Domain added:', data);
       toast.success('Domain added successfully');
       setNewDomain('');
       fetchDomains();
     } catch (error) {
-      console.error('Error adding domain:', error);
       toast.error('An error occurred while adding domain');
     } finally {
       setIsAddingDomain(false);
@@ -123,7 +115,6 @@ const DomainSettings = () => {
         .eq('id', domainId);
 
       if (error) {
-        console.error('Error deleting domain:', error);
         toast.error('Failed to delete domain');
         return;
       }
@@ -131,7 +122,6 @@ const DomainSettings = () => {
       toast.success('Domain deleted successfully');
       fetchDomains();
     } catch (error) {
-      console.error('Error deleting domain:', error);
       toast.error('An error occurred while deleting domain');
     }
   };
@@ -195,7 +185,6 @@ const DomainSettings = () => {
         toast.error(data.message || 'Domain verification failed');
       }
     } catch (error: any) {
-      console.error('Error verifying domain:', error);
       toast.error(error.message || 'Failed to verify domain');
     } finally {
       setIsVerifyingDomain(null);

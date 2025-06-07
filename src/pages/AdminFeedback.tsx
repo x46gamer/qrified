@@ -61,11 +61,10 @@ const AdminFeedback = () => {
     setLoading(true);
     
     if (!user) {
-      console.error('User not authenticated.');
+      toast.error('You must be logged in to view feedback.');
       setLoading(false);
       setReviews([]);
       setFeedback([]);
-      toast.error('You must be logged in to view feedback.');
       return;
     }
 
@@ -81,7 +80,6 @@ const AdminFeedback = () => {
           .order('created_at', { ascending: false });
         
         if (error) throw error;
-        console.log('Fetched reviews data:', data);
         setReviews(data as Review[]);
       } else {
         const { data, error } = await supabase
@@ -94,7 +92,6 @@ const AdminFeedback = () => {
           .order('created_at', { ascending: false });
         
         if (error) throw error;
-        console.log('Fetched feedback data:', data);
         const mappedFeedback: Feedback[] = data.map((item: any) => ({
           id: item.id,
           qr_code_id: item.qr_code_id,
@@ -109,7 +106,6 @@ const AdminFeedback = () => {
         setFeedback(mappedFeedback as Feedback[]);
       }
     } catch (error) {
-      console.error(`Error fetching ${activeTab}:`, error);
       toast.error(`Failed to load ${activeTab}`);
     } finally {
       setLoading(false);
@@ -139,7 +135,6 @@ const AdminFeedback = () => {
         setFeedback(feedback.filter(f => f.id !== id));
       }
     } catch (error) {
-      console.error('Error deleting item:', error);
       toast.error('Failed to delete item');
     } finally {
       setIsDeleteDialogOpen(false);

@@ -91,7 +91,6 @@ async function checkTxtRecords(domain: string): Promise<string[]> {
 // Function to check if SSL is provisioned and valid
 async function checkSSLCertificate(domain: string): Promise<{isValid: boolean; status: string}> {
   try {
-    console.log(`Checking SSL for domain: ${domain}`);
     // We'll check if HTTPS is responding correctly as a proxy for SSL validation
     const url = `https://${domain}`;
     
@@ -104,14 +103,11 @@ async function checkSSLCertificate(domain: string): Promise<{isValid: boolean; s
       
       // If we get any response at all over HTTPS, it means SSL is working
       if (response.status < 500) {
-        console.log(`SSL is working for ${domain}`);
         return { isValid: true, status: 'active' };
       } else {
-        console.log(`SSL check failed for ${domain} with status: ${response.status}`);
         return { isValid: false, status: 'failed' };
       }
     } catch (e: any) {
-      console.log(`SSL check failed for ${domain}:`, e);
       // If it's a TLS error or timeout, the certificate might be provisioning
       if (e.message.includes('TLS') || e.message.includes('certificate') || e.message.includes('timeout')) {
         return { isValid: false, status: 'pending' };
@@ -119,7 +115,6 @@ async function checkSSLCertificate(domain: string): Promise<{isValid: boolean; s
       return { isValid: false, status: 'failed' };
     }
   } catch (error: any) {
-    console.error("Error checking SSL:", error);
     return { isValid: false, status: 'failed' };
   }
 }
@@ -131,7 +126,6 @@ async function initiateSSLProvisioning(domain: string): Promise<boolean> {
     // For this implementation, we're relying on the platform's automatic SSL provisioning
     // after DNS records are correctly set up.
     
-    console.log(`Initiated SSL provisioning for ${domain}`);
     return true;
   } catch (error) {
     console.error("Error initiating SSL provisioning:", error);
@@ -205,15 +199,13 @@ serve(async (req) => {
         );
       }
     } else if (action === 'verify') {
-      console.log(`Verifying domain ${domain} with DNS type ${dns_type}`);
-      
+      // Verify domain
       try {
         let verified = false;
         
         if (dns_type === 'txt') {
           // For TXT verification
           const txtRecords = await checkTxtRecords(domain);
-          console.log(`TXT records for ${domain}:`, txtRecords);
           
           // Check if any TXT record matches our verification string
           const verificationString = `qrified-verify=${domain}`;
@@ -226,7 +218,6 @@ serve(async (req) => {
         } else if (domain.startsWith('www.')) {
           // Existing CNAME check for www subdomain
           const cnameRecords = await checkCnameRecords(domain);
-          console.log(`CNAME records for ${domain}:`, cnameRecords);
           
           for (const record of cnameRecords) {
             if (record.includes(APP_CNAME_TARGET)) {
@@ -237,7 +228,6 @@ serve(async (req) => {
         } else {
           // Existing A record check for root domain
           const aRecords = await checkARecords(domain);
-          console.log(`A records for ${domain}:`, aRecords);
           
           for (const record of aRecords) {
             if (record === APP_IP_ADDRESS) {
@@ -253,7 +243,6 @@ serve(async (req) => {
           
           // Initial SSL check 
           const sslStatus = await checkSSLCertificate(domain);
-          console.log(`Initial SSL status for ${domain}:`, sslStatus);
           
           // Update the domain status in the database
           const { error } = await supabase
@@ -303,8 +292,6 @@ serve(async (req) => {
       }
     } else {
       // Default action: verify domain
-      console.log(`Verifying domain ${domain}`);
-      
       try {
         // First, check if 'www' subdomain is correctly set up with CNAME
         let verified = false;
@@ -313,7 +300,6 @@ serve(async (req) => {
         if (domain.startsWith('www.')) {
           // For www subdomain, check CNAME
           const cnameRecords = await checkCnameRecords(domain);
-          console.log(`CNAME records for ${domain}:`, cnameRecords);
           
           // Check if any CNAME record points to our app domain
           for (const record of cnameRecords) {
@@ -325,7 +311,6 @@ serve(async (req) => {
         } else {
           // For root domain, check A record
           const aRecords = await checkARecords(domain);
-          console.log(`A records for ${domain}:`, aRecords);
           
           // Check if any A record points to our app IP
           for (const record of aRecords) {
@@ -342,7 +327,6 @@ serve(async (req) => {
           : `qr.${domain}`;
         
         const qrCnameRecords = await checkCnameRecords(qrSubdomain);
-        console.log(`CNAME records for ${qrSubdomain}:`, qrCnameRecords);
         
         // Both checks must pass - domain and qr subdomain
         let qrVerified = false;
@@ -359,7 +343,6 @@ serve(async (req) => {
           
           // Initial SSL check 
           const sslStatus = await checkSSLCertificate(domain);
-          console.log(`Initial SSL status for ${domain}:`, sslStatus);
           
           // Update the domain status in the database
           const { error } = await supabase

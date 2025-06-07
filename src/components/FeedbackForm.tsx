@@ -36,8 +36,6 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({
 
     setIsSubmitting(true);
     try {
-      console.log('Submitting feedback:', { qrId, feedback });
-      
       const feedbackData = {
         qr_code_id: qrId,
         feedback: feedback.trim()
@@ -50,16 +48,13 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({
         .single();
 
       if (error) {
-        console.error('Error submitting feedback:', error);
         toast.error('Failed to submit feedback');
         return;
       }
 
-      console.log('Feedback submitted successfully:', data);
       toast.success('Thank you for your feedback!');
       setIsSubmitted(true);
     } catch (error) {
-      console.error('Error submitting feedback:', error);
       toast.error('An error occurred while submitting feedback');
     } finally {
       setIsSubmitting(false);

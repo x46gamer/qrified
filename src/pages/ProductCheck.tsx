@@ -28,7 +28,6 @@ const ProductCheck = () => {
   
   // Helper function to increment failed scan attempts
   const incrementFailedAttempts = async (id: string) => {
-    console.log(`Attempting to increment failed scan attempts for QR ID: ${id}`);
     try {
       // First, fetch the current failed_scan_attempts value
       const { data, error: fetchError } = await supabase
@@ -38,7 +37,6 @@ const ProductCheck = () => {
         .single();
 
       if (fetchError) {
-        console.error('Error fetching current failed scan attempts:', fetchError);
         return;
       }
 
@@ -52,27 +50,20 @@ const ProductCheck = () => {
         .eq('id', id);
 
       if (updateError) {
-        console.error('Error updating failed scan attempts:', updateError);
-      } else {
-        console.log(`Successfully incremented failed scan attempts for QR ID: ${id}. New count: ${newAttempts}`);
       }
     } catch (err) {
-      console.error('Unexpected error incrementing failed scan attempts:', err);
     }
   };
   
   useEffect(() => {
     const fetchQRCode = async () => {
       if (!qrId) {
-        console.log('No QR ID provided');
         setVerificationMessage('No QR code ID provided');
         setIsLoading(false);
         return;
       }
       
       try {
-        console.log('Fetching QR code with ID:', qrId);
-        
         const { data, error } = await supabase
           .from('qr_codes')
           .select('*, products(name)')
@@ -80,18 +71,14 @@ const ProductCheck = () => {
           .single();
         
         if (error) {
-          console.error('Error fetching QR code:', error);
           toast.error('Failed to fetch QR code data');
           return;
         }
         
         if (!data) {
-          console.error('No QR code data found');
           toast.error('QR code not found');
           return;
         }
-        
-        console.log('QR code data retrieved:', data);
         
         const templateValue = isTemplateType(data.template) ? data.template : 'classic';
         
@@ -123,7 +110,6 @@ const ProductCheck = () => {
         };
         
         setQrCode(mappedQr);
-        console.log('QR code status - isEnabled:', mappedQr.is_enabled, 'isScanned:', mappedQr.is_scanned);
         
         // --- Fetch QR Code Owner's Settings ---
         if (mappedQr.user_id) {
@@ -134,24 +120,19 @@ const ProductCheck = () => {
             .single();
 
           if (settingsError && settingsError.code !== 'PGRST116') {
-            console.error('Error fetching owner\'s appearance settings:', settingsError);
           } else if (settingsData?.settings) {
              const ownerSettings = settingsData.settings as unknown as AppearanceSettings;
-             console.log('Loaded owner\'s appearance settings:', ownerSettings);
              setLocalSettings(ownerSettings);
           } else {
-             console.log('No custom settings found for owner, using defaults.');
              setLocalSettings(DEFAULT_SETTINGS);
           }
         } else {
-           console.log('QR code does not have a user_id, using default settings.');
            setLocalSettings(DEFAULT_SETTINGS);
         }
         // --- End Fetch Logic ---
         
         // Check if QR code is valid for verification
         if (!mappedQr.is_enabled) {
-          console.log('QR code is disabled');
           setIsVerified(false);
           setVerificationMessage(
             localSettings.isRtl 
@@ -160,14 +141,12 @@ const ProductCheck = () => {
           );
           setIsLoading(false);
           // Increment failed attempts if disabled
-          console.log('Calling incrementFailedAttempts due to QR disabled.');
           incrementFailedAttempts(qrId);
           return;
         }
         
         // If already scanned, show as not authentic
         if (mappedQr.is_scanned) {
-          console.log('QR code already scanned at:', mappedQr.scanned_at);
           setIsVerified(false);
           setVerificationMessage(
             localSettings.isRtl 
@@ -176,21 +155,17 @@ const ProductCheck = () => {
           );
           setIsLoading(false);
           // Increment failed attempts if already scanned
-          console.log('Calling incrementFailedAttempts due to already scanned.');
           incrementFailedAttempts(qrId);
           return;
         }
         
         // QR code is valid and not yet scanned - proceed with verification
         try {
-          console.log('Attempting to decrypt data:', mappedQr.encrypted_data);
           const decryptedData = await decryptData(mappedQr.encrypted_data);
-          console.log('Successfully decrypted data:', decryptedData);
           
           setProductData(decryptedData);
           
           // Mark as scanned ONLY after successful decryption
-          console.log('Marking QR code as scanned');
           const updateTimestamp = new Date().toISOString();
           
           let ipData = {};
@@ -199,13 +174,11 @@ const ProductCheck = () => {
               const ipResponse = await fetch('https://api.ipify.org?format=json');
               const ipJson = await ipResponse.json();
               const ipAddress = ipJson.ip;
-              console.log('Detected IP address:', ipAddress);
 
               if (ipAddress) {
                   // Get geolocation details using the IP
                   const geoResponse = await fetch(`https://freeipapi.com/api/json/${ipAddress}`);
                   const geoJson = await geoResponse.json();
-                  console.log('Geolocation data:', geoJson);
 
                   // Prepare IP and geolocation data for update
                   ipData = {
@@ -217,8 +190,6 @@ const ProductCheck = () => {
                   };
               }
           } catch (geoError) {
-              console.error('Error fetching IP or geolocation data:', geoError);
-              // Continue with the scan update even if geolocation fails
               toast.warning('Failed to capture IP and geolocation details.');
           }
 
@@ -229,8 +200,6 @@ const ProductCheck = () => {
               ...ipData, // Include the captured IP/geo data
           };
 
-          console.log('Sending update payload to Supabase:', updatePayload);
-
           const { error: updateError, data: updateData } = await supabase
             .from('qr_codes')
             .update(updatePayload) // Use the combined payload
@@ -239,41 +208,31 @@ const ProductCheck = () => {
             .select();
           
           if (updateError) {
-            console.error('Error updating QR code scan status:', updateError);
             setIsVerified(true);
             setVerificationMessage('Product verified successfully (scan status update failed)');
             // Increment failed attempts on update error
-            console.log('Calling incrementFailedAttempts due to update error.');
             incrementFailedAttempts(qrId);
           } else if (!updateData || updateData.length === 0) {
-            console.log('QR code was already scanned by another request');
             setIsVerified(false);
             setVerificationMessage('This QR code was just scanned by another request');
             // Increment failed attempts on race condition
-            console.log('Calling incrementFailedAttempts due to race condition.');
             incrementFailedAttempts(qrId);
           } else {
-            console.log('QR code marked as scanned successfully:', updateData);
-            console.log('IP and geolocation data successfully sent to database for QR ID:', qrId);
             setIsVerified(true);
             setVerificationMessage('Product verified successfully');
             // DO NOT increment failed attempts on successful scan
           }
               
         } catch (decryptError) {
-          console.error("Decryption error:", decryptError);
           setIsVerified(false);
           setVerificationMessage('Failed to decrypt QR code data - may be corrupted or invalid');
           // Increment failed attempts on decryption error
-          console.log('Calling incrementFailedAttempts due to decryption error.');
           incrementFailedAttempts(qrId);
         }
       } catch (err) {
-        console.error("Error fetching QR code:", err);
         setIsVerified(false);
         setVerificationMessage(`Unexpected error: ${err instanceof Error ? err.message : String(err)}`);
         // Increment failed attempts on unexpected error during fetch
-        console.log('Calling incrementFailedAttempts due to unexpected fetch error.');
         incrementFailedAttempts(qrId);
       } finally {
         setIsLoading(false);

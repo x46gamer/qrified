@@ -41,8 +41,6 @@ const Index = () => {
     
     setIsLoading(true);
     try {
-      console.log('Fetching QR codes for user:', user.id);
-      
       // Fetch QR codes (Row Level Security will restrict to only user's codes or all for admins)
       const { data, error } = await supabase
         .from('qr_codes')
@@ -53,7 +51,6 @@ const Index = () => {
         .order('sequential_number', { ascending: false });
       
       if (error) {
-        console.error('Error fetching QR codes:', error);
         toast({
           title: "Error",
           description: "Failed to fetch QR codes",
@@ -63,8 +60,6 @@ const Index = () => {
       }
       
       if (data) {
-        console.log('Fetched QR codes raw data:', data.length, 'codes');
-        
         // Map database fields to our app's QRCode type
         const mappedQrCodes: QRCode[] = data.map(qr => ({
           id: qr.id,
@@ -88,10 +83,8 @@ const Index = () => {
         }));
         
         setQRCodes(mappedQrCodes);
-        console.log('Mapped QR codes:', mappedQrCodes.length, 'codes for user:', user.id);
       }
     } catch (error) {
-      console.error('Error loading QR codes:', error);
       toast({
         title: "Error",
         description: "An error occurred while loading QR codes",
@@ -112,7 +105,6 @@ const Index = () => {
         .single();
       
       if (error) {
-        console.error('Error fetching counter:', error);
         return;
       }
       
@@ -120,7 +112,11 @@ const Index = () => {
         setLastSequentialNumber(data.current_value);
       }
     } catch (error) {
-      console.error('Error loading sequence counter:', error);
+      toast({
+        title: "Error",
+        description: "An error occurred while loading sequence counter",
+        variant: "destructive"
+      });
     }
   };
   

@@ -94,7 +94,6 @@ export const AppearanceSettingsProvider: React.FC<{
           .single();
 
         if (error && error.code !== 'PGRST116') {
-          console.error('Error fetching appearance settings:', error);
           toast.error('Failed to load appearance settings');
           setIsLoading(false);
           return;
@@ -104,32 +103,26 @@ export const AppearanceSettingsProvider: React.FC<{
           const storedSettings = data.settings as unknown;
           const typedSettings = storedSettings as AppearanceSettings;
           
-          console.log('Loaded appearance settings for user:', user.id, typedSettings);
-          
           setSettings({
             ...DEFAULT_SETTINGS,
             ...typedSettings
           });
         } else {
-          console.log('No existing settings found for user, creating defaults:', user.id);
-            const { error: insertError } = await supabase
-              .from('app_settings')
-              .upsert({
+          const { error: insertError } = await supabase
+            .from('app_settings')
+            .upsert({
               id: user.id,
-                settings: DEFAULT_SETTINGS as unknown as Json
-              }, {
-                onConflict: 'id'
-              });
-              
+              settings: DEFAULT_SETTINGS as unknown as Json
+            }, {
+              onConflict: 'id'
+            });
+            
             if (insertError) {
-            console.error('Error creating default settings for user:', user.id, insertError);
-          } else {
-            setSettings(DEFAULT_SETTINGS);
-            console.log('Default settings created and loaded for user:', user.id);
-          }
+            } else {
+              setSettings(DEFAULT_SETTINGS);
+            }
         }
       } catch (err) {
-        console.error('Error in loading settings:', err);
       } finally {
         setIsLoading(false);
       }
@@ -155,8 +148,6 @@ export const AppearanceSettingsProvider: React.FC<{
         ...newSettings
       };
 
-      console.log('Saving updated settings for user:', user.id, updatedSettings);
-
       const { error } = await supabase
         .from('app_settings')
         .upsert({
@@ -167,7 +158,6 @@ export const AppearanceSettingsProvider: React.FC<{
         });
 
       if (error) {
-        console.error('Error updating settings for user:', user.id, error);
         toast.error('Failed to save appearance settings');
         return;
       }
@@ -177,7 +167,6 @@ export const AppearanceSettingsProvider: React.FC<{
       
       localStorage.setItem('appearance_updated', Date.now().toString());
     } catch (err) {
-      console.error('Error in updating settings:', err);
       toast.error('Failed to save settings');
     } finally {
       setIsSaving(false);
