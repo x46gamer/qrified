@@ -156,6 +156,18 @@ button.inline-flex.items-center.justify-center.gap-2.whitespace-nowrap.rounded-m
   background-color: #3b82f6;
   color: white;
 }
+input#password {
+  COLOR: BLACK;
+}
+input#email {
+  COLOR: BLACK;
+}
+input#name {
+  COLOR: BLACK;
+}
+input#confirm-password {
+  COLOR: BLACK;
+}
 button.items-center.justify-center.gap-2.whitespace-nowrap.text-sm.font-medium.ring-offset-background.transition-colors.focus-visible\:outline-none.focus-visible\:ring-2.focus-visible\:ring-ring.focus-visible\:ring-offset-2.disabled\:pointer-events-none.disabled\:opacity-50.\[\&_svg\]\:pointer-events-none.\[\&_svg\]\:size-4.\[\&_svg\]\:shrink-0.bg-secondary.text-secondary-foreground.hover\:bg-secondary\/80.h-10.w-10.rounded-full.shadow-lg.hidden.md\:flex {
   display: none;
 }
