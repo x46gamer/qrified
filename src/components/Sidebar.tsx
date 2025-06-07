@@ -248,12 +248,20 @@ const Sidebar: React.FC<SidebarProps> = ({
 
           <NavLink to="/settings" className={({
             isActive
-          }) => cn("flex items-center py-2 rounded-lg text-sm transition-colors duration-200", isActive ? "bg-blue-50 text-blue-600" : "text-gray-700 hover:bg-gray-100", isOpen ? "px-3" : "px-2 justify-center")}> 
+          }) => cn("flex items-center py-2 rounded-lg text-sm transition-colors duration-200", isActive ? "bg-blue-50 text-blue-600" : "text-gray-700 hover:bg-gray-100", isOpen ? "px-3" : "px-2 justify-center")}>
             <Settings size={20} className="shrink-0" />
-            <span className={cn("ml-3 transition-opacity duration-300", isOpen ? "opacity-100" : "opacity-0 hidden")}> 
+            <span className={cn("ml-3 transition-opacity duration-300", isOpen ? "opacity-100" : "opacity-0 hidden")}>
               Settings
             </span>
           </NavLink>
+
+          <a onClick={handleLogout} className={cn("flex items-center py-2 rounded-lg text-sm transition-colors duration-200 text-gray-700 hover:bg-gray-100 cursor-pointer", isOpen ? "px-3" : "px-2 justify-center")}>
+            <LogOut size={20} className="shrink-0" />
+            <span className={cn("ml-3 transition-opacity duration-300", isOpen ? "opacity-100" : "opacity-0 hidden")}>
+              Log Out
+            </span>
+          </a>
+
         </nav>
       </div>
       
