@@ -589,7 +589,7 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
                     <Button
                       type="button"
                       onClick={async () => {
-                        console.log('User ID being sent:', user?.id); // Keep this log
+                        console.log('User ID being sent:', user?.id);
 
                         if (!newProductName.trim()) {
                           toast.error('Please enter a product name.');

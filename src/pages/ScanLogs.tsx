@@ -72,20 +72,13 @@ const ScanLogs = () => {
         .order(sortBy, { ascending: sortOrder === 'ascending' }); // Apply sorting
 
       if (error) {
-        console.error('Error fetching scan logs:', error);
         setError(error.message);
         toast.error('Failed to load scan logs.');
         setQrCodesData([]); // Clear data on error
       } else {
         // Map the data to the ScanLog interface (now representing QR code data)
-        console.log('Fetched QR codes data:', data);
         setQrCodesData(data as ScanLog[]);
         
-        // Log product data for debugging
-        data.forEach((qrCode: any) => {
-          console.log(`QR Code ID: ${qrCode.id}, Product ID: ${qrCode.product_id}, Product Name: ${qrCode.product_name}`);
-        });
-
         // Only calculate stats if data is not empty
         if (data.length > 0) {
            // Pass the fetched QR code data for stats calculation
@@ -98,7 +91,6 @@ const ScanLogs = () => {
         }
       }
     } catch (err: any) {
-      console.error('Unexpected error fetching scan logs:', err);
       setError(err.message || 'An unexpected error occurred.');
       toast.error('An unexpected error occurred while loading scan logs.');
       setQrCodesData([]); // Clear data on unexpected error

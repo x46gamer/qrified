@@ -64,7 +64,6 @@ const Settings = () => {
   // TODO: Implement logic to get Stripe customer portal URL
   const handleManagePlan = async () => {
     // This will likely require a backend call to generate a customer portal session URL
-    console.log('Manage plan clicked');
     // Example: const { data } = await supabase.functions.invoke('create-customer-portal', { userId: user.id });
     // if (data?.url) { window.location.href = data.url; }
   };

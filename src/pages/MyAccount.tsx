@@ -76,29 +76,70 @@ const MyAccount = () => {
 
   const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file) return;
-    setIsUploading(true);
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${user?.id}-${Math.random()}.${fileExt}`;
-    const { error: uploadError } = await supabase.storage
-      .from('avatars')
-      .upload(fileName, file, { upsert: true });
-    if (uploadError) {
-      setIsUploading(false);
-      toast.error('Failed to upload avatar');
+    if (!file) {
+      console.error('No file selected for upload.');
       return;
     }
-    const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(fileName);
-    const { error: updateError } = await supabase
-      .from('user_profiles')
-      .update({ avatar_url: publicUrl })
-      .eq('id', user?.id);
-    setIsUploading(false);
-    if (!updateError) {
+    setIsUploading(true);
+
+    // Log file details
+    console.log('Uploading avatar file:', {
+      name: file.name,
+      size: file.size,
+      type: file.type,
+    });
+
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${user?.id}-${Math.random()}.${fileExt}`;
+    console.log('Generated fileName for upload:', fileName);
+
+    try {
+      // Upload to Supabase Storage
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(fileName, file, { upsert: true });
+
+      if (uploadError) {
+        console.error('Supabase upload error:', uploadError);
+        setIsUploading(false);
+        toast.error('Failed to upload avatar');
+        return;
+      }
+      console.log('Upload response data:', uploadData);
+
+      // Get public URL
+      const { data: publicUrlData, error: publicUrlError } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(fileName);
+
+      if (publicUrlError) {
+        console.error('Error getting public URL:', publicUrlError);
+        setIsUploading(false);
+        toast.error('Failed to get avatar URL');
+        return;
+      }
+      console.log('Public URL data:', publicUrlData);
+
+      // Update profile with new avatar URL
+      const { error: updateError } = await supabase
+        .from('user_profiles')
+        .update({ avatar_url: publicUrlData.publicUrl })
+        .eq('id', user?.id);
+
+      if (updateError) {
+        console.error('Error updating user_profiles with avatar_url:', updateError);
+        setIsUploading(false);
+        toast.error('Failed to update avatar');
+        return;
+      }
+
       toast.success('Avatar updated');
       fetchProfile();
-    } else {
-      toast.error('Failed to update avatar');
+    } catch (err) {
+      console.error('Unexpected error during avatar upload:', err);
+      toast.error('Unexpected error during avatar upload');
+    } finally {
+      setIsUploading(false);
     }
   };
 
