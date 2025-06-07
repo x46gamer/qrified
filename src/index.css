@@ -117,10 +117,52 @@
   }
   body {
     @apply bg-background text-foreground;
-    
+  }
+  [lang="ar"] body {
+    font-family: 'IBM Plex Sans Arabic', sans-serif;
+  }
+  html body {
+    font-family: 'IBM Plex Sans Arabic', sans-serif;
   }
 }
+button.inline-flex.items-center.justify-center.gap-2.whitespace-nowrap.rounded-md.text-sm.font-medium.ring-offset-background.transition-colors.focus-visible\:outline-none.focus-visible\:ring-2.focus-visible\:ring-ring.focus-visible\:ring-offset-2.disabled\:pointer-events-none.disabled\:opacity-50.\[\&_svg\]\:pointer-events-none.\[\&_svg\]\:size-4.\[\&_svg\]\:shrink-0.hover\:bg-accent.hover\:text-accent-foreground.h-10.w-10.mr-2 {
+  color: black;
+}
+.p-6.overflow-y-auto {
+  color: black;
+}
+span.flex.h-full.w-full.items-center.justify-center.rounded-full.bg-muted {
+  color: black;
+  background-color: lightblue;
+}
+a.flex.items-center.py-2.rounded-lg.text-sm.transition-colors.duration-200.text-gray-700.hover\:bg-gray-100.px-3 {
+  color: black;
+}
+.flex.items-center.justify-between.border-b.px-6.py-4.bg-background {
+  display: none;
+}
+.h-full.w-full.flex-1.bg-primary.transition-all {
+  background-color: #3b82f6;
+}
+button.items-center.justify-center.gap-2.whitespace-nowrap.text-sm.font-medium.ring-offset-background.transition-colors.focus-visible\:outline-none.focus-visible\:ring-2.focus-visible\:ring-ring.focus-visible\:ring-offset-2.disabled\:pointer-events-none.disabled\:opacity-50.\[\&_svg\]\:pointer-events-none.\[\&_svg\]\:size-4.\[\&_svg\]\:shrink-0.bg-secondary.text-secondary-foreground.hover\:bg-secondary\/80.h-10.w-10.rounded-full.shadow-lg.hidden.md\:flex {
+  display: none;
+}
+header.sticky.top-0.w-full.z-50.transition-all.duration-300.bg-white\/80.backdrop-blur-sm.border-b.border-gray-100.py-4 {
+  display: flex !important;
+  position: fixed !important;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding-top: 3px;
+  padding-bottom: 3px;
+  background-color: rgba(255, 255, 255, 0.9) !important;
+  backdrop-filter: blur(8px) !important;
+  z-index: 1000 !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+}
 main.flex-1.overflow-x-hidden.p-4 {
+  margin-top: 60px;
   color: black;
 }
 h3.font-bold.text-neutral-900.dark\:text-white.light\:text-neutral-900.mb-4 {
@@ -135,13 +177,6 @@ button.inline-flex.items-center.justify-center.gap-2.whitespace-nowrap.text-sm.f
 }
 label.text-sm.font-medium.leading-none.peer-disabled\:cursor-not-allowed.peer-disabled\:opacity-70 {
   color: black;
-}
-
-header.sticky.top-0.w-full.z-50.transition-all.duration-300.bg-white\/80.backdrop-blur-sm.border-b.border-gray-100.py-4 {
-  display: none;
-}
-main.flex-1.overflow-x-hidden.p-4 {
-  background-color: white;
 }
 span.absolute.h-full.bg-primary {
   background-color: #2563eb;

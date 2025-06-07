@@ -177,15 +177,7 @@ const Index = () => {
 
   return (
     <div className="container mx-auto py-8 px-4 md:px-6">
-      <header className="mb-8">
-        <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent">Dashboard</h1>
-        <p className="text-lg text-muted-foreground">Generate, manage, and verify product authenticity</p>
-        {user && (
-          <p className="text-sm text-muted-foreground mt-2">
-            Welcome back, {user.name} ({user.role})
-          </p>
-        )}
-      </header>
+     
       
       <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-8">
         <TabsContent value="generate" className="space-y-8 animate-fade-in">

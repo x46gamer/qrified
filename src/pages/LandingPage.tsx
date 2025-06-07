@@ -743,7 +743,7 @@ const App = () => {
             transition: background-color 0.3s ease, color 0.3s ease;
         }
         html[dir="rtl"] body {
-            font-family: 'Noto Sans Arabic', 'Inter', sans-serif;
+            font-family: 'IBM Plex Sans Arabic', 'Inter', sans-serif;
         }
         html[dir="rtl"] h1, html[dir="rtl"] h2, html[dir="rtl"] h3, html[dir="rtl"] h4, html[dir="rtl"] h5, html[dir="rtl"] .font-semibold {
             font-weight: 600; 
