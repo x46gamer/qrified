@@ -76,7 +76,7 @@
     
   }
   .dark {
-    --background: 222.2 84% 4.9%;
+    --background: 0 0% 100%;
     --foreground: 210 40% 98%;
 
     --card: 222.2 84% 4.9%;
@@ -171,6 +171,15 @@ input#confirm-password {
 button#radix-\:rb\:-trigger-arabic {
   WIDTH: 50%;
 }
+img.aspect-square.h-full.w-full {
+  object-fit: cover;
+}
+div#radix-\:r2l\: {
+  color: black;
+}
+div#radix-\:r2f\: {
+  color: black;
+}
 button#radix-\:rb\:-trigger-modern-beige {
   WIDTH: 50%;
 }button#radix-\:rb\:-trigger-modern-blue {
@@ -182,8 +191,13 @@ button#radix-\:rb\:-trigger-modern-beige {
 }button.inline-flex.items-center.justify-center.gap-2.whitespace-nowrap.rounded-md.text-sm.font-medium.ring-offset-background.transition-colors.focus-visible\:outline-none.focus-visible\:ring-2.focus-visible\:ring-ring.focus-visible\:ring-offset-2.disabled\:pointer-events-none.disabled\:opacity-50.\[\&_svg\]\:pointer-events-none.\[\&_svg\]\:size-4.\[\&_svg\]\:shrink-0.border.border-input.bg-background.hover\:bg-accent.hover\:text-accent-foreground.h-10.px-4.py-2.w-full {
   BACKGROUND-COLOR: GAINSBORO;
   COLOR: BLACK;
-}button.peer.inline-flex.h-6.w-11.shrink-0.cursor-pointer.items-center.rounded-full.border-2.border-transparent.transition-colors.focus-visible\:outline-none.focus-visible\:ring-2.focus-visible\:ring-ring.focus-visible\:ring-offset-2.focus-visible\:ring-offset-background.disabled\:cursor-not-allowed.disabled\:opacity-50.data-\[state\=checked\]\:bg-primary.data-\[state\=unchecked\]\:bg-input {
-  BACKGROUND-COLOR: #16a34a;
+}button.peer.inline-flex.h-6.w-11.shrink-0.cursor-pointer.items-center.rounded-full.border-2.border-transparent.transition-colors.focus-visible\:outline-none.focus-visible\:ring-2.focus-visible\:ring-ring.focus-visible\:ring-offset-2.focus-visible\:ring-offset-background.disabled\:cursor-not-allowed.disabled\:opacity-50 {
+  &[data-state="checked"] {
+    background-color: #16a34a; /* Green for Enabled */
+  }
+  &[data-state="unchecked"] {
+    background-color: #ef4444; /* Red for Disabled */
+  }
 }
 .h-10.items-center.justify-center.rounded-md.bg-muted.p-1.text-muted-foreground.grid.grid-cols-2.sm\:grid-cols-4.mb-4 {
   DISPLAY: inline-table;
@@ -214,7 +228,6 @@ header.sticky.top-0.w-full.z-50.transition-all.duration-300.bg-white\/80.backdro
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
 }
 main.flex-1.overflow-x-hidden.p-4 {
-  margin-top: 60px;
   color: black;
 }
 h3.font-bold.text-neutral-900.dark\:text-white.light\:text-neutral-900.mb-4 {

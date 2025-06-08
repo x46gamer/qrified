@@ -7,14 +7,15 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow 
 } from "@/components/ui/table";
 import { Switch } from "@/components/ui/switch";
-import { Checkbox } from "@/components/ui/checkbox"; // Added
+import { Checkbox } from "@/components/ui/checkbox";
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { toast } from "sonner";
 import { Trash2, RefreshCw, Eye, EyeOff, Search, X, CheckCircle2, XCircle } from "lucide-react";
 import { supabase } from '@/integrations/supabase/client';
 import { QRCodeTemplatePreview } from './QRCodeTemplatePreview';
-import { QRCode } from '@/types/qrCode'; // Assuming QRCode type is defined elsewhere
-import { formatSequentialNumber } from '@/utils/qrCodeUtils'; // Assuming this utility exists
-import { useAuth } from '@/contexts/AuthContext'; // Assuming this context exists
+import { QRCode } from '@/types/qrCode';
+import { formatSequentialNumber } from '@/utils/qrCodeUtils';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface QRCodeManagerProps {
   qrCodes: QRCode[];
@@ -24,7 +25,7 @@ interface QRCodeManagerProps {
 }
 
 const QRCodeManager: React.FC<QRCodeManagerProps> = ({ qrCodes, onUpdateQRCode, onDeleteQRCode, onRefresh }) => {
-  const [loading, setLoading] = useState<boolean>(false); // For single delete operations
+  const [loading, setLoading] = useState<boolean>(false);
   const [previewQRCode, setPreviewQRCode] = useState<QRCode | null>(null);
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
@@ -32,6 +33,9 @@ const QRCodeManager: React.FC<QRCodeManagerProps> = ({ qrCodes, onUpdateQRCode, 
   const [selectedQrCodeIds, setSelectedQrCodeIds] = useState<Set<string>>(new Set());
   const [isBatchDeleting, setIsBatchDeleting] = useState<boolean>(false);
   const [isBatchDisabling, setIsBatchDisabling] = useState<boolean>(false);
+  
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const qrCodesPerPage = 10;
 
   const { user } = useAuth();
   
@@ -63,7 +67,6 @@ const QRCodeManager: React.FC<QRCodeManagerProps> = ({ qrCodes, onUpdateQRCode, 
   };
   
   const handleDelete = async (id: string) => {
-    // Consider implementing a custom modal for confirmation here.
     if (!user) {
       toast.error('You must be logged in to delete QR codes');
       return;
@@ -111,7 +114,6 @@ const QRCodeManager: React.FC<QRCodeManagerProps> = ({ qrCodes, onUpdateQRCode, 
       toast.info('No QR codes selected for deletion.');
       return;
     }
-    // Consider implementing a custom modal for confirmation here.
   
     if (!user) {
       toast.error('You must be logged in to delete QR codes');
@@ -122,7 +124,6 @@ const QRCodeManager: React.FC<QRCodeManagerProps> = ({ qrCodes, onUpdateQRCode, 
     let initialUserLimits: { qr_created: number; monthly_qr_created: number } | null = null;
     
     try {
-      // Step 1: Fetch user limits first
       const { data: userLimitData, error: fetchLimitError } = await supabase
         .from('user_limits')
         .select('qr_created, monthly_qr_created')
@@ -137,29 +138,27 @@ const QRCodeManager: React.FC<QRCodeManagerProps> = ({ qrCodes, onUpdateQRCode, 
       }
       initialUserLimits = userLimitData;
 
-      // Step 2: Perform batch deletion
       const idsToDelete = Array.from(selectedQrCodeIds);
       const { error: deleteError } = await supabase
         .from('qr_codes')
         .delete()
-        .in('id', idsToDelete); // Batch delete using .in()
+        .in('id', idsToDelete);
 
       if (deleteError) {
         console.error('Error batch deleting QR codes:', deleteError);
         toast.error(`Failed to delete selected QR codes: ${deleteError.message}`);
       } else {
-        const SucceededCount = idsToDelete.length; // Assume all were deleted if no error
+        const SucceededCount = idsToDelete.length;
         
-        // Update parent state for each deleted QR code
         idsToDelete.forEach(id => onDeleteQRCode(id)); 
   
         toast.success(`${SucceededCount} QR code(s) deleted successfully.`);
       }
-    } catch (error: any) { // Catch any other unexpected errors during the process
+    } catch (error: any) {
         console.error('Unexpected error during batch deletion process:', error);
         toast.error(`An unexpected error occurred: ${error.message || 'Please try again.'}`);
     } finally {
-      setSelectedQrCodeIds(new Set()); // Clear selection regardless of outcome
+      setSelectedQrCodeIds(new Set());
       setIsBatchDeleting(false);
     }
   };
@@ -270,6 +269,13 @@ const QRCodeManager: React.FC<QRCodeManagerProps> = ({ qrCodes, onUpdateQRCode, 
   const isAllFilteredSelected = filteredQRCodes.length > 0 && selectedQrCodeIds.size === filteredQRCodes.length;
   const isSomeFilteredSelected = selectedQrCodeIds.size > 0 && selectedQrCodeIds.size < filteredQRCodes.length;
   
+  const paginatedQRCodes = filteredQRCodes.slice((currentPage - 1) * qrCodesPerPage, currentPage * qrCodesPerPage);
+  const totalPages = Math.ceil(filteredQRCodes.length / qrCodesPerPage);
+
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -351,14 +357,14 @@ const QRCodeManager: React.FC<QRCodeManagerProps> = ({ qrCodes, onUpdateQRCode, 
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredQRCodes.length === 0 && (
+                {paginatedQRCodes.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={7} className="text-center h-24">
                       {searchTerm ? 'No QR codes match your search.' : 'No QR codes available.'}
                     </TableCell>
                   </TableRow>
                 )}
-                {filteredQRCodes.map((qrCode) => (
+                {paginatedQRCodes.map((qrCode) => (
                   <TableRow 
                     key={qrCode.id}
                     data-state={selectedQrCodeIds.has(qrCode.id) ? 'selected' : undefined}
@@ -443,28 +449,47 @@ const QRCodeManager: React.FC<QRCodeManagerProps> = ({ qrCodes, onUpdateQRCode, 
             </Table>
           </div>
         </CardContent>
+        <div className="flex justify-between items-center p-4">
+          <span className="text-sm text-muted-foreground">
+            Showing {paginatedQRCodes.length} of {filteredQRCodes.length} QR codes
+          </span>
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious 
+                  onClick={() => handlePageChange(currentPage - 1)} 
+                  disabled={currentPage === 1} 
+                />
+              </PaginationItem>
+              {Array.from({ length: totalPages }, (_, i) => (
+                <PaginationItem key={i}>
+                  <PaginationLink 
+                    onClick={() => handlePageChange(i + 1)} 
+                    isActive={currentPage === i + 1}
+                  >
+                    {i + 1}
+                  </PaginationLink>
+                </PaginationItem>
+              ))}
+              <PaginationItem>
+                <PaginationNext 
+                  onClick={() => handlePageChange(currentPage + 1)} 
+                  disabled={currentPage === totalPages} 
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
       </Card>
       
       <Dialog open={!!previewQRCode} onOpenChange={(open) => !open && setPreviewQRCode(null)}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>QR Code Preview</DialogTitle>
           </DialogHeader>
           
           {previewQRCode && (
-            <div className="flex flex-col items-center space-y-4 py-4">
-              <div className="w-full max-w-[200px] xs:max-w-[240px] overflow-hidden rounded-lg shadow-md border">
-                <QRCodeTemplatePreview
-                  template={previewQRCode.template || 'classic'}
-                  qrCodeDataUrl={previewQRCode.dataUrl}
-                  headerText={previewQRCode.headerText}
-                  instructionText={previewQRCode.instructionText}
-                  websiteUrl={previewQRCode.websiteUrl}
-                  footerText={previewQRCode.footerText}
-                  directionRTL={previewQRCode.directionRTL}
-                />
-              </div>
-              
+            <div className="grid gap-4 py-4">
               <div className="w-full space-y-1 text-sm bg-muted p-3 rounded-md">
                 <p><strong>ID:</strong> <span className="font-mono text-xs">{previewQRCode.id}</span></p>
                 <p><strong>Sequence:</strong> {formatSequentialNumber(Number(previewQRCode.sequentialNumber))}</p>
@@ -486,23 +511,32 @@ const QRCodeManager: React.FC<QRCodeManagerProps> = ({ qrCodes, onUpdateQRCode, 
                 )}
 
                 {/* Display Scan Details if scanned */}
-                {previewQRCode.isScanned && (
-                  <div className="mt-4 pt-4 border-t border-gray-200 space-y-1">
-                    <p className="text-base font-semibold">Scan Details:</p>
-                    {previewQRCode.scanned_ip && <p><strong>IP Address:</strong> {previewQRCode.scanned_ip}</p>}
-                    {previewQRCode.scanned_isp && <p><strong>ISP:</strong> {previewQRCode.scanned_isp}</p>}
-                    {previewQRCode.scanned_location && <p><strong>Location:</strong> {previewQRCode.scanned_location}</p>}
-                    {previewQRCode.scanned_city && <p><strong>City:</strong> {previewQRCode.scanned_city}</p>}
-                    {previewQRCode.scanned_country && <p><strong>Country:</strong> {previewQRCode.scanned_country}</p>}
-                  </div>
+                {previewQRCode.isScanned && previewQRCode.scannedAt && (
+                  <>
+                    <h4 className="font-semibold mt-4 mb-2">Scan Details:</h4>
+                    <p><strong>IP:</strong> {previewQRCode.scannedIp || 'N/A'}</p>
+                    <p><strong>ISP:</strong> {previewQRCode.scannedIsp || 'N/A'}</p>
+                    <p><strong>Location:</strong> {previewQRCode.scannedCity && previewQRCode.scannedCountry ? 
+                      `${previewQRCode.scannedCity}, ${previewQRCode.scannedCountry}` : 
+                      'N/A'}</p>
+                  </>
                 )}
-
               </div>
+              <QRCodeTemplatePreview
+                template={previewQRCode.template}
+                headerText={previewQRCode.headerText}
+                instructionText={previewQRCode.instructionText}
+                websiteUrl={previewQRCode.websiteUrl}
+                footerText={previewQRCode.footerText}
+                directionRtl={previewQRCode.directionRtl}
+                dataUrl={previewQRCode.dataUrl}
+                text={previewQRCode.text}
+              />
             </div>
           )}
           
           <DialogFooter>
-            <Button onClick={() => setPreviewQRCode(null)} variant="outline">Close</Button>
+            <Button onClick={() => setPreviewQRCode(null)}>Close</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

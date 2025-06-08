@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowUpDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination"; // Added for pagination
 
 interface ScanLog {
   id: string;
@@ -57,34 +58,41 @@ const ScanLogs = () => {
   const [sortBy, setSortBy] = useState<string>('created_at');
   const [sortOrder, setSortOrder] = useState<'ascending' | 'descending'>('descending');
 
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const logsPerPage = 10;
+  const [totalLogsCount, setTotalLogsCount] = useState<number>(0);
+
   useEffect(() => {
     fetchScanLogs();
-  }, [sortBy, sortOrder]); // Refetch data when sort criteria change
+  }, [sortBy, sortOrder, currentPage]); // Refetch data when sort criteria or page change
 
   const fetchScanLogs = async () => {
     setIsLoading(true); // Set loading true before fetching
     setError(null); // Clear previous errors
     try {
-      // Fetch data from the qr_codes table
-      const { data, error } = await supabase
+      const from = (currentPage - 1) * logsPerPage;
+      const to = from + logsPerPage - 1;
+
+      const { data, error, count } = await supabase
         .from('qr_codes') // Change table to qr_codes
-        .select('id, created_at, scanned_at, scanned_ip, scanned_isp, scanned_city, scanned_country, product_id, product_name') // Select new product_name column, remove products(name)
-        .order(sortBy, { ascending: sortOrder === 'ascending' }); // Apply sorting
+        .select('id, created_at, scanned_at, scanned_ip, scanned_isp, scanned_city, scanned_country, product_id, product_name', { count: 'exact' })
+        .order(sortBy, { ascending: sortOrder === 'ascending' })
+        .range(from, to); // Apply pagination range
 
       if (error) {
         setError(error.message);
         toast.error('Failed to load scan logs.');
         setQrCodesData([]); // Clear data on error
+        setTotalLogsCount(0);
       } else {
-        // Map the data to the ScanLog interface (now representing QR code data)
         setQrCodesData(data as ScanLog[]);
+        setTotalLogsCount(count || 0);
         
         // Only calculate stats if data is not empty
         if (data.length > 0) {
-           // Pass the fetched QR code data for stats calculation
            calculateAndSetStats(data as ScanLog[]);
         } else {
-           // Clear stats if no data
            setTopDevices([]);
            setTopCities([]);
            setTopCountries([]);
@@ -285,6 +293,45 @@ const ScanLogs = () => {
             </TableBody>
           </Table>
         </CardContent>
+        <div className="flex justify-between items-center p-4">
+          <span className="text-sm text-muted-foreground">
+            Showing {Math.min(logsPerPage, qrCodesData.length)} of {totalLogsCount} scan logs
+          </span>
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationLink 
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))} 
+                  isActive={currentPage === 1}
+                  aria-disabled={currentPage === 1}
+                  className={currentPage === 1 ? 'pointer-events-none opacity-50' : ''}
+                >
+                  <PaginationPrevious />
+                </PaginationLink>
+              </PaginationItem>
+              {Array.from({ length: Math.ceil(totalLogsCount / logsPerPage) }, (_, i) => (
+                <PaginationItem key={i}>
+                  <PaginationLink 
+                    onClick={() => setCurrentPage(i + 1)} 
+                    isActive={currentPage === i + 1}
+                  >
+                    {i + 1}
+                  </PaginationLink>
+                </PaginationItem>
+              ))}
+              <PaginationItem>
+                <PaginationLink
+                  onClick={() => setCurrentPage(prev => Math.min(Math.ceil(totalLogsCount / logsPerPage), prev + 1))} 
+                  isActive={currentPage === Math.ceil(totalLogsCount / logsPerPage)}
+                  aria-disabled={currentPage === Math.ceil(totalLogsCount / logsPerPage)}
+                  className={currentPage === Math.ceil(totalLogsCount / logsPerPage) ? 'pointer-events-none opacity-50' : ''}
+                >
+                  <PaginationNext />
+                </PaginationLink>
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
       </Card>
     </div>
   );
