@@ -1,7 +1,21 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, HTMLMotionProps } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
 import { Check, X } from 'lucide-react';
+import { toast } from 'sonner';
+import { getStripe, createCheckoutSession } from '@/integrations/stripe/client';
+
+interface Plan {
+  name: string;
+  description: string;
+  monthlyPrice: number;
+  annualPrice: number;
+  monthlyProductId?: string;
+  annualProductId?: string;
+  features: Array<{ name: string; included: boolean }>;
+  recommended: boolean;
+  ctaText: string;
+}
 
 const PricingSection = () => {
   const [ref, inView] = useInView({
@@ -10,6 +24,37 @@ const PricingSection = () => {
   });
 
   const [annually, setAnnually] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleCheckout = async (plan: Plan) => {
+    try {
+      setIsLoading(true);
+      const productId = annually ? plan.annualProductId : plan.monthlyProductId;
+      
+      if (!productId) {
+        toast.error('This plan is not available for checkout');
+        return;
+      }
+
+      const sessionId = await createCheckoutSession(productId);
+      
+      // Redirect to Stripe Checkout
+      const stripe = await getStripe();
+      if (!stripe) {
+        throw new Error('Failed to load Stripe');
+      }
+
+      const { error } = await stripe.redirectToCheckout({ sessionId });
+      if (error) {
+        throw error;
+      }
+    } catch (error: any) {
+      console.error('Error creating checkout session:', error);
+      toast.error(error.message || 'Failed to start checkout process');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const plans = [
     {
@@ -17,6 +62,8 @@ const PricingSection = () => {
       description: "For individuals and small businesses taking their first step in brand protection.",
       monthlyPrice: 19,
       annualPrice: 15, // Approx 20% discount
+      monthlyProductId: "prod_SQ7xkoPstFb6EW",
+      annualProductId: "prod_ST3hw6HjjE2lnz",
       features: [
         { name: "Up to 1,000 QR Codes", included: true },
         { name: "Branded Subdomain (yourbrand.service.com)", included: true },
@@ -180,18 +227,20 @@ const PricingSection = () => {
                 ))}
               </ul>
               
-              <motion.a
-                href="#contact"
+              <motion.button
+                type="button"
+                onClick={() => handleCheckout(plan)}
+                disabled={isLoading}
                 className={`w-full inline-flex h-12 items-center justify-center rounded-md ${
                   plan.recommended 
                     ? 'bg-primary-500 hover:bg-primary-600 text-white' 
                     : 'bg-neutral-800 hover:bg-neutral-700 text-white'
-                } px-6 text-base font-medium shadow-md transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-neutral-950`}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+                } px-6 text-base font-medium shadow-md transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-neutral-950 disabled:opacity-50 disabled:cursor-not-allowed`}
+                whileHover={{ scale: isLoading ? 1 : 1.02 }}
+                whileTap={{ scale: isLoading ? 1 : 0.98 }}
               >
-                {plan.ctaText}
-              </motion.a>
+                {isLoading ? 'Loading...' : plan.ctaText}
+              </motion.button>
 
               {/* Add 'no credit card required' text for Basic and Pro plans */}
               {plan.name === 'Basic' || plan.name === 'Pro' ? (

@@ -45,6 +45,7 @@ import FinalCTASection from './components/FinalCTASection';
 import Footer from './components/Footer';
 import { ScrollProgress } from './components/ScrollProgress';
 import Cursor from './components/Cursor';
+import LifetimePage from './pages/LifetimePage';
 
 // Public Pages
 const CookiePolicyPage = lazy(() => import('./pages/CookiePolicyPage'));
@@ -101,6 +102,7 @@ function App() {
               {/* Public routes - accessible to all users */}
               <Route path="/" element={<RootRouteHandler />} />
               <Route path="/landing" element={<LandingPageContent />} />
+              <Route path="/lifetime" element={<AppLayout><LifetimePage /></AppLayout>} />
               <Route path="/about" element={<AppLayout><AboutPage /></AppLayout>} />
               <Route path="/faq" element={<AppLayout><FAQPage /></AppLayout>} />
               <Route path="/privacy" element={<AppLayout><PrivacyPolicyPage /></AppLayout>} />

@@ -82,8 +82,11 @@ refresh_token_reuse_interval = 10
 enable_signup = true
 
 [functions]
-# enabled = true # Comment out or remove
-# port = 54321 # Comment out or remove
+enabled = true
+port = 54321
+
+[functions.create-checkout-session]
+verify_jwt = false
 
 [functions.verify-domain]
 verify_jwt = false

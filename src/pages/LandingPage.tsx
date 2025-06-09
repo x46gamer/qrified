@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
+import { loadStripe } from '@stripe/stripe-js';
 // import { Link, useNavigate } from 'react-router-dom'; // Not used for this single-page structure
 // import { motion } from 'framer-motion'; // Not used as original HTML has no complex animations beyond CSS
 // import { useAuth } from '../contexts/AuthContext'; // Placeholder if auth functions are needed
@@ -576,15 +577,56 @@ const BlogSection = ({ lang, t }) => {
 };
 
 const CallToActionSection = ({ lang, t }) => {
+    const handleCheckout = async () => {
+        try {
+            // Replace 'YOUR_STRIPE_PRICE_ID' with your actual Stripe Price ID
+            const priceId = 'YOUR_STRIPE_PRICE_ID'; 
+            const response = await fetch('http://localhost:54321/functions/v1/create-checkout-session', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ priceId }),
+            });
+            const { sessionId } = await response.json();
+            
+            // Redirect to Stripe Checkout
+            const stripe = await loadStripe('YOUR_STRIPE_PUBLIC_KEY'); // Replace with your public key
+            stripe.redirectToCheckout({ sessionId });
+
+        } catch (error) {
+            console.error('Error creating checkout session:', error);
+            // Optionally, display an error message to the user
+        }
+    };
+
     return (
-        <section className="py-20 sm:py-28">
-            <div className="max-w-3xl mx-auto text-center px-4 sm:px-6 lg:px-8">
-                <TranslatedText translationKey="ctaTitle" lang={lang} options={{}} as="h2" className="text-3xl sm:text-4xl font-extrabold mb-6 text-gray-50" />
-                <TranslatedText translationKey="ctaSubtitle" lang={lang} options={{}} as="p" className="text-lg text-gray-400 mb-10" />
-                <Button variant="primary" size="lg" href="/ContactPage">
-                    <TranslatedText translationKey="ctaButton" lang={lang} options={{}} as="span" />
+        <section id="cta" className="relative py-16 md:py-24 overflow-hidden">
+            <div className="container mx-auto px-4 relative z-10 text-center">
+                <TranslatedText
+                    translationKey="ctaTitle"
+                    lang={lang}
+                    as="h2"
+                    className="text-3xl md:text-5xl font-extrabold mb-4 text-neutral-900 dark:text-white leading-tight"
+                />
+                <TranslatedText
+                    translationKey="ctaSubtitle"
+                    lang={lang}
+                    as="p"
+                    className="text-lg md:text-xl text-neutral-600 dark:text-neutral-300 max-w-3xl mx-auto mb-8"
+                />
+                <Button 
+                    onClick={handleCheckout}
+                    variant="primary" 
+                    size="lg" 
+                    className="px-8 py-3 rounded-full text-lg shadow-lg hover:shadow-xl transition-all duration-300"
+                >
+                    <CreditCard className="inline-block mr-2" />
+                    Buy Now
                 </Button>
             </div>
+            {/* Aurora background remains unchanged */}
+            <AuroraBackground />
         </section>
     );
 };
