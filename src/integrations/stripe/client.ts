@@ -17,7 +17,8 @@ export const formatPrice = (amount: number, currency: string = 'USD') => {
 // Helper function to create a checkout session
 export const createCheckoutSession = async (productId: string) => {
   try {
-    const response = await fetch('http://localhost:54321/functions/v1/create-checkout-session', {
+    const supabaseFunctionsUrl = import.meta.env.VITE_SUPABASE_FUNCTIONS_URL || 'http://localhost:54321';
+    const response = await fetch(`${supabaseFunctionsUrl}/functions/v1/create-checkout-session`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
