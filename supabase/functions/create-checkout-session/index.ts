@@ -16,7 +16,36 @@ serve(async (req) => {
     apiVersion: '2024-06-20',
   })
 
-  const { productId } = await req.json()
+  let productId: string;
+  try {
+    const contentLength = req.headers.get("content-length");
+    if (contentLength && parseInt(contentLength) === 0) {
+      console.warn('Received request with empty body (Content-Length: 0).');
+      return new Response(JSON.stringify({ error: 'Request body is empty.' }), {
+        headers: { "Content-Type": "application/json" },
+        status: 400,
+      });
+    }
+
+    const rawBody = await req.text();
+    console.log('Raw request body:', rawBody);
+
+    const body = JSON.parse(rawBody);
+    productId = body.productId;
+  } catch (error) {
+    console.error('Error parsing request body:', error);
+    return new Response(JSON.stringify({ error: `Invalid request body. Expected JSON. Error: ${error.message}` }), {
+      headers: { "Content-Type": "application/json" },
+      status: 400,
+    });
+  }
+
+  if (!productId) {
+    return new Response(JSON.stringify({ error: 'Missing productId in request body.' }), {
+      headers: { "Content-Type": "application/json" },
+      status: 400,
+    });
+  }
 
   // Get the product to determine if it's monthly or yearly
   const product = await stripe.products.retrieve(productId)
