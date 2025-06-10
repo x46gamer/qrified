@@ -124,8 +124,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             ...prev,
             role: data.role || 'user' // Use fetched role or default to 'user'
           };
-          localStorage.setItem('qrauth_user', JSON.stringify(updatedUser));
-          return updatedUser;
+          // Only update if there's a material change to avoid unnecessary re-renders
+          if (JSON.stringify(updatedUser) !== JSON.stringify(prev)) {
+            localStorage.setItem('qrauth_user', JSON.stringify(updatedUser));
+            return updatedUser;
+          }
+          return prev; // No material change, return previous state
         });
         return data as UserProfile;
       } else {
