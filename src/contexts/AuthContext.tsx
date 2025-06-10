@@ -107,7 +107,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const { data, error } = await supabase
         .from('user_profiles')
-        .select('*') // Fetch all profile fields (no 'role' in user_profiles)
+        .select('*, role') // Fetch all profile fields including 'role'
         .eq('id', userId)
         .maybeSingle();
       
@@ -117,12 +117,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       
       if (data) {
-        // Profile exists, update user context's User object (including role)
+        // Profile exists, update user context's User object with fetched role
         setUser(prev => {
           if (!prev) return null;
           const updatedUser: User = {
             ...prev,
-            role: 'user' // Default role for existing profiles fetched, as role is not in UserProfile
+            role: data.role || 'user' // Use fetched role or default to 'user'
           };
           localStorage.setItem('qrauth_user', JSON.stringify(updatedUser));
           return updatedUser;
@@ -138,7 +138,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             email: userEmail,
             full_name: userName,
             trial_status: 'not_started',
-            // No 'role' field here, as it's not in the UserProfile interface/table
+            role: 'user', // Default role for newly created user profile
           })
           .select('*') // Select all columns for the newly created profile
           .single();
@@ -153,7 +153,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             if (!prev) return null;
             const updatedUser: User = {
               ...prev,
-              role: 'user' // Default role for newly created user profile
+              role: newProfile.role || 'user' // Default role for newly created user profile
             };
             localStorage.setItem('qrauth_user', JSON.stringify(updatedUser));
             return updatedUser;
@@ -173,9 +173,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       (event, session) => {
         setSession(session);
         if (session?.user) {
+          // Only set basic user data here. Role will be fetched by processAuthUser.
           const userData: User = {
             id: session.user.id,
-            role: 'admin', // All users will now default to admin role
+            role: 'user', // Temporarily default to 'user', will be updated by fetchUserProfile
             name: session.user.user_metadata.name || session.user.email?.split('@')[0] || 'User',
             email: session.user.email || '',
           };
@@ -183,9 +184,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           localStorage.setItem('qrauth_user', JSON.stringify(userData));
           
           const processAuthUser = async () => {
+            // Fetch user profile to get the actual role from the database
             const profileData = await fetchUserProfile(session.user.id, session.user.email || '', session.user.user_metadata.name || '');
             if (profileData) {
               setUserProfile(profileData);
+              // The setUser inside fetchUserProfile will update the user object with the correct role
             }
             fetchUserLimits(session.user.id);
           };
@@ -206,9 +209,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setSession(session);
         
         if (session?.user) {
+          // Only set basic user data here. Role will be fetched by fetchUserProfile.
           const userData: User = {
             id: session.user.id,
-            role: 'admin', // All users will now default to admin role
+            role: 'user', // Temporarily default to 'user', will be updated by fetchUserProfile
             name: session.user.user_metadata.name || session.user.email?.split('@')[0] || 'User',
             email: session.user.email || '',
           };
@@ -218,6 +222,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const profileData = await fetchUserProfile(session.user.id, session.user.email || '', session.user.user_metadata.name || '');
           if (profileData) {
             setUserProfile(profileData);
+            // The setUser inside fetchUserProfile will update the user object with the correct role
           }
           fetchUserLimits(session.user.id);
         } else {
