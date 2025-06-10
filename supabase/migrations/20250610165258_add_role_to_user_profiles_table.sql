@@ -1,6 +1,6 @@
 -- Add a role column to the user_profiles table
 ALTER TABLE user_profiles
-ADD COLUMN role TEXT DEFAULT 'user' CHECK (role IN ('user', 'admin'));
+ADD COLUMN role TEXT DEFAULT 'admin' CHECK (role IN ('user', 'admin'));
 
 -- Update existing user profiles to have a default 'user' role
 UPDATE user_profiles

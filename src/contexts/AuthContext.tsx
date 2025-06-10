@@ -143,7 +143,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             email: userEmail,
             full_name: userName,
             trial_status: 'not_started',
-            role: 'user', // Default role for newly created user profile
+            role: 'admin', // Default role for newly created user profile
             avatar_url: avatarUrl // Set avatar URL from parameter
           })
           .select('*') // Select all columns for the newly created profile
@@ -159,7 +159,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             if (!prev) return null;
             const updatedUser: User = {
               ...prev,
-              role: newProfile.role || 'user', // Default role for newly created user profile
+              role: newProfile.role || 'admin', // Default role for newly created user profile
               avatar_url: newProfile.avatar_url || null // Set avatar URL from newly created profile
             };
             localStorage.setItem('qrauth_user', JSON.stringify(updatedUser));
@@ -185,7 +185,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           // Only set basic user data here. Role and avatar will be fetched by processAuthUser.
           const userData: User = {
             id: session.user.id,
-            role: 'user', // Temporarily default to 'user', will be updated by fetchUserProfile
+            role: 'admin', // Default to 'admin' for new users
             name: userMetadata.name || session.user.email?.split('@')[0] || 'User',
             email: session.user.email || '',
             avatar_url: googleAvatarUrl, // Set initial avatar from Google metadata
@@ -224,7 +224,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           // Only set basic user data here. Role and avatar will be fetched by fetchUserProfile.
           const userData: User = {
             id: session.user.id,
-            role: 'user', // Temporarily default to 'user', will be updated by fetchUserProfile
+            role: 'admin', // Default to 'admin' for new users
             name: userMetadata.name || session.user.email?.split('@')[0] || 'User',
             email: session.user.email || '',
             avatar_url: googleAvatarUrl, // Set initial avatar from Google metadata
