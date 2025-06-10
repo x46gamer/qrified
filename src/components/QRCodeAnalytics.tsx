@@ -16,6 +16,12 @@ interface ReviewData {
   image_urls: string[] | null;
   created_at: string;
   qr_code_id: string;
+  qr_codes?: {
+    sequential_number: string;
+    product: {
+      name: string;
+    };
+  };
 }
 
 interface FeedbackData {
@@ -59,8 +65,9 @@ const QRCodeAnalytics: React.FC<QRCodeAnalyticsProps> = ({ qrCodes }) => {
           .from('customer_feedback')
           .select(`
             *,
-            qr_codes!inner(
-              user_id
+            qr_codes:customer_feedback_qr_code_id_fkey(
+              sequential_number,
+              product:products(name)
             )
           `)
           .eq('qr_codes.user_id', user?.id)
@@ -69,7 +76,17 @@ const QRCodeAnalytics: React.FC<QRCodeAnalyticsProps> = ({ qrCodes }) => {
         if (feedbackError) {
           console.error('Error fetching feedback:', feedbackError);
         } else {
-          setFeedback(feedbackData || []);
+          const mappedFeedback: FeedbackData[] = feedbackData.map((item: any) => ({
+            id: item.id,
+            feedback: item.feedback,
+            created_at: item.created_at,
+            qr_code_id: item.qr_code_id,
+            qr_codes: item.qr_codes ? {
+              sequential_number: item.qr_codes.sequential_number,
+              product: item.qr_codes.product ? { name: item.qr_codes.product.name } : undefined
+            } : undefined,
+          }));
+          setFeedback(mappedFeedback);
         }
       } catch (error) {
         console.error('Error in fetchAnalyticsData:', error);
@@ -107,7 +124,7 @@ const QRCodeAnalytics: React.FC<QRCodeAnalyticsProps> = ({ qrCodes }) => {
       supabase.removeChannel(reviewsSubscription);
       supabase.removeChannel(feedbackSubscription);
     };
-  }, []);
+  }, [user?.id]);
 
   const totalQRCodes = qrCodes.length;
   const scannedQRCodes = qrCodes.filter(qr => qr.isScanned).length;
@@ -126,9 +143,9 @@ const QRCodeAnalytics: React.FC<QRCodeAnalyticsProps> = ({ qrCodes }) => {
   }));
 
   const monthlyScans = qrCodes
-    .filter(qr => qr.scannedAt)
+    .filter(qr => qr.scanned_at)
     .reduce((acc, qr) => {
-      const month = new Date(qr.scannedAt!).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+      const month = new Date(qr.scanned_at!).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
       acc[month] = (acc[month] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
