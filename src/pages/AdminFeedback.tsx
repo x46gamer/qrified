@@ -194,13 +194,13 @@ const AdminFeedback = () => {
     <div className="container mx-auto py-8">
       <h1 className="text-3xl font-bold mb-8">Customer Feedback Management</h1>
       
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6 ">
         <TabsList className="grid w-full max-w-md mx-auto grid-cols-2">
           <TabsTrigger value="reviews">Product Reviews</TabsTrigger>
           <TabsTrigger value="feedback">Improvement Feedback</TabsTrigger>
         </TabsList>
         
-        <TabsContent value="reviews" className="space-y-4">
+        <TabsContent value="reviews" className="space-y-4 bg-white shadow-sm rounded-lg">
           <Card>
             <CardHeader>
               <CardTitle>Product Reviews</CardTitle>
@@ -288,7 +288,7 @@ const AdminFeedback = () => {
           </Card>
         </TabsContent>
         
-        <TabsContent value="feedback" className="space-y-4">
+        <TabsContent value="feedback" className="space-y-4 bg-white shadow-sm rounded-lg">
           <Card>
             <CardHeader>
               <CardTitle>Improvement Feedback</CardTitle>
@@ -383,13 +383,13 @@ const AdminFeedback = () => {
         setSelectedReview(null);
         setSelectedFeedback(null);
       }}>
-        <DialogContent className="max-w-xl">
+        <DialogContent className="max-w-xl text-gray-900">
           <DialogHeader>
             <DialogTitle>Review Details</DialogTitle>
           </DialogHeader>
           
           {selectedReview && (
-            <div className="space-y-4">
+            <div className="space-y-4 text-gray-900">
               <div>
                 <h4 className="font-medium">Rating</h4>
                 <div className="flex mt-1">
@@ -412,7 +412,7 @@ const AdminFeedback = () => {
                 <Textarea 
                   readOnly 
                   value={selectedReview.comment || 'No comment provided'} 
-                  className="mt-1 min-h-[100px]" 
+                  className="mt-1 min-h-[100px] text-gray-900" 
                 />
               </div>
               
@@ -448,7 +448,7 @@ const AdminFeedback = () => {
         setSelectedReview(null);
         setSelectedFeedback(null);
       }}>
-        <DialogContent className="max-w-xl">
+        <DialogContent className="max-w-xl text-gray-900">
           <DialogHeader>
             <DialogTitle>Feedback Details</DialogTitle>
           </DialogHeader>
@@ -465,7 +465,7 @@ const AdminFeedback = () => {
                 <Textarea 
                   readOnly 
                   value={selectedFeedback.feedback} 
-                  className="mt-1 min-h-[150px]" 
+                  className="mt-1 min-h-[150px] text-gray-900" 
                 />
               </div>
               

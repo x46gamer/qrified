@@ -482,64 +482,37 @@ const QRCodeManager: React.FC<QRCodeManagerProps> = ({ qrCodes, onUpdateQRCode, 
         </div>
       </Card>
       
-      <Dialog open={!!previewQRCode} onOpenChange={(open) => !open && setPreviewQRCode(null)}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>QR Code Preview</DialogTitle>
-          </DialogHeader>
-          
-          {previewQRCode && (
-            <div className="grid gap-4 py-4">
-              <div className="w-full space-y-1 text-sm bg-muted p-3 rounded-md">
-                <p><strong>ID:</strong> <span className="font-mono text-xs">{previewQRCode.id}</span></p>
-                <p><strong>Sequence:</strong> {formatSequentialNumber(Number(previewQRCode.sequentialNumber))}</p>
-                <p><strong>Product:</strong> {previewQRCode.product?.name || 'N/A'}</p>
-                <p><strong>Created:</strong> {previewQRCode.createdAt ? new Date(previewQRCode.createdAt).toLocaleString() : 'N/A'}</p>
-                <p><strong>Status:</strong> {previewQRCode.isEnabled ? 
-                  <span className="text-green-600 font-medium">Enabled</span> : 
-                  <span className="text-red-600 font-medium">Disabled</span>}
-                </p>
-                <p><strong>Scanned:</strong> {previewQRCode.isScanned ? 
-                  <span className="text-green-600 font-medium">Yes</span> : 
-                  <span className="text-amber-600 font-medium">No</span>}
-                </p>
-                {previewQRCode.isScanned && previewQRCode.scannedAt && (
-                  <p><strong>Last Scanned:</strong> {new Date(previewQRCode.scannedAt).toLocaleString()}</p>
-                )}
-                 {previewQRCode.websiteUrl && (
-                  <p><strong>URL:</strong> <a href={previewQRCode.websiteUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline break-all">{previewQRCode.websiteUrl}</a></p>
-                )}
-
-                {/* Display Scan Details if scanned */}
-                {previewQRCode.isScanned && previewQRCode.scannedAt && (
-                  <>
-                    <h4 className="font-semibold mt-4 mb-2">Scan Details:</h4>
-                    <p><strong>IP:</strong> {previewQRCode.scannedIp || 'N/A'}</p>
-                    <p><strong>ISP:</strong> {previewQRCode.scannedIsp || 'N/A'}</p>
-                    <p><strong>Location:</strong> {previewQRCode.scannedCity && previewQRCode.scannedCountry ? 
-                      `${previewQRCode.scannedCity}, ${previewQRCode.scannedCountry}` : 
-                      'N/A'}</p>
-                  </>
-                )}
-              </div>
-              <QRCodeTemplatePreview
-                template={previewQRCode.template}
-                headerText={previewQRCode.headerText}
-                instructionText={previewQRCode.instructionText}
-                websiteUrl={previewQRCode.websiteUrl}
-                footerText={previewQRCode.footerText}
-                directionRtl={previewQRCode.directionRtl}
-                dataUrl={previewQRCode.dataUrl}
-                text={previewQRCode.text}
+      {previewQRCode && (
+        <Dialog open={!!previewQRCode} onOpenChange={() => setPreviewQRCode(null)}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>QR Code Preview</DialogTitle>
+            </DialogHeader>
+            <div className="flex flex-col items-center justify-center p-4">
+              <img 
+                src={previewQRCode.dataUrl} 
+                alt="QR Code Preview" 
+                className="w-full h-auto max-w-[250px] object-contain"
               />
+              <div className="text-sm text-gray-600 mt-4 text-center">
+                <p>ID: {previewQRCode.id}</p>
+                <p>Sequence: {formatSequentialNumber(previewQRCode.sequentialNumber)}</p>
+                <p>Product: {previewQRCode.product?.name || 'N/A'}</p>
+                <p>Created: {new Date(previewQRCode.created_at).toLocaleString()}</p>
+                <p>Status: <span className={previewQRCode.isEnabled ? 'text-green-600' : 'text-red-600'}>{previewQRCode.isEnabled ? 'Enabled' : 'Disabled'}</span></p>
+                <p>Scanned: <span className={previewQRCode.scans > 0 ? 'text-green-600' : 'text-red-600'}>{previewQRCode.scans > 0 ? 'Yes' : 'No'}</span></p>
+                {previewQRCode.lastScannedAt && <p>Last Scanned: {new Date(previewQRCode.lastScannedAt).toLocaleString()}</p>}
+                {previewQRCode.lastScannedIp && <p>IP: {previewQRCode.lastScannedIp}</p>}
+                {previewQRCode.lastScannedIsp && <p>ISP: {previewQRCode.lastScannedIsp}</p>}
+                {previewQRCode.lastScannedLocation && <p>Location: {previewQRCode.lastScannedLocation}</p>}
+              </div>
             </div>
-          )}
-          
-          <DialogFooter>
-            <Button onClick={() => setPreviewQRCode(null)}>Close</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            <DialogFooter>
+              <Button onClick={() => setPreviewQRCode(null)}>Close</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 };

@@ -136,10 +136,15 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
   // Fetch verified domains
   useEffect(() => {
     const fetchVerifiedDomains = async () => {
-      if (!user) return;
+      console.log("fetchVerifiedDomains called");
+      if (!user) {
+        console.log("User not available, skipping domain fetch.");
+        return;
+      }
 
       setIsLoadingDomains(true);
       try {
+        console.log("Fetching verified domains from Supabase...");
         const { data, error } = await supabase
           .from('custom_domains')
           .select('id, domain')
@@ -151,11 +156,13 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
           return;
         }
 
+        console.log("Verified domains fetched:", data);
         setVerifiedDomains(data || []);
       } catch (error) {
         console.error('Error fetching domains:', error);
       } finally {
         setIsLoadingDomains(false);
+        console.log("Domain fetch completed.");
       }
     };
 
@@ -865,7 +872,7 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
                     <TabsTrigger value="classic">Original</TabsTrigger>
                     <TabsTrigger value="modern-blue">Modern Blue</TabsTrigger>
                     <TabsTrigger value="modern-beige">Modern Beige</TabsTrigger>
-                    <TabsTrigger value="arabic">Arabic</TabsTrigger>
+                    <TabsTrigger value="arabic">Modern Green</TabsTrigger>
                   </TabsList>
 
                   <div className="mt-4 flex justify-center items-center"> {/* Added items-center */}

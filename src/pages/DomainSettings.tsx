@@ -265,8 +265,8 @@ const DomainSettings = () => {
         </Dialog>
       </div>
 
-      <Card>
-        <CardHeader>
+      <Card className="space-y-4 bg-white shadow-sm rounded-lg ">
+        <CardHeader >
           <CardTitle>Domain Management</CardTitle>
         </CardHeader>
         <CardContent>

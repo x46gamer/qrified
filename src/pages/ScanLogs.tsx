@@ -197,8 +197,9 @@ const ScanLogs = () => {
 
   return (
     <div className="container mx-auto py-8">
-      <Card className="mb-8">
+      <Card className="mb-8 bg-white shadow-sm rounded-lg">
         <CardHeader>
+          <CardTitle className="text-2xl font-semibold mb-4">Scan Statistics</CardTitle>
         </CardHeader>
         <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div>
@@ -228,10 +229,10 @@ const ScanLogs = () => {
         </CardContent>
       </Card>
 
-      <Card >
+      <Card className="bg-white shadow-sm rounded-lg">
         
       <div className="flex m-5">
-                    <text className="text-2xl text-lg font-semibold mb-2">All Scan Logs</text>
+                    <span className="text-2xl text-lg font-semibold mb-2">All Scan Logs</span>
                     <Button onClick={handleExportCsv} size="sm" className="ml-auto mr-1 h-10 w-50">
             <ArrowUpDown className="mr-2 h-4 w-4" /> Export CSV
           </Button>

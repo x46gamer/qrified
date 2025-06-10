@@ -75,51 +75,20 @@ const Settings = () => {
         <p className="text-lg text-muted-foreground">Manage your team and system settings</p>
       </header>
       
-      <Tabs defaultValue="team" className="space-y-8" >
-        <TabsList className="grid w-full max-w-md grid-cols-4 [display:contents]">
-          <TabsTrigger value="team">Team Management</TabsTrigger>
+      <Tabs defaultValue="system" className="space-y-8" >
+        <TabsList className="grid w-full max-w-md grid-cols-3 [display:contents]">
           <TabsTrigger value="system">System Settings</TabsTrigger>
           <TabsTrigger value="domains">Domains</TabsTrigger>
           <TabsTrigger value="help">Help & Resources</TabsTrigger>
         </TabsList>
         
-        <TabsContent value="team">
-          <Card>
-            <CardHeader>
-              <CardTitle>Team Management</CardTitle>
-              <CardDescription>Add, edit or remove team members</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-4">
-                <div className="border rounded-lg p-4">
-                  <div className="flex justify-between items-center mb-2">
-                    <div>
-                      <h3 className="font-medium">Employee User</h3>
-                      <p className="text-sm text-gray-500">employee@example.com</p>
-                    </div>
-                    <Button variant="outline" size="sm">Manage</Button>
-                  </div>
-                </div>
-                
-                <div className="border rounded-lg p-4">
-                  <Label htmlFor="new-member">Add Team Member</Label>
-                  <div className="flex gap-2 mt-1">
-                    <Input id="new-member" placeholder="Email address" />
-                    <Button>Add</Button>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="system">
+        <TabsContent value="system" className="space-y-4 bg-white shadow-sm rounded-lg ">
           <Card>
             <CardHeader>
               <CardTitle>System Settings</CardTitle>
               <CardDescription>Configure system-wide settings</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent >
               <div className="space-y-4">
                 <div className="border rounded-lg p-4">
                   <Label htmlFor="company-name">Store Name</Label>
@@ -150,7 +119,7 @@ const Settings = () => {
           </Card>
         </TabsContent>
 
-        <TabsContent value="domains">
+        <TabsContent value="domains" className="space-y-4 bg-white shadow-sm rounded-lg ">
           <Card>
             <CardHeader>
               <CardTitle>Domain Settings</CardTitle>
@@ -182,7 +151,7 @@ const Settings = () => {
           </Card>
         </TabsContent>
 
-        <TabsContent value="help">
+        <TabsContent value="help" className="space-y-4 bg-white shadow-sm rounded-lg ">
           <Card>
             <CardHeader>
               <CardTitle>Help & Resources</CardTitle>
