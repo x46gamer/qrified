@@ -4,6 +4,7 @@ import { supabase } from '../integrations/supabase/client';
 import { Session } from '@supabase/supabase-js';
 import { toast } from 'sonner';
 import { UserLimits } from '@/types/userLimits';
+import { UserProfile } from '@/types/user';
 
 interface AuthContextType {
   user: User | null;
@@ -16,6 +17,9 @@ interface AuthContextType {
   signUp: (email: string, password: string, name: string) => Promise<void>;
   userLimits: UserLimits | null;
   refreshUserLimits: () => Promise<void>;
+  userProfile: UserProfile | null;
+  updateUserProfileState: (profile: UserProfile) => void;
+  forceRefreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -44,8 +48,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [userLimits, setUserLimits] = useState<UserLimits | null>(null);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
 
-  // Fetch user limits function (moved outside useEffect)
+  const updateUserProfileState = (profile: UserProfile) => {
+    setUserProfile(profile);
+    // The role for the `user` object is managed separately and defaults to 'user'
+    // or is set based on specific application logic/admin intervention.
+  };
+
+  // New function to force refresh user profile from DB
+  const forceRefreshProfile = async () => {
+    if (user?.id) {
+      const profileData = await fetchUserProfile(user.id, user.email || '', user.name || '');
+      if (profileData) {
+        setUserProfile(profileData);
+      }
+    }
+  };
+
   const fetchUserLimits = async (userId: string) => {
     try {
       const { data, error } = await supabase
@@ -76,42 +96,110 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           updated_at: new Date(0).toISOString(),
         });
       }
-
     } catch (err) {
       console.error('Error in fetch user limits:', err);
       setUserLimits(null);
     }
   };
 
+  // Fetch user profile and ensure user's role is set correctly
+  const fetchUserProfile = async (userId: string, userEmail: string, userName: string): Promise<UserProfile | null> => {
+    try {
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('*') // Fetch all profile fields (no 'role' in user_profiles)
+        .eq('id', userId)
+        .maybeSingle();
+      
+      if (error) {
+        console.error('Error fetching user profile:', error);
+        return null;
+      }
+      
+      if (data) {
+        // Profile exists, update user context's User object (including role)
+        setUser(prev => {
+          if (!prev) return null;
+          const updatedUser: User = {
+            ...prev,
+            role: 'user' // Default role for existing profiles fetched, as role is not in UserProfile
+          };
+          localStorage.setItem('qrauth_user', JSON.stringify(updatedUser));
+          return updatedUser;
+        });
+        return data as UserProfile;
+      } else {
+        // If no profile found, create one and set default role for User object
+        console.log('No user profile found, creating one for user:', userId);
+        const { data: newProfile, error: profileError } = await supabase
+          .from('user_profiles')
+          .insert({
+            id: userId,
+            email: userEmail,
+            full_name: userName,
+            trial_status: 'not_started',
+            // No 'role' field here, as it's not in the UserProfile interface/table
+          })
+          .select('*') // Select all columns for the newly created profile
+          .single();
+
+        if (profileError) {
+          console.error('Error creating user profile:', profileError);
+          return null;
+        }
+        
+        if (newProfile) {
+          setUser(prev => {
+            if (!prev) return null;
+            const updatedUser: User = {
+              ...prev,
+              role: 'user' // Default role for newly created user profile
+            };
+            localStorage.setItem('qrauth_user', JSON.stringify(updatedUser));
+            return updatedUser;
+          });
+          return newProfile as UserProfile;
+        }
+      }
+      return null; // Should not reach here if logic is sound
+    } catch (error) {
+      console.error('Error fetching or creating user profile:', error);
+      return null;
+    }
+  };
+
   useEffect(() => {
-    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         setSession(session);
         if (session?.user) {
           const userData: User = {
             id: session.user.id,
-            role: 'admin', // Default role, should be fetched from profiles
+            role: 'admin', // All users will now default to admin role
             name: session.user.user_metadata.name || session.user.email?.split('@')[0] || 'User',
             email: session.user.email || '',
           };
           setUser(userData);
           localStorage.setItem('qrauth_user', JSON.stringify(userData));
           
-          // Fetch user profile to get role and user limits
-          setTimeout(() => {
-            fetchUserProfile(session.user.id);
+          const processAuthUser = async () => {
+            const profileData = await fetchUserProfile(session.user.id, session.user.email || '', session.user.user_metadata.name || '');
+            if (profileData) {
+              setUserProfile(profileData);
+            }
             fetchUserLimits(session.user.id);
-          }, 0);
+          };
+          processAuthUser();
+
         } else {
           setUser(null);
           setUserLimits(null);
+          setUserProfile(null);
           localStorage.removeItem('qrauth_user');
         }
       }
     );
 
-    // Check for existing session
     const checkSession = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
@@ -120,18 +208,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (session?.user) {
           const userData: User = {
             id: session.user.id,
-            role: 'admin', // Default role, should be fetched from profiles
+            role: 'admin', // All users will now default to admin role
             name: session.user.user_metadata.name || session.user.email?.split('@')[0] || 'User',
             email: session.user.email || '',
           };
           setUser(userData);
           localStorage.setItem('qrauth_user', JSON.stringify(userData));
           
-          // Fetch user profile to get role and user limits
-          fetchUserProfile(session.user.id);
+          const profileData = await fetchUserProfile(session.user.id, session.user.email || '', session.user.user_metadata.name || '');
+          if (profileData) {
+            setUserProfile(profileData);
+          }
           fetchUserLimits(session.user.id);
         } else {
           setUser(null);
+          setUserProfile(null);
         }
         
         setIsLoading(false);
@@ -141,42 +232,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     };
 
-    // Fetch user profile to get role
-    const fetchUserProfile = async (userId: string) => {
-      try {
-        const { data, error } = await supabase
-          .from('user_profiles')
-          .select('role')
-          .eq('id', userId)
-          .maybeSingle();
-        
-        if (error) {
-          console.error('Error fetching user profile:', error);
-          return;
-        }
-        
-        if (data) {
-          setUser(prev => {
-            if (!prev) return null;
-            const updatedUser = {
-              ...prev,
-              role: data.role as UserRole
-            };
-            localStorage.setItem('qrauth_user', JSON.stringify(updatedUser));
-            return updatedUser;
-          });
-        }
-      } catch (error) {
-        console.error('Error fetching user profile:', error);
-      }
-    };
-
     checkSession();
     
     return () => {
       subscription.unsubscribe();
     };
-  }, [session?.user?.id]); // Depend on session user ID
+  }, [session?.user?.id]);
 
   const login = async (email: string, password: string) => {
     try {
@@ -195,6 +256,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
       
       if (error) throw error;
+
+      if (data.user) {
+        const profileData = await fetchUserProfile(data.user.id, data.user.email || '', data.user.user_metadata.name || '');
+        if (profileData) {
+          setUserProfile(profileData);
+        }
+      }
       
       toast.success('Login successful!');
     } catch (error: any) {
@@ -227,6 +295,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (error: any) {
       toast.error(error.message || 'Failed to login with Google');
       throw error;
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -243,9 +313,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       
       setUser(null);
+      setUserProfile(null);
       toast.success('Logged out successfully');
       
-      // Force page reload for a clean state
       window.location.href = '/login';
     } catch (error: any) {
       toast.error(error.message || 'Failed to logout');
@@ -256,16 +326,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   
   const resetPassword = async (email: string) => {
     try {
+      setIsLoading(true);
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: window.location.origin + '/reset-password',
+        redirectTo: window.location.origin + '/update-password',
       });
-      
       if (error) throw error;
-      
-      toast.success('Password reset link sent to your email');
+      toast.success('Password reset email sent. Check your inbox!');
     } catch (error: any) {
-      toast.error(error.message || 'Failed to send password reset link');
+      toast.error(error.message || 'Failed to send password reset email');
       throw error;
+    } finally {
+      setIsLoading(false);
     }
   };
   
@@ -273,43 +344,57 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       setIsLoading(true);
       cleanupAuthState();
-      
-      const { data, error } = await supabase.auth.signUp({
+
+      const { data: { user: newUser }, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
-            name,
+            name: name,
           },
-          emailRedirectTo: window.location.origin + '/dashboard',
-        }
+        },
       });
-      
+
       if (error) throw error;
 
-      // Grant 100 QR codes to the new user
-      if (data.user) {
-        const { error: limitsError } = await supabase
-          .from('user_limits')
+      if (newUser) {
+        const { error: profileError } = await supabase
+          .from('user_profiles')
           .insert({
-            id: data.user.id,
-            qr_limit: 0, // Initial value
-            qr_created: 0, // Initial value
-            qr_successful: 0, // Initial value
-            monthly_qr_limit: 100, // Grant 100 monthly QR codes
-            monthly_qr_created: 0, // Initial value
-            last_monthly_reset: new Date().toISOString(),
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
+            id: newUser.id,
+            email: newUser.email,
+            full_name: name,
+            trial_status: 'not_started',
+            role: 'admin' // Set new sign-ups to admin
           });
 
-        if (limitsError) {
-          console.error('Error setting initial user limits:', limitsError.message);
-          // Optionally, you might want to handle this error more gracefully, e.g., send an alert to an admin
+        if (profileError) {
+          console.error('Error creating user profile on signup:', profileError);
+          toast.error('Failed to create user profile.');
+          throw profileError;
         }
+        
+        const createdProfile: UserProfile = {
+          id: newUser.id,
+          email: newUser.email || '',
+          full_name: name,
+          trial_status: 'not_started',
+          avatar_url: null, 
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          trial_started_at: null,
+          trial_ended_at: null,
+        };
+        setUserProfile(createdProfile);
+        setUser(prev => {
+          if (!prev) return null;
+          return { ...prev, role: 'admin' }; // Ensure local User object also reflects admin role
+        });
+
+        toast.success('Sign up successful! Please check your email to confirm your account.');
+      } else {
+        toast.error('Sign up failed. Please try again.');
       }
-      
-      toast.success('Signup successful! Please check your email for verification.');
     } catch (error: any) {
       toast.error(error.message || 'Failed to sign up');
       throw error;
@@ -318,18 +403,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Expose fetchUserLimits as refreshUserLimits
   const refreshUserLimits = async () => {
     if (user?.id) {
       await fetchUserLimits(user.id);
     }
   };
 
+  const isAuthenticated = !!user;
+
   return (
     <AuthContext.Provider
       value={{
         user,
-        isAuthenticated: !!user,
+        isAuthenticated,
         isLoading,
         login,
         loginWithGoogle,
@@ -338,6 +424,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         signUp,
         userLimits,
         refreshUserLimits,
+        userProfile,
+        updateUserProfileState,
+        forceRefreshProfile,
       }}
     >
       {children}

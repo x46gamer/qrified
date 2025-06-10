@@ -46,6 +46,8 @@ import Footer from './components/Footer';
 import { ScrollProgress } from './components/ScrollProgress';
 import Cursor from './components/Cursor';
 import LifetimePage from './pages/LifetimePage';
+import FreeTrial from './pages/FreeTrial';
+import Plans from './pages/Plans';
 
 // Public Pages
 const CookiePolicyPage = lazy(() => import('./pages/CookiePolicyPage'));
@@ -223,6 +225,31 @@ function App() {
               <Route path="/case-studies" element={<CaseStudiesPage />} />
               <Route path="/community" element={<CommunityForumPage />} />
               <Route path="/partners" element={<PartnersPage />} />
+
+              {/* Plans route - accessible to authenticated users */}
+              <Route
+                path="/plans"
+                element={
+                  <AuthGuard>
+                    <AppLayout showFooter={false}>
+                      <Plans />
+                    </AppLayout>
+                  </AuthGuard>
+                }
+              />
+
+              {/* Free trial route */}
+              <Route
+                path="/freetrial"
+                element={
+                  <AuthGuard>
+                    <AppLayout showFooter={false}>
+                      <FreeTrial />
+                    </AppLayout>
+                  </AuthGuard>
+                }
+              />
+
               <Route path="*" element={<NotFound />} />
             </Routes>
             <MyAccountDialog open={myAccountOpen} onOpenChange={setMyAccountOpen} />

@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from '../contexts/AuthContext';
 import { AlertCircle } from 'lucide-react';
 
@@ -16,6 +17,7 @@ const Signup = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
 
   // If user is already authenticated, redirect to dashboard
   React.useEffect(() => {
@@ -38,6 +40,11 @@ const Signup = () => {
       return;
     }
 
+    if (!agreedToTerms) {
+      setError("You must agree to the Terms of Service and Privacy Policy");
+      return;
+    }
+
     try {
       setIsSubmitting(true);
       await signUp(email, password, name);
@@ -50,6 +57,11 @@ const Signup = () => {
   };
 
   const handleGoogleLogin = async () => {
+    if (!agreedToTerms) {
+      setError("You must agree to the Terms of Service and Privacy Policy to sign up with Google");
+      return;
+    }
+
     try {
       setError(null);
       await loginWithGoogle();
@@ -135,10 +147,22 @@ const Signup = () => {
                 autoComplete="new-password"
               />
             </div>
+
+            {/* Terms and Privacy Checkbox */}
+            <div className="flex items-center space-x-2">
+              <Checkbox 
+                id="terms" 
+                checked={agreedToTerms}
+                onCheckedChange={(checked) => setAgreedToTerms(checked as boolean)}
+              />
+              <Label htmlFor="terms" className="text-sm font-normal text-gray-700">
+                I agree to the <Link to="/terms" className="text-blue-600 hover:underline">Terms of Service</Link> and <Link to="/privacy" className="text-blue-600 hover:underline">Privacy Policy</Link>
+              </Label>
+            </div>
             
             <Button 
               type="submit"
-              disabled={isSubmitting}
+              disabled={isSubmitting || !agreedToTerms}
               className="w-full bg-gradient-to-r from-blue-500 to-violet-500 hover:from-blue-600 hover:to-violet-600 transition-all shadow hover:shadow-blue-300/30"
             >
               {isSubmitting ? "Creating Account..." : "Sign Up"}
@@ -157,6 +181,7 @@ const Signup = () => {
           
           <Button 
             onClick={handleGoogleLogin}
+            disabled={!agreedToTerms}
             className="w-full flex items-center justify-center gap-2 bg-white border border-gray-300 hover:bg-gray-50 text-black"
             type="button"
           >

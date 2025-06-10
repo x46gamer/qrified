@@ -5,6 +5,9 @@ export interface UserProfile {
     avatar_url: string | null;
     created_at: string;
     updated_at: string;
+    trial_started_at: string | null;
+    trial_ended_at: string | null;
+    trial_status: 'not_started' | 'active' | 'expired';
 }
 
 export interface UpdateProfileData {
