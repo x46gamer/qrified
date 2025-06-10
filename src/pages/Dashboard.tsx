@@ -19,6 +19,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { QRCode } from '@/types/qrCode';
 import { format } from 'date-fns';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { cn } from '@/lib/utils';
 
 // Register ChartJS components
 ChartJS.register(
@@ -193,6 +195,8 @@ const Dashboard = () => {
 
   // Add state variable for most scanned products
   const [mostScannedProducts, setMostScannedProducts] = useState<{ name: string; scans: number }[]>([]);
+
+  const isMobile = useIsMobile();
 
   // Fetch and process scan data for various dashboard sections
   useEffect(() => {
@@ -779,7 +783,7 @@ const Dashboard = () => {
   ];
 
   return (
-    <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
+    <div className={cn("container mx-auto py-8", isMobile && "mt-[15px]")}>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-semibold text-gray-900">
           Analytics Dashboard

@@ -747,9 +747,7 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
                       </div>
                     )}
                   </div>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    If provided, a button to visit this website will be displayed on verification page
-                  </p>
+                  
                 </div>
 
                 <div className="grid gap-2">
@@ -867,18 +865,17 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
                 <CardTitle>QR Code Template & Preview</CardTitle> {/* Updated title */}
               </CardHeader>
               <CardContent className="flex-1">
-                <Tabs defaultValue="classic" className="w-full" onValueChange={(value) => setValue('template', value as TemplateType)}>
-                  <TabsList className="grid grid-cols-2 sm:grid-cols-4 mb-4">
-                    <TabsTrigger value="classic">Original</TabsTrigger>
-                    <TabsTrigger value="modern-blue">Modern Blue</TabsTrigger>
-                    <TabsTrigger value="modern-beige">Modern Beige</TabsTrigger>
-                    <TabsTrigger value="arabic">Modern Green</TabsTrigger>
+                <Tabs value={template} onValueChange={(value: TemplateType) => setValue('template', value)} className="space-y-4">
+                  <TabsList className="flex flex-wrap justify-center w-full bg-gray-100">
+                    <TabsTrigger value="classic" className="flex-1 min-w-[120px]">Original</TabsTrigger>
+                    <TabsTrigger value="modern-blue" className="flex-1 min-w-[120px]">Modern Blue</TabsTrigger>
+                    <TabsTrigger value="modern-beige" className="flex-1 min-w-[120px]">Modern Beige</TabsTrigger>
+                    <TabsTrigger value="arabic" className="flex-1 min-w-[120px]">Modern Green</TabsTrigger>
                   </TabsList>
 
-                  <div className="mt-4 flex justify-center items-center"> {/* Added items-center */}
-                    {/* Changed dimensions here */}
+                  <div className="flex justify-center items-center mt-[60px] xl:mt-[30px] 2xl:mt-0">
                     <div
-                        className="w-[250px] h-[400px] border rounded-md flex justify-center items-center"
+                        className="w-[250px] mt-4 h-[400px] border rounded-md flex justify-center items-center"
                         ref={templatePreviewRef} // Attach the ref here
                     >
                       <QRCodeTemplatePreview
@@ -898,7 +895,7 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
                     </div>
                   </div>
 
-                  <div className="mt-4 text-center">
+                  <div className="mt-[10px] text-center">
                     <p className="text-sm text-muted-foreground">
                       Live preview of the selected QR code template.
                     </p>

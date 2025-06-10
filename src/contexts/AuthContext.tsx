@@ -14,7 +14,7 @@ interface AuthContextType {
   loginWithGoogle: () => Promise<void>;
   logout: () => void;
   resetPassword: (email: string) => Promise<void>;
-  signUp: (email: string, password: string, name: string) => Promise<void>;
+  signUp: (email: string, password: string, name: string, avatarUrl?: string | null) => Promise<void>;
   userLimits: UserLimits | null;
   refreshUserLimits: () => Promise<void>;
   userProfile: UserProfile | null;
@@ -59,7 +59,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // New function to force refresh user profile from DB
   const forceRefreshProfile = async () => {
     if (user?.id) {
-      const profileData = await fetchUserProfile(user.id, user.email || '', user.name || '');
+      const profileData = await fetchUserProfile(user.id, user.email || '', user.name || '', user.avatar_url || null);
       if (profileData) {
         setUserProfile(profileData);
       }
@@ -103,11 +103,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   // Fetch user profile and ensure user's role is set correctly
-  const fetchUserProfile = async (userId: string, userEmail: string, userName: string): Promise<UserProfile | null> => {
+  const fetchUserProfile = async (userId: string, userEmail: string, userName: string, avatarUrl: string | null): Promise<UserProfile | null> => {
     try {
       const { data, error } = await supabase
         .from('user_profiles')
-        .select('*, role') // Fetch all profile fields including 'role'
+        .select('*, role, avatar_url') // Fetch all profile fields including 'role' and 'avatar_url'
         .eq('id', userId)
         .maybeSingle();
       
@@ -117,12 +117,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       
       if (data) {
-        // Profile exists, update user context's User object with fetched role
+        // Profile exists, update user context's User object with fetched role and avatar
         setUser(prev => {
           if (!prev) return null;
           const updatedUser: User = {
             ...prev,
-            role: data.role || 'user' // Use fetched role or default to 'user'
+            role: data.role || 'user', // Use fetched role or default to 'user'
+            avatar_url: data.avatar_url || avatarUrl || null // Use fetched avatar, or passed avatar, or null
           };
           // Only update if there's a material change to avoid unnecessary re-renders
           if (JSON.stringify(updatedUser) !== JSON.stringify(prev)) {
@@ -133,7 +134,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         });
         return data as UserProfile;
       } else {
-        // If no profile found, create one and set default role for User object
+        // If no profile found, create one and set default role and avatar for User object
         console.log('No user profile found, creating one for user:', userId);
         const { data: newProfile, error: profileError } = await supabase
           .from('user_profiles')
@@ -143,6 +144,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             full_name: userName,
             trial_status: 'not_started',
             role: 'user', // Default role for newly created user profile
+            avatar_url: avatarUrl // Set avatar URL from parameter
           })
           .select('*') // Select all columns for the newly created profile
           .single();
@@ -157,7 +159,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             if (!prev) return null;
             const updatedUser: User = {
               ...prev,
-              role: newProfile.role || 'user' // Default role for newly created user profile
+              role: newProfile.role || 'user', // Default role for newly created user profile
+              avatar_url: newProfile.avatar_url || null // Set avatar URL from newly created profile
             };
             localStorage.setItem('qrauth_user', JSON.stringify(updatedUser));
             return updatedUser;
@@ -177,22 +180,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       (event, session) => {
         setSession(session);
         if (session?.user) {
-          // Only set basic user data here. Role will be fetched by processAuthUser.
+          const userMetadata = session.user.user_metadata;
+          const googleAvatarUrl = userMetadata?.picture || null; // Google provides 'picture' for avatar
+          // Only set basic user data here. Role and avatar will be fetched by processAuthUser.
           const userData: User = {
             id: session.user.id,
             role: 'user', // Temporarily default to 'user', will be updated by fetchUserProfile
-            name: session.user.user_metadata.name || session.user.email?.split('@')[0] || 'User',
+            name: userMetadata.name || session.user.email?.split('@')[0] || 'User',
             email: session.user.email || '',
+            avatar_url: googleAvatarUrl, // Set initial avatar from Google metadata
           };
           setUser(userData);
           localStorage.setItem('qrauth_user', JSON.stringify(userData));
           
           const processAuthUser = async () => {
-            // Fetch user profile to get the actual role from the database
-            const profileData = await fetchUserProfile(session.user.id, session.user.email || '', session.user.user_metadata.name || '');
+            // Fetch user profile to get the actual role and avatar from the database
+            const profileData = await fetchUserProfile(session.user.id, session.user.email || '', userMetadata.name || '', googleAvatarUrl);
             if (profileData) {
               setUserProfile(profileData);
-              // The setUser inside fetchUserProfile will update the user object with the correct role
+              // The setUser inside fetchUserProfile will update the user object with the correct role and avatar
             }
             fetchUserLimits(session.user.id);
           };
@@ -213,20 +219,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setSession(session);
         
         if (session?.user) {
-          // Only set basic user data here. Role will be fetched by fetchUserProfile.
+          const userMetadata = session.user.user_metadata;
+          const googleAvatarUrl = userMetadata?.picture || null; // Google provides 'picture' for avatar
+          // Only set basic user data here. Role and avatar will be fetched by fetchUserProfile.
           const userData: User = {
             id: session.user.id,
             role: 'user', // Temporarily default to 'user', will be updated by fetchUserProfile
-            name: session.user.user_metadata.name || session.user.email?.split('@')[0] || 'User',
+            name: userMetadata.name || session.user.email?.split('@')[0] || 'User',
             email: session.user.email || '',
+            avatar_url: googleAvatarUrl, // Set initial avatar from Google metadata
           };
           setUser(userData);
           localStorage.setItem('qrauth_user', JSON.stringify(userData));
           
-          const profileData = await fetchUserProfile(session.user.id, session.user.email || '', session.user.user_metadata.name || '');
+          const profileData = await fetchUserProfile(session.user.id, session.user.email || '', userMetadata.name || '', googleAvatarUrl);
           if (profileData) {
             setUserProfile(profileData);
-            // The setUser inside fetchUserProfile will update the user object with the correct role
+            // The setUser inside fetchUserProfile will update the user object with the correct role and avatar
           }
           fetchUserLimits(session.user.id);
         } else {
@@ -267,7 +276,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (error) throw error;
 
       if (data.user) {
-        const profileData = await fetchUserProfile(data.user.id, data.user.email || '', data.user.user_metadata.name || '');
+        const profileData = await fetchUserProfile(data.user.id, data.user.email || '', data.user.user_metadata.name || '', data.user.user_metadata.picture || null);
         if (profileData) {
           setUserProfile(profileData);
         }
@@ -349,7 +358,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
   
-  const signUp = async (email: string, password: string, name: string) => {
+  const signUp = async (email: string, password: string, name: string, avatarUrl: string | null = null) => {
     try {
       setIsLoading(true);
       cleanupAuthState();
@@ -359,7 +368,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         password,
         options: {
           data: {
-            name: name,
+            full_name: name,
+            avatar_url: avatarUrl // Pass avatar URL to Supabase user metadata
           },
         },
       });
@@ -388,7 +398,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           email: newUser.email || '',
           full_name: name,
           trial_status: 'not_started',
-          avatar_url: null, 
+          avatar_url: avatarUrl,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
           trial_started_at: null,
