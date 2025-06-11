@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.42.0"
 import Stripe from "https://esm.sh/stripe@14.12.0?target=deno"
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': 'https://www.qrified.app',
+  'Access-Control-Allow-Origin': '*',  // Allow all origins during development
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Credentials': 'true',
@@ -69,8 +69,8 @@ serve(async (req) => {
           quantity: 1,
         },
       ],
-      success_url: `${req.headers.get('origin')}/success`,
-      cancel_url: `${req.headers.get('origin')}/cancel`,
+      success_url: 'https://www.qrified.app/success',
+      cancel_url: 'https://www.qrified.app/cancel',
     });
 
     return new Response(JSON.stringify({ sessionId: session.id }), {
@@ -126,8 +126,8 @@ serve(async (req) => {
         quantity: 1,
       },
     ],
-    success_url: `${req.headers.get('origin')}/success`,
-    cancel_url: `${req.headers.get('origin')}/cancel`,
+    success_url: 'https://www.qrified.app/success',
+    cancel_url: 'https://www.qrified.app/cancel',
   })
 
   return new Response(JSON.stringify({ sessionId: session.id }), {
