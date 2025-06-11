@@ -15,7 +15,6 @@ import { loadStripe } from '@stripe/stripe-js';
 import { toast } from 'sonner';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { getStripe, createCheckoutSession } from '@/integrations/stripe/client';
 
 const LifetimePage = () => {
   const [timeLeft, setTimeLeft] = useState({
@@ -112,40 +111,29 @@ const LifetimePage = () => {
     "Anyone who wants to build a trusted, direct relationship with their customers."
   ];
 
-  const CallToActionSection = ({ lang, t }) => {
-    const handleCheckout = async () => {
-        try {
-            // Replace 'YOUR_STRIPE_PRICE_ID' with your actual Stripe Price ID
-            const priceId = 'YOUR_STRIPE_PRICE_ID'; 
-            const response = await fetch('http://localhost:54321/functions/v1/create-checkout-session', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ priceId }),
-            });
-            const { sessionId } = await response.json();
-            
-            // Redirect to Stripe Checkout
-            const stripe = await loadStripe('YOUR_STRIPE_PUBLIC_KEY'); // Replace with your public key
-            stripe.redirectToCheckout({ sessionId });
-
-        } catch (error) {
-            console.error('Error creating checkout session:', error);
-            // Optionally, display an error message to the user
-        }
-    };
-
   // Add handler for Stripe checkout
   const handleBuyNow = async () => {
     try {
       setIsLoading(true);
+      const response = await fetch('http://localhost:54321/functions/v1/create-checkout-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          priceId: 'prod_STjyRAv61Ylnaf',
+          isLifetime: true 
+        }),
+      });
       
-      // Use the same checkout session creation as PricingSection
-      const sessionId = await createCheckoutSession('prod_STjyRAv61Ylnaf'); // Using the lifetime product ID
+      if (!response.ok) {
+        throw new Error('Failed to create checkout session');
+      }
+
+      const { sessionId } = await response.json();
       
       // Redirect to Stripe Checkout
-      const stripe = await getStripe();
+      const stripe = await loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
       if (!stripe) {
         throw new Error('Failed to load Stripe');
       }
