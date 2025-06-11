@@ -127,8 +127,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           };
           // Only update if there's a material change to avoid unnecessary re-renders
           if (JSON.stringify(updatedUser) !== JSON.stringify(prev)) {
-            localStorage.setItem('qrauth_user', JSON.stringify(updatedUser));
-            return updatedUser;
+          localStorage.setItem('qrauth_user', JSON.stringify(updatedUser));
+          return updatedUser;
           }
           return prev; // No material change, return previous state
         });

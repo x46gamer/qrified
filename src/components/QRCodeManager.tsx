@@ -484,10 +484,10 @@ const QRCodeManager: React.FC<QRCodeManagerProps> = ({ qrCodes, onUpdateQRCode, 
       
       {previewQRCode && (
         <Dialog open={!!previewQRCode} onOpenChange={() => setPreviewQRCode(null)}>
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle>QR Code Preview</DialogTitle>
-            </DialogHeader>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>QR Code Preview</DialogTitle>
+          </DialogHeader>
             <div className="flex flex-col items-center justify-center p-4">
               <img 
                 src={previewQRCode.dataUrl} 
@@ -507,11 +507,11 @@ const QRCodeManager: React.FC<QRCodeManagerProps> = ({ qrCodes, onUpdateQRCode, 
                 {previewQRCode.lastScannedLocation && <p>Location: {previewQRCode.lastScannedLocation}</p>}
               </div>
             </div>
-            <DialogFooter>
-              <Button onClick={() => setPreviewQRCode(null)}>Close</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+          <DialogFooter>
+            <Button onClick={() => setPreviewQRCode(null)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       )}
     </div>
   );

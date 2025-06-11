@@ -16,8 +16,6 @@ const Footer = () => {
         { name: "Features", href: "#" },
         { name: "Pricing", href: "#pricing" },
         { name: "Security", href: "#security" },
-        { name: "Dashboard", href: "#dashboard" },
-        { name: "API", href: "#" },
       ]
     },
     {
@@ -26,18 +24,6 @@ const Footer = () => {
         { name: "About", href: "#" },
         { name: "Careers", href: "#" },
         { name: "Blog", href: "#" },
-        { name: "Press", href: "#" },
-        { name: "Partners", href: "#" },
-      ]
-    },
-    {
-      title: "Resources",
-      links: [
-        { name: "Documentation", href: "#" },
-        { name: "Help Center", href: "#" },
-        { name: "Guides", href: "#" },
-        { name: "Events", href: "#" },
-        { name: "Webinars", href: "#" },
       ]
     },
     {
@@ -46,8 +32,6 @@ const Footer = () => {
         { name: "Privacy", href: "#" },
         { name: "Terms", href: "#" },
         { name: "Cookie Policy", href: "#" },
-        { name: "GDPR", href: "#" },
-        { name: "Accessibility", href: "#" },
       ]
     }
   ];
@@ -60,9 +44,9 @@ const Footer = () => {
   ];
 
   const contactInfo = [
-    { icon: <Mail className="h-5 w-5" />, text: "contact@qrified.com" },
+    { icon: <Mail className="h-5 w-5" />, text: "contact@qrified.app" },
     { icon: <Phone className="h-5 w-5" />, text: "+1 (555) 123-4567" },
-    { icon: <MapPin className="h-5 w-5" />, text: "San Francisco, CA" }
+    { icon: <MapPin className="h-5 w-5" />, text: "London, England" }
   ];
 
   return (
