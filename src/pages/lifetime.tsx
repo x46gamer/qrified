@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/carousel";
 import { loadStripe } from '@stripe/stripe-js';
 import { toast } from 'sonner';
+import { getStripe, createCheckoutSession } from '@/integrations/stripe/client';
 
 const LifetimePage = () => {
   const [timeLeft, setTimeLeft] = useState({
@@ -21,6 +22,7 @@ const LifetimePage = () => {
     minutes: 59,
     seconds: 22
   });
+  const [isLoading, setIsLoading] = useState(false);
 
   // App screenshots for the gallery
   const screenshots = [
@@ -109,24 +111,26 @@ const LifetimePage = () => {
   // Add handler for Stripe checkout
   const handleBuyNow = async () => {
     try {
-      // Replace 'YOUR_STRIPE_PRICE_ID' with your actual Stripe Price ID
-      const priceId = 'YOUR_STRIPE_PRICE_ID'; 
-      const response = await fetch('http://localhost:54321/functions/v1/create-checkout-session', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ priceId }),
-      });
-      const { sessionId } = await response.json();
+      setIsLoading(true);
+      const productId = 'prod_STZYwQwtObNE8T'; // Your lifetime deal product ID
+      
+      const sessionId = await createCheckoutSession(productId);
       
       // Redirect to Stripe Checkout
-      const stripe = await loadStripe('YOUR_STRIPE_PUBLIC_KEY'); // Replace with your public key
-      stripe.redirectToCheckout({ sessionId });
+      const stripe = await getStripe();
+      if (!stripe) {
+        throw new Error('Failed to load Stripe');
+      }
 
-    } catch (error) {
+      const { error } = await stripe.redirectToCheckout({ sessionId });
+      if (error) {
+        throw error;
+      }
+    } catch (error: any) {
       console.error('Error creating checkout session:', error);
-      // Optionally, display an error message to the user
+      toast.error(error.message || 'Failed to start checkout process');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -182,8 +186,12 @@ const LifetimePage = () => {
           </div>
 
           <div className="px-2">
-            <Button className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white text-sm md:text-xl px-4 md:px-12 py-3 md:py-6 rounded-xl shadow-2xl hover:shadow-3xl transition-all duration-300 hover:scale-105 w-full md:w-auto" onClick={handleBuyNow}>
-              SECURE MY LIFETIME ACCESS NOW FOR $99
+            <Button
+              onClick={handleBuyNow}
+              disabled={isLoading}
+              className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white text-sm md:text-xl px-4 md:px-12 py-3 md:py-6 rounded-xl shadow-2xl hover:shadow-3xl transition-all duration-300 hover:scale-105 w-full md:w-auto"
+            >
+              {isLoading ? 'Loading...' : 'SECURE MY LIFETIME ACCESS NOW FOR $99'}
             </Button>
           </div>
           
