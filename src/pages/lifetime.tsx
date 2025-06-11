@@ -11,7 +11,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import { getStripe, createCheckoutSession } from '@/integrations/stripe/client';
+import { loadStripe } from '@stripe/stripe-js';
 import { toast } from 'sonner';
 
 const LifetimePage = () => {
@@ -109,13 +109,24 @@ const LifetimePage = () => {
   // Add handler for Stripe checkout
   const handleBuyNow = async () => {
     try {
-      const sessionId = await createCheckoutSession('prod_STZYwQwtObNE8T');
-      const stripe = await getStripe();
-      if (!stripe) throw new Error('Stripe failed to load');
-      const { error } = await stripe.redirectToCheckout({ sessionId });
-      if (error) throw error;
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to start checkout process');
+      // Replace 'YOUR_STRIPE_PRICE_ID' with your actual Stripe Price ID
+      const priceId = 'YOUR_STRIPE_PRICE_ID'; 
+      const response = await fetch('http://localhost:54321/functions/v1/create-checkout-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ priceId }),
+      });
+      const { sessionId } = await response.json();
+      
+      // Redirect to Stripe Checkout
+      const stripe = await loadStripe('YOUR_STRIPE_PUBLIC_KEY'); // Replace with your public key
+      stripe.redirectToCheckout({ sessionId });
+
+    } catch (error) {
+      console.error('Error creating checkout session:', error);
+      // Optionally, display an error message to the user
     }
   };
 
