@@ -137,134 +137,185 @@ const LifetimePage = () => {
       setIsLoading(false);
     }
   };
-  
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 overflow-x-hidden">
-      {/* Floating Elements Background */}
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-20 left-10 w-32 h-32 bg-gradient-to-r from-pink-500/20 to-blue-500/20 rounded-full blur-xl animate-fade-in"></div>
-        <div className="absolute top-40 right-20 w-24 h-24 bg-gradient-to-r from-blue-400/20 to-purple-500/20 rounded-full blur-xl animate-fade-in animation-delay-1000"></div>
-        <div className="absolute bottom-40 left-1/4 w-40 h-40 bg-gradient-to-r from-purple-500/20 to-pink-400/20 rounded-full blur-xl animate-fade-in animation-delay-2000"></div>
-      </div>
 
-      {/* Hero Section */}
-      <div className="container mx-auto px-4 py-8 md:py-12 relative">
-        <div className="text-center max-w-4xl mx-auto animate-fade-in">
-          <Badge className="mb-4 md:mb-6 text-xs md:text-lg px-3 md:px-6 py-1 md:py-2 bg-gradient-to-r from-pink-600 to-red-600 text-white border-0 shadow-lg">
-            FINAL OPPORTUNITY - LIMITED TIME
-          </Badge>
-          
-          <h1 className="text-2xl md:text-5xl lg:text-7xl font-bold mb-4 md:mb-6 bg-gradient-to-r from-pink-400 via-purple-400 to-blue-400 bg-clip-text text-transparent leading-tight animate-scale-in px-2">
-            Qrified.app Lifetime Access
-          </h1>
-          
-          <p className="text-lg md:text-2xl lg:text-3xl font-semibold mb-3 md:mb-4 text-white animate-fade-in animation-delay-300 px-2">
-            Your Unprecedented & Final Opportunity for Just $99
-          </p>
-          
-          <p className="text-sm md:text-xl text-blue-100 mb-6 md:mb-8 leading-relaxed px-4 animate-fade-in animation-delay-500">
-            This isn't just a deal; it's the foundation of our journey. For the first and only time, secure lifetime access to the ultimate tool for product authenticity and customer connection. When this timer hits zero, this offer is gone forever.
-          </p>
+  // Add handler for Stripe checkout
+  const handleBuyNow = async () => {
+    if (!isAuthenticated) {
+      navigate('/signup?redirect=lifetime-checkout');
+      return;
+    }
+    try {
+      setIsLoading(true);
+      const sessionId = await createCheckoutSession('prod_STZYwQwtObNE8T');
+      const stripe = await getStripe();
+      if (!stripe) throw new Error('Failed to load Stripe');
 
-          {/* Countdown Timer */}
-          <div className="bg-gradient-to-r from-pink-600 to-purple-600 text-white rounded-xl md:rounded-2xl p-3 md:p-8 mb-6 md:mb-8 shadow-2xl animate-scale-in animation-delay-700 hover:scale-105 transition-transform duration-300 mx-2">
-            <h3 className="text-base md:text-2xl font-bold mb-3 md:mb-4">DEAL ENDS IN:</h3>
-            <div className="grid grid-cols-4 gap-1 md:gap-4 text-center max-w-md mx-auto">
+      const { error } = await stripe.redirectToCheckout({ sessionId });
+      if (error) throw error;
+
+    } catch (error: any) {
+      console.error('Error creating checkout session:', error);
+      toast.error(error.message || 'Failed to start checkout process');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleClaim = async () => {
+    if (!isAuthenticated) {
+      navigate('/signup?redirect=lifetime-checkout');
+      return;
+    }
+    try {
+      setIsLoading(true);
+      const sessionId = await createCheckoutSession('prod_STZYwQwtObNE8T');
+      const stripe = await getStripe();
+      if (!stripe) throw new Error('Failed to load Stripe');
+
+      const { error } = await stripe.redirectToCheckout({ sessionId });
+      if (error) throw error;
+
+    } catch (error: any) {
+      console.error('Error creating checkout session:', error);
+      toast.error(error.message || 'Failed to start checkout process');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // This function is no longer needed if premium plans are removed.
+  // You can safely remove it along with premiumPlans.
+  const handlePremiumCheckout = async (plan: any) => {};
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 overflow-x-hidden">
+      {/* Floating Elements Background */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute top-20 left-10 w-32 h-32 bg-gradient-to-r from-pink-500/20 to-blue-500/20 rounded-full blur-xl animate-fade-in"></div>
+        <div className="absolute top-40 right-20 w-24 h-24 bg-gradient-to-r from-blue-400/20 to-purple-500/20 rounded-full blur-xl animate-fade-in animation-delay-1000"></div>
+        <div className="absolute bottom-40 left-1/4 w-40 h-40 bg-gradient-to-r from-purple-500/20 to-pink-400/20 rounded-full blur-xl animate-fade-in animation-delay-2000"></div>
+      </div>
+
+      {/* Hero Section */}
+      <div className="container mx-auto px-4 py-8 md:py-12 relative">
+        <div className="text-center max-w-4xl mx-auto animate-fade-in">
+          <Badge className="mb-4 md:mb-6 text-xs md:text-lg px-3 md:px-6 py-1 md:py-2 bg-gradient-to-r from-pink-600 to-red-600 text-white border-0 shadow-lg">
+            FINAL OPPORTUNITY - LIMITED TIME
+          </Badge>
+          
+          <h1 className="text-2xl md:text-5xl lg:text-7xl font-bold mb-4 md:mb-6 bg-gradient-to-r from-pink-400 via-purple-400 to-blue-400 bg-clip-text text-transparent leading-tight animate-scale-in px-2">
+            Qrified.app Lifetime Access
+          </h1>
+          
+          <p className="text-lg md:text-2xl lg:text-3xl font-semibold mb-3 md:mb-4 text-white animate-fade-in animation-delay-300 px-2">
+            Your Unprecedented & Final Opportunity for Just $99
+          </p>
+          
+          <p className="text-sm md:text-xl text-blue-100 mb-6 md:mb-8 leading-relaxed px-4 animate-fade-in animation-delay-500">
+            This isn't just a deal; it's the foundation of our journey. For the first and only time, secure lifetime access to the ultimate tool for product authenticity and customer connection. When this timer hits zero, this offer is gone forever.
+          </p>
+
+          {/* Countdown Timer */}
+          <div className="bg-gradient-to-r from-pink-600 to-purple-600 text-white rounded-xl md:rounded-2xl p-3 md:p-8 mb-6 md:mb-8 shadow-2xl animate-scale-in animation-delay-700 hover:scale-105 transition-transform duration-300 mx-2">
+            <h3 className="text-base md:text-2xl font-bold mb-3 md:mb-4">DEAL ENDS IN:</h3>
+            <div className="grid grid-cols-4 gap-1 md:gap-4 text-center max-w-md mx-auto">
               {Object.entries(timeLeft).map(([unit, value]) => (
                 <div key={unit} className="bg-white/20 rounded-lg p-1 md:p-4 backdrop-blur-sm hover:bg-white/30 transition-all duration-300">
                   <div className="text-lg md:text-3xl font-bold">{value}</div>
                   <div className="text-xs md:text-sm capitalize">{unit}</div>
                 </div>
               ))}
-            </div>
-          </div>
+            </div>
+          </div>
 
-          <div className="px-2">
-            <Button
-              onClick={() => handleCheckout('prod_STZYwQwtObNE8T')} // Lifetime Product ID
-              disabled={isLoading}
-              className="bg-gradient-to-r from-pink-600 to-blue-600 hover:from-pink-700 hover:to-blue-700 text-white text-sm md:text-xl px-4 md:px-12 py-3 md:py-6 rounded-xl shadow-2xl hover:shadow-3xl transition-all duration-300 hover:scale-105 w-full md:w-auto"
-            >
-              {isLoading ? 'Processing...' : 'CLAIM MY LIFETIME DEAL - $99 ONE-TIME'}
-            </Button>
-          </div>
-          
-          <p className="text-xs md:text-sm text-blue-200 mt-3 px-2">30-Day Money-Back Guarantee</p>
-        </div>
-      </div>
+          <div className="px-2">
+            <Button
+              onClick={handleBuyNow}
+              disabled={isLoading}
+              className="bg-gradient-to-r from-pink-600 to-blue-600 hover:from-pink-700 hover:to-blue-700 text-white text-sm md:text-xl px-4 md:px-12 py-3 md:py-6 rounded-xl shadow-2xl hover:shadow-3xl transition-all duration-300 hover:scale-105 w-full md:w-auto"
+            >
+              {isLoading ? 'Processing...' : 'CLAIM MY LIFETIME DEAL - $99 ONE-TIME'}
+            </Button>
+          </div>
+          
+          <p className="text-xs md:text-sm text-blue-200 mt-3 px-2">30-Day Money-Back Guarantee</p>
+        </div>
+      </div>
 
-      {/* UPDATED: Choose a Plan Section */}
-      <div className="container mx-auto px-4 py-12 md:py-20 relative">
-        <div className="text-center mb-12">
-          <h2 className="text-2xl md:text-4xl font-bold mb-4 text-white">
-            Choose Your Perfect One-Time Plan
-          </h2>
-          <p className="text-lg text-blue-100 max-w-3xl mx-auto">
-            Select our limited-time lifetime deal or another powerful one-time payment option.
-          </p>
-        </div>
+      {/* Add this new section after the hero section and before the app screenshots gallery */}
+      <div className="container mx-auto px-4 py-12 md:py-20 relative">
+        <div className="text-center mb-12">
+          <h2 className="text-2xl md:text-4xl font-bold mb-4 text-white">
+            Your Exclusive Lifetime Offer
+          </h2>
+          <p className="text-lg text-blue-100 max-w-3xl mx-auto">
+            Secure your unprecedented lifetime access to Qrified.
+          </p>
+        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-7xl mx-auto">
-          {/* Lifetime Deal Card */}
-          <motion.div
-            className="relative bg-gradient-to-br from-pink-600 to-purple-600 rounded-xl p-8 shadow-2xl"
-          >
-            <div className="absolute -top-4 left-0 right-0 flex justify-center">
-              <div className="px-4 py-1 bg-yellow-400 text-black text-sm font-bold rounded-full">LIMITED TIME OFFER</div>
-            </div>
-            <h3 className="text-2xl font-bold mb-2 text-white">Lifetime Access</h3>
-            <div className="mb-6 flex items-end">
-              <span className="text-5xl font-bold text-white">$99</span>
-              <span className="text-white/80 ml-2 mb-1">one-time</span>
-            </div>
-            <ul className="space-y-3 mb-8">
-              {["All Premium Features", "All Future Updates", "No Recurring Payments"].map((feature) => (
-                <li key={feature} className="flex items-start">
+        <div className="flex justify-center max-w-7xl mx-auto">
+          {/* Lifetime Deal Card */}
+          <motion.div
+            initial={{ opacity: 1, y: 0 }}
+            animate={inView ? { opacity: 1, y: 0 } : { opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="relative bg-gradient-to-br from-pink-600 to-purple-600 rounded-xl p-8 shadow-2xl w-full md:w-1/2 lg:w-1/3"
+          >
+            <div className="absolute -top-4 left-0 right-0 flex justify-center">
+              <div className="px-4 py-1 bg-yellow-400 text-black text-sm font-bold rounded-full">
+                LIMITED TIME OFFER
+              </div>
+            </div>
+
+            <div className="mb-6">
+              <h3 className="text-2xl font-bold mb-2 text-white">Lifetime Access</h3>
+              <p className="text-white/80 text-sm">One-time payment, lifetime access to all features</p>
+            </div>
+
+            <div className="mb-6">
+              <div className="flex items-end">
+                <span className="text-5xl font-bold text-white">$99</span>
+                <span className="text-white/80 ml-2 mb-1">one-time</span>
+              </div>
+            </div>
+
+            <ul className="space-y-3 mb-8">
+              {[
+                "Unlimited QR Codes Forever",
+                "All Premium Features",
+                "Use Your Own Custom Domain",
+                "Customizable Analytics Dashboard",
+                "Up to 5 Team Members",
+                "Priority Support Queue",
+                "Future Updates Included",
+                "No Recurring Payments"
+              ].map((feature, index) => (
+                <li key={index} className="flex items-start">
                   <Check className="h-5 w-5 text-white mt-0.5 mr-2 flex-shrink-0" />
                   <span className="text-white/90">{feature}</span>
                 </li>
               ))}
-            </ul>
-            <Button onClick={() => handleCheckout('prod_STZYwQwtObNE8T')} disabled={isLoading} className="w-full bg-white text-pink-600 hover:bg-white/90 text-lg font-semibold py-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300">
-              {isLoading ? 'Processing...' : 'CLAIM LIFETIME DEAL'}
-            </Button>
-          </motion.div>
+            </ul>
 
-          {/* Premium One-Time Plan Cards */}
-          {oneTimePlans.map((plan, index) => (
-            <motion.div
-              key={index}
-              className={`relative bg-neutral-900/50 backdrop-blur-sm border ${ plan.recommended ? 'border-primary-500' : 'border-neutral-800' } rounded-xl p-8`}
-            >
-              {plan.recommended && (
-                <div className="absolute -top-4 left-0 right-0 flex justify-center">
-                  <div className="px-3 py-1 bg-primary-500 text-white text-xs font-medium rounded-full">Best Value</div>
-                </div>
-              )}
-              <h3 className="text-xl font-bold mb-2 text-white">{plan.name}</h3>
-              <div className="mb-6 flex items-end">
-                <span className="text-4xl font-bold text-white">${plan.price}</span>
-                <span className="text-neutral-400 ml-2 mb-1">one-time</span>
-              </div>
-              <ul className="space-y-3 mb-8">
-                {plan.features.map((feature, featureIndex) => (
-                  <li key={featureIndex} className="flex items-start">
-                    <Check className="h-5 w-5 text-primary-500 mt-0.5 mr-2 flex-shrink-0" />
-                    <span className="text-neutral-300">{feature.name}</span>
-                  </li>
-                ))}
-              </ul>
-              <Button onClick={() => handleCheckout(plan.productId)} disabled={isLoading} className={`w-full ${ plan.recommended ? 'bg-primary-500 hover:bg-primary-600' : 'bg-neutral-800 hover:bg-neutral-700' } text-white text-lg font-semibold py-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300`}>
-                {isLoading ? 'Processing...' : plan.ctaText}
-              </Button>
-            </motion.div>
-          ))}
-        </div>
-      </div>
+            <Button
+              onClick={handleClaim}
+              disabled={isLoading}
+              className="w-full bg-white text-pink-600 hover:bg-white/90 text-lg font-semibold py-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
+            >
+              {isLoading ? 'Processing...' : 'CLAIM LIFETIME DEAL'}
+            </Button>
 
-      {/* The rest of your page components (App Screenshots, Founder's Message, etc.) remain unchanged */}
-    </div>
-  );
+            <p className="text-center text-white/80 text-sm mt-4">
+              30-Day Money-Back Guarantee
+            </p>
+          </motion.div>
+        </div>
+      </div>
+
+      {/* App Screenshots Gallery Section */}
+      {/* ... existing code ... */}
+    </div>
+  );
 };
 
 export default LifetimePage;
