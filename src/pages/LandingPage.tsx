@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, HTMLAttributes } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
 // import { Link, useNavigate } from 'react-router-dom'; // Not used for this single-page structure
 // import { motion } from 'framer-motion'; // Not used as original HTML has no complex animations beyond CSS
@@ -96,262 +96,8 @@ import {
   Terminal
 } from 'lucide-react';
 
+// Helper function to get translated text
 const useTranslation = (lang) => {
-    // Define the translations object
-    const translations = {
-        en: {
-            brandName: "Qrified",
-            betaBadge: "Beta",
-            navFeatures: "Features",
-            navPerks: "Perks",
-            navBlog: "Blog",
-            navPricing: "Pricing",
-            navDocs: "Docs",
-            navLogin: "Login",
-            navGetStarted: "Get Started Free",
-            navFeaturesMobile: "Features",
-            navPerksMobile: "Perks",
-            navBlogMobile: "Blog",
-            navPricingMobile: "Pricing",
-            navDocsMobile: "Documentation",
-            navLoginMobile: "Login",
-            heroTitle: 'Secure Your <span class="accent-gradient-text">Brand & Products</span> with Next-Gen QR Codes',
-            heroSubtitle: "Our advanced QR code authentication platform empowers businesses to combat counterfeiting, enhance consumer trust, and gain valuable insights into their supply chain.",
-            heroCtaPrimary: "Get Started Free",
-            heroCtaSecondary: "Learn More",
-            heroImagePlaceholder: "Interactive Demo/Image Here",
-            asFeaturedInTitle: "As Featured In",
-            trustedByTitle: "Trusted by Leading Brands",
-            feature1TitleLead: "Unmatched",
-            feature1TitleAccent: "Security",
-            feature1Desc: "Leverage advanced cryptographic techniques and blockchain principles to create unforgeable QR codes that ensure product authenticity from manufacturing to consumer.",
-            feature1Item1: "Tamper-proof QR codes with unique digital signatures.",
-            feature1Item2: "Decentralized verification protecting against single points of failure.",
-            feature1Item3: "Real-time fraud detection and alert system.",
-            feature1Item4: "Secure data encryption for all transactions.",
-            feature1Cta: "Explore Security Features",
-            feature1ImagePlaceholder: "Security Features Illustration",
-            feature2TitleLead: "Engage & Connect",
-            feature2TitleAccent: "with Customers",
-            feature2Desc: "Beyond security, our platform transforms QR codes into interactive touchpoints, enabling direct consumer engagement, feedback collection, and personalized marketing campaigns.",
-            feature2Item1: "Customizable landing pages for each QR scan.",
-            feature2Item2: "Collect valuable consumer data and feedback.",
-            feature2Item3: "Run targeted promotions and loyalty programs.",
-            feature2Item4: "Direct communication channel with your customers.",
-            feature2Cta: "Discover Engagement Tools",
-            feature2ImagePlaceholder: "Customer Engagement Illustration",
-            feature3TitleLead: "Streamlined",
-            feature3TitleAccent: "Supply Chain Traceability",
-            feature3Desc: "Gain complete visibility into your supply chain with our end-to-end tracking solutions. Monitor products at every stage, from production to delivery, ensuring transparency and accountability.",
-            feature3Item1: "Track product movement across the supply chain in real-time.",
-            feature3Item2: "Verify product origin and handling history.",
-            feature3Item3: "Reduce grey market activities and parallel imports.",
-            feature3Item4: "Automated inventory management and reconciliation.",
-            feature3Cta: "Learn About Traceability",
-            feature3ImagePlaceholder: "Supply Chain Traceability Illustration",
-            toolsTitleLead: "Powerful",
-            toolsTitleAccent: "Tools",
-            toolsSubtitle: "Our platform offers a comprehensive suite of tools designed to simplify your brand protection and customer engagement efforts.",
-            tool1Title: "QR Code Generator",
-            tool1Desc: "Easily create secure and unique QR codes for all your products with customizable designs and data.",
-            tool2Title: "Verification Portal",
-            tool2Desc: "A dedicated portal for consumers to instantly verify product authenticity with a simple scan.",
-            tool3Title: "Analytics Dashboard",
-            tool3Desc: "Gain deep insights into scan data, geographic distribution, and consumer engagement.",
-            tool4Title: "Multi-language Support",
-            tool4Desc: "Reach a global audience with full support for multiple languages, including RTL.",
-            tool5Title: "Advanced Anti-Counterfeiting",
-            tool5Desc: "Utilize cutting-edge technology to detect and prevent counterfeiting attempts.",
-            tool6Title: "API Integration",
-            tool6Desc: "Seamlessly integrate our security features into your existing systems with our robust API.",
-            perksTitleLead: "Why Choose",
-            perksTitleAccent: "Us",
-            perksSubtitle: "We are committed to providing the most reliable and user-friendly brand protection solution on the market.",
-            perk1Title: "Unrivaled Security",
-            perk1Desc: "Our proprietary technology ensures your products are genuinely authentic, always.",
-            perk2Title: "Mobile-First Experience",
-            perk2Desc: "Easy scanning and verification for consumers on any smartphone device.",
-            perk3Title: "Real-time Insights",
-            perk3Desc: "Monitor product journeys and consumer interactions as they happen.",
-            perk4Title: "Scalable Solutions",
-            perk4Desc: "From startups to enterprises, our platform grows with your business.",
-            perk5Title: "Exceptional Support",
-            perk5Desc: "Our team is here to assist you every step of the way, ensuring smooth operations.",
-            perk6Title: "Customizable for Your Brand",
-            perk6Desc: "Tailor the verification experience to match your brand's unique identity.",
-            blogTitleLead: "Our Latest",
-            blogTitleAccent: "Insights",
-            blogViewAllCta: "View All Posts",
-            blog1Category: "Technology",
-            blog1Title: "The Future of Product Authentication: Blockchain & QR Codes",
-            blog1Excerpt: "Discover how combining blockchain with QR codes is revolutionizing brand protection and consumer trust...",
-            blog1Meta: "By Alex R., August 15, 2024",
-            blog2Category: "Brand Protection",
-            blog2Title: "5 Ways QR Codes Can Boost Your Customer Engagement Strategy",
-            blog2Excerpt: "Learn how interactive QR codes can transform passive consumers into active brand advocates...",
-            blog2Meta: "By Sarah L., July 28, 2024",
-            blog3Category: "Supply Chain",
-            blog3Title: "Achieving Transparency: QR Codes in Supply Chain Traceability",
-            blog3Excerpt: "Understand the critical role of QR codes in providing end-to-end visibility for your products...",
-            blog3Meta: "By Mark T., July 10, 2024",
-            ctaTitle: 'Ready to Protect Your Brand & <span class="accent-gradient-text">Connect with Customers</span>?',
-            ctaSubtitle: "Join countless businesses already leveraging our cutting-edge technology to secure their products and build lasting customer relationships.",
-            footerBrandName: "Qrified",
-            footerTagline: "Authenticity & Engagement Powered by QR.",
-            footerCompanyName: "Qrified Inc.",
-            footerAddr1: "123 Secure Lane, Innovation City",
-            footerCountry: "USA",
-            footerProductColTitle: "Product",
-            footerProductLink1: "Features",
-            footerProductLink2: "Pricing",
-            footerProductLink3: "Integrations",
-            footerProductLink4: "Security",
-            footerProductLink5: "API",
-            footerProductLink6: "Demo",
-            footerCompanyColTitle: "Company",
-            footerCompanyLink1: "About Us",
-            footerCompanyLink2: "Careers",
-            footerCompanyLink3: "Contact",
-            footerCompanyLink4: "Partners",
-            footerCompanyLink5: "Affiliates",
-            footerResourcesColTitle: "Resources",
-            footerResourcesLink1: "Blog",
-            footerResourcesLink2: "Documentation",
-            footerResourcesLink3: "Support",
-            footerResourcesLink4: "Community",
-            footerResourcesLink5: "Privacy Center",
-            footerCopyright: "Qrified. All rights reserved.",
-            footerPrivacy: "Privacy Policy",
-            footerTerms: "Terms of Service",
-            footerCookies: "Cookie Policy",
-        },
-        ar: {
-            brandName: "كيوريفايد",
-            betaBadge: "تجريبي",
-            navFeatures: "الميزات",
-            navPerks: "المزايا",
-            navBlog: "المدونة",
-            navPricing: "الأسعار",
-            navDocs: "الوثائق",
-            navLogin: "تسجيل الدخول",
-            navGetStarted: "ابدأ مجاناً",
-            navFeaturesMobile: "الميزات",
-            navPerksMobile: "المزايا",
-            navBlogMobile: "المدونة",
-            navPricingMobile: "الأسعار",
-            navDocsMobile: "الوثائق",
-            navLoginMobile: "تسجيل الدخول",
-            heroTitle: 'احمِ <span class="accent-gradient-text">علامتك التجارية ومنتجاتك</span> باستخدام رموز QR من الجيل التالي',
-            heroSubtitle: "منصتنا المتقدمة لمصادقة رموز QR تمكن الشركات من مكافحة التزوير، تعزيز ثقة المستهلك، واكتساب رؤى قيمة في سلسلة التوريد الخاصة بهم.",
-            heroCtaPrimary: "ابدأ مجاناً",
-            heroCtaSecondary: "تعلم المزيد",
-            heroImagePlaceholder: "عرض توضيحي/صورة تفاعلية هنا",
-            asFeaturedInTitle: "كما ورد في",
-            trustedByTitle: "موثوق به من قبل العلامات التجارية الرائدة",
-            feature1TitleLead: "أمان",
-            feature1TitleAccent: "لا يُضاهى",
-            feature1Desc: "استفد من التقنيات التشفيرية المتقدمة ومبادئ البلوك تشين لإنشاء رموز QR غير قابلة للتزوير تضمن أصالة المنتج من التصنيع إلى المستهلك.",
-            feature1Item1: "رموز QR مقاومة للتلاعب بتوقيعات رقمية فريدة.",
-            feature1Item2: "تحقق لامركزي يحمي من نقاط الفشل الفردية.",
-            feature1Item3: "نظام كشف الاحتيال والتنبيه في الوقت الفعلي.",
-            feature1Item4: "تشفير بيانات آمن لجميع المعاملات.",
-            feature1Cta: "استكشف ميزات الأمان",
-            feature1ImagePlaceholder: "توضيح ميزات الأمان",
-            feature2TitleLead: "تفاعل وتواصل",
-            feature2TitleAccent: "مع العملاء",
-            feature2Desc: "بالإضافة إلى الأمان، تحول منصتنا رموز QR إلى نقاط اتصال تفاعلية، مما يتيح التفاعل المباشر مع المستهلك، وجمع الملاحظات، وحملات تسويق مخصصة.",
-            feature2Item1: "صفحات هبوط قابلة للتخصيص لكل عملية مسح لرمز QR.",
-            feature2Item2: "جمع بيانات وملاحظات قيمة من المستهلكين.",
-            feature2Item3: "تشغيل عروض ترويجية مستهدفة وبرامج ولاء.",
-            feature2Item4: "قناة اتصال مباشرة مع عملائك.",
-            feature2Cta: "اكتشف أدوات التفاعل",
-            feature2ImagePlaceholder: "توضيح تفاعل العملاء",
-            feature3TitleLead: "سهولة تتبع",
-            feature3TitleAccent: "سلسلة التوريد",
-            feature3Desc: "احصل على رؤية كاملة لسلسلة التوريد الخاصة بك من خلال حلول التتبع الشاملة لدينا. راقب المنتجات في كل مرحلة، من الإنتاج إلى التسليم، مما يضمن الشفافية والمساءلة.",
-            feature3Item1: "تتبع حركة المنتج عبر سلسلة التوريد في الوقت الفعلي.",
-            feature3Item2: "التحقق من أصل المنتج وتاريخ التعامل معه.",
-            feature3Item3: "الحد من أنشطة السوق الرمادية والواردات الموازية.",
-            feature3Item4: "إدارة المخزون والتسوية الآلية.",
-            feature3Cta: "تعرف على إمكانية التتبع",
-            feature3ImagePlaceholder: "توضيح تتبع سلسلة التوريد",
-            toolsTitleLead: "أدوات",
-            toolsTitleAccent: "قوية",
-            toolsSubtitle: "تقدم منصتنا مجموعة شاملة من الأدوات المصممة لتبسيط جهود حماية علامتك التجارية وتفاعل العملاء.",
-            tool1Title: "مولد رموز QR",
-            tool1Desc: "يمكنك بسهولة إنشاء رموز QR آمنة وفريدة لجميع منتجاتك بتصاميم وبيانات قابلة للتخصيص.",
-            tool2Title: "بوابة التحقق",
-            tool2Desc: "بوابة مخصصة للمستهلكين للتحقق الفوري من أصالة المنتج بمسح بسيط.",
-            tool3Title: "لوحة تحكم التحليلات",
-            tool3Desc: "احصل على رؤى عميقة حول بيانات المسح الضوئي، التوزيع الجغرافي، وتفاعل المستهلك.",
-            tool4Title: "دعم متعدد اللغات",
-            tool4Desc: "الوصول إلى جمهور عالمي مع دعم كامل للغات متعددة، بما في ذلك اللغات التي تُكتب من اليمين إلى اليسار.",
-            tool5Title: "مكافحة التزوير المتقدمة",
-            tool5Desc: "استخدام أحدث التقنيات للكشف عن محاولات التزوير ومنعها.",
-            tool6Title: "تكامل API",
-            tool6Desc: "دمج ميزات الأمان الخاصة بنا بسلاسة في أنظمتك الحالية من خلال واجهة برمجة التطبيقات القوية لدينا.",
-            perksTitleLead: "لماذا تختار",
-            perksTitleAccent: "نحن",
-            perksSubtitle: "نحن ملتزمون بتوفير حل حماية العلامة التجارية الأكثر موثوقية وسهولة في الاستخدام في السوق.",
-            perk1Title: "أمان لا مثيل له",
-            perk1Desc: "تضمن تقنيتنا الخاصة أن منتجاتك أصلية تمامًا، دائمًا.",
-            perk2Title: "تجربة الهاتف أولاً",
-            perk2Desc: "سهولة المسح والتحقق للمستهلكين على أي جهاز هاتف ذكي.",
-            perk3Title: "رؤى في الوقت الفعلي",
-            perk3Desc: "راقب رحلات المنتج وتفاعلات المستهلك فور حدوثها.",
-            perk4Title: "حلول قابلة للتطوير",
-            perk4Desc: "من الشركات الناشئة إلى الشركات الكبيرة، تنمو منصتنا مع عملك.",
-            perk5Title: "دعم استثنائي",
-            perk5Desc: "فريقنا هنا لمساعدتك في كل خطوة على الطريق، مما يضمن عمليات سلسة.",
-            perk6Title: "قابل للتخصيص لعلامتك التجارية",
-            perk6Desc: "صمم تجربة التحقق لتناسب هوية علامتك التجارية الفريدة.",
-            blogTitleLead: "أحدث",
-            blogTitleAccent: "رؤانا",
-            blogViewAllCta: "عرض جميع المشاركات",
-            blog1Category: "التقنية",
-            blog1Title: "مستقبل مصادقة المنتج: البلوك تشين ورموز QR",
-            blog1Excerpt: "اكتشف كيف تحدث مزامنة البلوك تشين مع رموز QR ثورة في حماية العلامة التجارية وثقة المستهلك...",
-            blog1Meta: "بواسطة أليكس آر، 15 أغسطس 2024",
-            blog2Category: "حماية العلامة التجارية",
-            blog2Title: "5 طرق لرموز QR لتعزيز استراتيجية تفاعل العملاء لديك",
-            blog2Excerpt: "تعرف على كيفية تحويل رموز QR التفاعلية المستهلكين السلبيين إلى دعاة نشطين للعلامة التجارية...",
-            blog2Meta: "بواسطة سارة إل، 28 يوليو 2024",
-            blog3Category: "سلسلة التوريد",
-            blog3Title: "تحقيق الشفافية: رموز QR في تتبع سلسلة التوريد",
-            blog3Excerpt: "فهم الدور الحاسم لرموز QR في توفير رؤية شاملة لمنتجاتك...",
-            blog3Meta: "بواسطة مارك تي، 10 يوليو 2024",
-            ctaTitle: 'هل أنت مستعد لحماية علامتك التجارية و<span class="accent-gradient-text">التواصل مع العملاء</span>؟',
-            ctaSubtitle: "انضم إلى عدد لا يحصى من الشركات التي تستفيد بالفعل من تقنيتنا المتطورة لتأمين منتجاتها وبناء علاقات دائمة مع العملاء.",
-            footerBrandName: "كيوريفايد",
-            footerTagline: "الأصالة والمشاركة مدعومة بواسطة QR.",
-            footerCompanyName: "كيوريفايد إنك.",
-            footerAddr1: "123 Secure Lane, Innovation City",
-            footerCountry: "الولايات المتحدة الأمريكية",
-            footerProductColTitle: "المنتج",
-            footerProductLink1: "الميزات",
-            footerProductLink2: "الأسعار",
-            footerProductLink3: "التكاملات",
-            footerProductLink4: "الأمان",
-            footerProductLink5: "API",
-            footerProductLink6: "تجريبي",
-            footerCompanyColTitle: "الشركة",
-            footerCompanyLink1: "من نحن",
-            footerCompanyLink2: "الوظائف",
-            footerCompanyLink3: "اتصل بنا",
-            footerCompanyLink4: "الشركاء",
-            footerCompanyLink5: "الشركات التابعة",
-            footerResourcesColTitle: "الموارد",
-            footerResourcesLink1: "المدونة",
-            footerResourcesLink2: "الوثائق",
-            footerResourcesLink3: "الدعم",
-            footerResourcesLink4: "المجتمع",
-            footerResourcesLink5: "مركز الخصوصية",
-            footerCopyright: "كيوريفايد. جميع الحقوق محفوظة.",
-            footerPrivacy: "سياسة الخصوصية",
-            footerTerms: "شروط الخدمة",
-            footerCookies: "سياسة ملفات تعريف الارتباط",
-        },
-    };
     return (key, options = {}) => {
         let text = translations[lang]?.[key] || translations.en[key] || key;
         // Basic placeholder replacement, can be expanded
@@ -406,30 +152,22 @@ const Button = ({ children, variant = 'primary', size = 'default', className = '
 };
 
 
-interface TranslatedTextProps extends HTMLAttributes<HTMLElement> {
-  translationKey: string;
-  lang: string;
-  options?: Record<string, any>;
-  as?: keyof JSX.IntrinsicElements;
-}
+// Component for rendering translated text, handling HTML
+const TranslatedText = ({ translationKey, lang, options, as = "p", className = "" }) => {
+    const t = useTranslation(lang);
+    const translatedString = t(translationKey, options);
 
-const TranslatedText: React.FC<TranslatedTextProps> = ({
-  translationKey, lang, options = {}, as: Tag = "p", className = "", ...rest
-}) => {
-  const t = useTranslation(lang);
-  const translatedString = t(translationKey, options);
+    const Tag = as;
 
-  // Keys that are known to contain HTML
-  const htmlKeys = [
-    'heroTitle', 'feature1TitleAccent', 'feature2TitleAccent', 'feature3TitleAccent',
-    'toolsTitleAccent', 'perksTitleAccent', 'blogTitleAccent', 'pricingTitleAccent', 'ctaTitle'
-  ];
-  const isHtml = htmlKeys.includes(translationKey) || (translationKey.includes('TitleLead') && translatedString.includes('<span'));
+    // Keys that are known to contain HTML
+    const htmlKeys = ['heroTitle', 'feature1TitleAccent', 'feature2TitleAccent', 'feature3TitleAccent', 'toolsTitleAccent', 'perksTitleAccent', 'blogTitleAccent', 'pricingTitleAccent', 'ctaTitle'];
+    const isHtml = htmlKeys.includes(translationKey) || (translationKey.includes('TitleLead') && translatedString.includes('<span'));
 
-  if (isHtml) {
-    return <Tag className={className} dangerouslySetInnerHTML={{ __html: translatedString }} {...rest} />;
-  }
-  return <Tag className={className} {...rest}>{translatedString}</Tag>;
+
+    if (isHtml) {
+        return <Tag className={className} dangerouslySetInnerHTML={{ __html: translatedString }} />;
+    }
+    return <Tag className={className}>{translatedString}</Tag>;
 };
 
 
@@ -501,9 +239,9 @@ const Header = ({ lang, t, onToggleTheme, currentTheme, onToggleLang, onToggleMo
         <header ref={headerRef} className="py-4 px-4 sm:px-6 lg:px-8 fixed w-full z-50" style={{ transform: 'translateY(0px)', backgroundColor: 'rgba(0, 0, 0, 0.6)' }}>
             <nav className="max-w-7xl mx-auto flex items-center justify-between">
                 <a href="#" className="text-2xl font-bold hero-gradient-text flex items-center">
-                    <TranslatedText translationKey="brandName" lang={lang} options={{}} as="span" />
+                    <TranslatedText translationKey="brandName" lang={lang} as="span" />
                     <span className="beta-badge beta-badge-gradient">
-                        <TranslatedText translationKey="betaBadge" lang={lang} options={{}} as="span" />
+                        <TranslatedText translationKey="betaBadge" lang={lang} as="span" />
                     </span>
                 </a>
                 <div className="hidden md:flex items-center space-x-6">
@@ -556,7 +294,7 @@ const HeroSection = ({ lang, t }) => {
                 </div>
                 <div className="mt-16 relative w-full max-w-2xl mx-auto">
                     <div className="aspect-[16/9] p-2 flex items-center justify-center image-placeholder card-bg">
-                        <TranslatedText translationKey="heroImagePlaceholder" lang={lang} options={{}} as="span" />
+                        <TranslatedText translationKey="heroImagePlaceholder" lang={lang} as="span" />
                     </div>
                 </div>
             </div>
@@ -770,7 +508,7 @@ const CallToActionSection = ({ lang, t }) => {
             const { sessionId } = await response.json();
             
             // Redirect to Stripe Checkout
-            const stripe = await loadStripe('pk_test_TYooMQauVDyHTNF7aGL6QoGx'); // Replace with your public key
+            const stripe = await loadStripe('YOUR_STRIPE_PUBLIC_KEY'); // Replace with your public key
             stripe.redirectToCheckout({ sessionId });
 
         } catch (error) {
@@ -785,13 +523,13 @@ const CallToActionSection = ({ lang, t }) => {
                 <TranslatedText
                     translationKey="ctaTitle"
                     lang={lang}
-                    options={{}} as="h2"
+                    as="h2"
                     className="text-3xl md:text-5xl font-extrabold mb-4 text-neutral-900 dark:text-white leading-tight"
                 />
                 <TranslatedText
                     translationKey="ctaSubtitle"
                     lang={lang}
-                    options={{}} as="p"
+                    as="p"
                     className="text-lg md:text-xl text-neutral-600 dark:text-neutral-300 max-w-3xl mx-auto mb-8"
                 />
                 <Button 
