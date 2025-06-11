@@ -181,7 +181,7 @@ const LifetimePage = () => {
 
           <div className="px-2">
             <Button
-              onClick={() => handleCheckout('prod_STjyRAv61Ylnaf')} // Lifetime Product ID
+              onClick={() => handleCheckout('prod_STZYwQwtObNE8T')} // Lifetime Product ID
               disabled={isLoading}
               className="bg-gradient-to-r from-pink-600 to-blue-600 hover:from-pink-700 hover:to-blue-700 text-white text-sm md:text-xl px-4 md:px-12 py-3 md:py-6 rounded-xl shadow-2xl hover:shadow-3xl transition-all duration-300 hover:scale-105 w-full md:w-auto"
             >
@@ -225,7 +225,7 @@ const LifetimePage = () => {
                 </li>
               ))}
             </ul>
-            <Button onClick={() => handleCheckout('prod_STjyRAv61Ylnaf')} disabled={isLoading} className="w-full bg-white text-pink-600 hover:bg-white/90 text-lg font-semibold py-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300">
+            <Button onClick={() => handleCheckout('prod_STZYwQwtObNE8T')} disabled={isLoading} className="w-full bg-white text-pink-600 hover:bg-white/90 text-lg font-semibold py-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300">
               {isLoading ? 'Processing...' : 'CLAIM LIFETIME DEAL'}
             </Button>
           </motion.div>
