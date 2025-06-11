@@ -16,7 +16,6 @@ import { toast } from 'sonner';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { getStripe, createCheckoutSession } from '@/integrations/stripe/client';
-import { motion } from 'framer-motion';
 
 const LifetimePage = () => {
   const [timeLeft, setTimeLeft] = useState({
@@ -65,8 +64,8 @@ const LifetimePage = () => {
   const features = [
     {
       icon: QrCode,
-      title: "100,000 QR Codes Monthly",
-      benefit: "Generate a massive 100,000 QR codes every single month, forever! That's over 3,000 codes per day - more than enough for even the largest businesses. And it's all included in your one-time payment."
+      title: "Unlimited QR Code Generation",
+      benefit: "Create unlimited highly customizable QR codes with embedded encryption and anti-counterfeiting measures. Support for URLs, text, contact info, and more."
     },
     {
       icon: BarChart3,
@@ -209,71 +208,6 @@ const LifetimePage = () => {
           </div>
           
           <p className="text-xs md:text-sm text-blue-200 mt-3 px-2">30-Day Money-Back Guarantee</p>
-        </div>
-      </div>
-
-      {/* Add this section after the hero section and before the features grid */}
-      <div className="bg-gradient-to-r from-pink-600/20 to-blue-600/20 py-12 md:py-16 backdrop-blur-sm relative overflow-hidden">
-        <div className="absolute inset-0">
-          <div className="absolute top-0 left-1/4 w-64 h-64 bg-pink-500/30 rounded-full blur-3xl animate-pulse"></div>
-          <div className="absolute bottom-0 right-1/4 w-64 h-64 bg-blue-500/30 rounded-full blur-3xl animate-pulse animation-delay-1000"></div>
-        </div>
-        
-        <div className="container mx-auto px-4 relative">
-          <div className="text-center max-w-4xl mx-auto">
-            <motion.div
-              initial={{ scale: 0.5, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ type: "spring", stiffness: 200, damping: 10 }}
-              className="mb-8"
-            >
-              <h2 className="text-3xl md:text-5xl lg:text-6xl font-bold mb-6 bg-gradient-to-r from-pink-400 via-purple-400 to-blue-400 bg-clip-text text-transparent">
-                <span className="block">100,000 QR Codes</span>
-                <span className="block text-2xl md:text-3xl lg:text-4xl mt-2">Every Single Month</span>
-              </h2>
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-8 mt-8">
-                <motion.div
-                  initial={{ y: 20, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ delay: 0.2 }}
-                  className="bg-white/10 backdrop-blur-md rounded-xl p-4 md:p-6 hover:scale-105 transition-transform duration-300"
-                >
-                  <div className="text-4xl md:text-5xl font-bold text-pink-400 mb-2">100K</div>
-                  <div className="text-sm md:text-base text-blue-100">Monthly QR Codes</div>
-                </motion.div>
-                
-                <motion.div
-                  initial={{ y: 20, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ delay: 0.4 }}
-                  className="bg-white/10 backdrop-blur-md rounded-xl p-4 md:p-6 hover:scale-105 transition-transform duration-300"
-                >
-                  <div className="text-4xl md:text-5xl font-bold text-purple-400 mb-2">∞</div>
-                  <div className="text-sm md:text-base text-blue-100">Lifetime Access</div>
-                </motion.div>
-                
-                <motion.div
-                  initial={{ y: 20, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ delay: 0.6 }}
-                  className="bg-white/10 backdrop-blur-md rounded-xl p-4 md:p-6 hover:scale-105 transition-transform duration-300"
-                >
-                  <div className="text-4xl md:text-5xl font-bold text-blue-400 mb-2">$99</div>
-                  <div className="text-sm md:text-base text-blue-100">One-Time Payment</div>
-                </motion.div>
-              </div>
-              
-              <motion.p
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.8 }}
-                className="text-lg md:text-xl text-blue-100 mt-8 italic"
-              >
-                "Yeah, 100 thousand QR codes every month forever just for $99 one-time pay. It can't get better than this!"
-              </motion.p>
-            </motion.div>
-          </div>
         </div>
       </div>
 
@@ -506,7 +440,7 @@ const LifetimePage = () => {
                 <span className="text-sm md:text-base font-semibold text-green-400">Registered UK Company</span>
               </div>
               <div className="text-xs md:text-sm text-blue-200 space-y-1">
-                <p>Company No. 15374908</p>
+                <p>QRified.app Ltd. | Company No. 15374908</p>
                 <p>3173 275 New N Rd, London N1 7AA, United Kingdom</p>
               </div>
             </div>
