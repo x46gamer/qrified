@@ -62,8 +62,8 @@ const PricingSection = () => {
       description: "For individuals and small businesses taking their first step in brand protection.",
       monthlyPrice: 19,
       annualPrice: 15, // Approx 20% discount
-      monthlyProductId: "prod_SQ7xkoPstFb6EW",
-      annualProductId: "prod_ST3hw6HjjE2lnz",
+      monthlyProductId: "prod_STjyRAv61Ylnaf",
+      annualProductId: "prod_STjyRAv61Ylnaf",
       features: [
         { name: "Up to 1,000 QR Codes", included: true },
         { name: "Branded Subdomain (yourbrand.service.com)", included: true },
