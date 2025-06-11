@@ -18,13 +18,14 @@ import { useNavigate } from 'react-router-dom';
 import { getStripe, createCheckoutSession } from '@/integrations/stripe/client';
 import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
+import { getLifetimeTimer, type TimerResponse } from '@/lib/api/timer';
 
 const LifetimePage = () => {
   const [timeLeft, setTimeLeft] = useState({
-    days: 6,
-    hours: 23,
-    minutes: 59,
-    seconds: 22
+    days: '00',
+    hours: '00',
+    minutes: '00',
+    seconds: '00'
   });
   const [isLoading, setIsLoading] = useState(false);
   const { isAuthenticated } = useAuth();
@@ -33,6 +34,8 @@ const LifetimePage = () => {
     threshold: 0.1,
     triggerOnce: false
   });
+  const [timerEndDate, setTimerEndDate] = useState<Date | null>(null);
+  const [timerError, setTimerError] = useState<string | null>(null);
 
   // App screenshots for the gallery
   const screenshots = [
@@ -47,19 +50,70 @@ const LifetimePage = () => {
     "https://xowxgbovrbnpsreqgrlt.supabase.co/storage/v1/object/public/content//1%20(1).png"
   ];
 
-  // Countdown timer effect
+  // Fetch timer end date on component mount
   useEffect(() => {
-    const timer = setInterval(() => {
-      setTimeLeft(prev => {
-        if (prev.seconds > 0) return { ...prev, seconds: prev.seconds - 1 };
-        if (prev.minutes > 0) return { ...prev, minutes: prev.minutes - 1, seconds: 59 };
-        if (prev.hours > 0) return { ...prev, hours: prev.hours - 1, minutes: 59, seconds: 59 };
-        if (prev.days > 0) return { ...prev, days: prev.days - 1, hours: 23, minutes: 59, seconds: 59 };
-        return prev;
-      });
-    }, 1000);
-    return () => clearInterval(timer);
+    const fetchTimer = async () => {
+      console.log("Attempting to fetch lifetime timer...");
+      const response = await getLifetimeTimer();
+      console.log("Timer API response:", response);
+      if (response.error) {
+        setTimerError(response.error);
+        // Set a fallback timer (7 days from now)
+        const fallbackDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+        setTimerEndDate(fallbackDate);
+        console.log("Using fallback timer end date:", fallbackDate.toISOString());
+      } else {
+        const fetchedDate = new Date(response.endDate);
+        setTimerEndDate(fetchedDate);
+        console.log("Fetched timer end date:", fetchedDate.toISOString());
+      }
+    };
+
+    fetchTimer();
   }, []);
+
+  // Update timer every second
+  useEffect(() => {
+    if (!timerEndDate) return;
+
+    const updateTimer = () => {
+      const now = new Date().getTime();
+      const end = timerEndDate.getTime();
+      const distance = end - now;
+
+      if (distance < 0) {
+        // Timer has ended
+        setTimeLeft({
+          days: '00',
+          hours: '00',
+          minutes: '00',
+          seconds: '00'
+        });
+        return;
+      }
+
+      const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+      setTimeLeft({
+        days: days.toString().padStart(2, '0'),
+        hours: hours.toString().padStart(2, '0'),
+        minutes: minutes.toString().padStart(2, '0'),
+        seconds: seconds.toString().padStart(2, '0')
+      });
+    };
+
+    // Update immediately
+    updateTimer();
+
+    // Then update every second
+    const timer = setInterval(updateTimer, 1000);
+
+    // Cleanup
+    return () => clearInterval(timer);
+  }, [timerEndDate]);
 
   const features = [
     { icon: QrCode, title: "Unlimited QR Code Generation", benefit: "Create unlimited highly customizable QR codes with embedded encryption and anti-counterfeiting measures. Support for URLs, text, contact info, and more." },
@@ -180,7 +234,14 @@ const LifetimePage = () => {
 
           {/* Countdown Timer */}
           <div className="bg-gradient-to-r from-pink-600 to-purple-600 text-white rounded-xl md:rounded-2xl p-3 md:p-8 mb-6 md:mb-8 shadow-2xl animate-scale-in animation-delay-700 hover:scale-105 transition-transform duration-300 mx-2">
-            <h3 className="text-base md:text-2xl font-bold mb-3 md:mb-4">DEAL ENDS IN:</h3>
+            <h3 className="text-base md:text-2xl font-bold mb-3 md:mb-4">
+              {timerError ? 'OFFER ENDS IN:' : 'DEAL ENDS IN:'}
+            </h3>
+            {timerError && (
+              <p className="text-sm text-yellow-300 mb-2">
+                Note: Using fallback timer due to connection issues
+              </p>
+            )}
             <div className="grid grid-cols-4 gap-1 md:gap-4 text-center max-w-md mx-auto">
               {Object.entries(timeLeft).map(([unit, value]) => (
                 <div key={unit} className="bg-white/20 rounded-lg p-1 md:p-4 backdrop-blur-sm hover:bg-white/30 transition-all duration-300">
