@@ -30,7 +30,10 @@ serve(async (req) => {
     apiVersion: '2024-06-20',
   })
 
-  let productId: string;
+  let productId: string | undefined;
+  let priceId: string | undefined;
+  let isLifetime: boolean = false;
+
   try {
     const contentLength = req.headers.get("content-length");
     if (contentLength && parseInt(contentLength) === 0) {
@@ -46,6 +49,8 @@ serve(async (req) => {
 
     const body = JSON.parse(rawBody);
     productId = body.productId;
+    priceId = body.priceId;
+    isLifetime = body.isLifetime || false;
   } catch (error) {
     console.error('Error parsing request body:', error);
     return new Response(JSON.stringify({ error: `Invalid request body. Expected JSON. Error: ${error.message}` }), {
@@ -54,8 +59,29 @@ serve(async (req) => {
     });
   }
 
+  // If we have a priceId, use it directly
+  if (priceId) {
+    const session = await stripe.checkout.sessions.create({
+      mode: isLifetime ? 'payment' : 'subscription',
+      line_items: [
+        {
+          price: priceId,
+          quantity: 1,
+        },
+      ],
+      success_url: `${req.headers.get('origin')}/success`,
+      cancel_url: `${req.headers.get('origin')}/cancel`,
+    });
+
+    return new Response(JSON.stringify({ sessionId: session.id }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 200,
+    });
+  }
+
+  // Otherwise, handle productId as before
   if (!productId) {
-    return new Response(JSON.stringify({ error: 'Missing productId in request body.' }), {
+    return new Response(JSON.stringify({ error: 'Missing productId or priceId in request body.' }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 400,
     });
@@ -64,9 +90,10 @@ serve(async (req) => {
   // Get the product to determine if it's monthly or yearly
   const product = await stripe.products.retrieve(productId)
   const isYearly = product.name.toLowerCase().includes('yearly')
+  isLifetime = isLifetime || product.name.toLowerCase().includes('lifetime')
 
   // Create a price for the product if it doesn't exist
-  let priceId: string
+  let finalPriceId: string
   const prices = await stripe.prices.list({
     product: productId,
     active: true,
@@ -76,24 +103,26 @@ serve(async (req) => {
     // Create a new price for the product
     const price = await stripe.prices.create({
       product: productId,
-      unit_amount: isYearly ? 1500 : 1900, // $15/month yearly or $19/month monthly
+      unit_amount: isLifetime ? 9900 : (isYearly ? 1500 : 1900), // $99 for lifetime, $15/month yearly or $19/month monthly
       currency: 'usd',
-      recurring: {
-        interval: 'month',
-        interval_count: isYearly ? 12 : 1,
-      },
+      ...(isLifetime ? {} : {
+        recurring: {
+          interval: 'month',
+          interval_count: isYearly ? 12 : 1,
+        },
+      }),
     })
-    priceId = price.id
+    finalPriceId = price.id
   } else {
     // Use the first active price
-    priceId = prices.data[0].id
+    finalPriceId = prices.data[0].id
   }
 
   const session = await stripe.checkout.sessions.create({
-    mode: 'subscription',
+    mode: isLifetime ? 'payment' : 'subscription',
     line_items: [
       {
-        price: priceId,
+        price: finalPriceId,
         quantity: 1,
       },
     ],

@@ -13,7 +13,8 @@ import {
 } from "@/components/ui/carousel";
 import { loadStripe } from '@stripe/stripe-js';
 import { toast } from 'sonner';
-import { getStripe, createCheckoutSession } from '@/integrations/stripe/client';
+import { useAuth } from '../contexts/AuthContext';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const LifetimePage = () => {
   const [timeLeft, setTimeLeft] = useState({
@@ -23,6 +24,8 @@ const LifetimePage = () => {
     seconds: 22
   });
   const [isLoading, setIsLoading] = useState(false);
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
 
   // App screenshots for the gallery
   const screenshots = [
@@ -112,16 +115,33 @@ const LifetimePage = () => {
   const handleBuyNow = async () => {
     try {
       setIsLoading(true);
-      const productId = 'prod_STZYwQwtObNE8T'; // Your lifetime deal product ID
       
-      const sessionId = await createCheckoutSession(productId);
-      
-      // Redirect to Stripe Checkout
-      const stripe = await getStripe();
+      // Initialize Stripe
+      const stripe = await loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
       if (!stripe) {
         throw new Error('Failed to load Stripe');
       }
 
+      // Create checkout session
+      const response = await fetch('https://xowxgbovrbnpsreqgrlt.supabase.co/functions/v1/create-checkout-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          priceId: 'price_1QxYwQwtObNE8T', // Replace with your actual price ID for the lifetime deal
+          isLifetime: true // This tells the Edge Function to create a one-time payment
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to create checkout session');
+      }
+
+      const { sessionId } = await response.json();
+
+      // Redirect to Stripe Checkout
       const { error } = await stripe.redirectToCheckout({ sessionId });
       if (error) {
         throw error;
@@ -132,6 +152,14 @@ const LifetimePage = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleClaim = async () => {
+    if (!isAuthenticated) {
+      navigate('/signup?redirect=lifetime-checkout');
+      return;
+    }
+    await handleBuyNow();
   };
 
   return (
@@ -187,11 +215,11 @@ const LifetimePage = () => {
 
           <div className="px-2">
             <Button
-              onClick={handleBuyNow}
+              onClick={handleClaim}
               disabled={isLoading}
-              className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white text-sm md:text-xl px-4 md:px-12 py-3 md:py-6 rounded-xl shadow-2xl hover:shadow-3xl transition-all duration-300 hover:scale-105 w-full md:w-auto"
+              className="bg-gradient-to-r from-pink-600 to-blue-600 hover:from-pink-700 hover:to-blue-700 text-white text-sm md:text-xl px-4 md:px-12 py-3 md:py-6 rounded-xl shadow-2xl hover:shadow-3xl transition-all duration-300 hover:scale-105 w-full md:w-auto"
             >
-              {isLoading ? 'Loading...' : 'SECURE MY LIFETIME ACCESS NOW FOR $99'}
+              {isLoading ? 'Processing...' : 'CLAIM MY LIFETIME DEAL - $99 ONE-TIME'}
             </Button>
           </div>
           
@@ -341,7 +369,7 @@ const LifetimePage = () => {
           </div>
 
           <div className="text-center px-2">
-            <Button className="bg-gradient-to-r from-pink-600 to-blue-600 hover:from-pink-700 hover:to-blue-700 text-white text-sm md:text-xl px-4 md:px-12 py-3 md:py-6 rounded-xl shadow-2xl hover:shadow-3xl transition-all duration-300 hover:scale-105 w-full md:w-auto" onClick={handleBuyNow}>
+            <Button className="bg-gradient-to-r from-pink-600 to-blue-600 hover:from-pink-700 hover:to-blue-700 text-white text-sm md:text-xl px-4 md:px-12 py-3 md:py-6 rounded-xl shadow-2xl hover:shadow-3xl transition-all duration-300 hover:scale-105 w-full md:w-auto" onClick={handleClaim}>
               CLAIM MY LIFETIME DEAL - $99 ONE-TIME
             </Button>
             <p className="text-xs md:text-sm text-blue-200 mt-3">Price returns to $49/month after this offer ends.</p>
@@ -405,7 +433,7 @@ const LifetimePage = () => {
           </div>
 
           <div className="px-2">
-            <Button className="bg-white text-pink-700 hover:bg-gray-100 text-sm md:text-xl px-4 md:px-12 py-3 md:py-6 rounded-xl shadow-2xl hover:shadow-3xl transition-all duration-300 hover:scale-105 font-bold w-full md:w-auto" onClick={handleBuyNow}>
+            <Button className="bg-white text-pink-700 hover:bg-gray-100 text-sm md:text-xl px-4 md:px-12 py-3 md:py-6 rounded-xl shadow-2xl hover:shadow-3xl transition-all duration-300 hover:scale-105 font-bold w-full md:w-auto" onClick={handleClaim}>
               SECURE MY LIFETIME ACCESS & PROTECT MY BRAND
             </Button>
           </div>
