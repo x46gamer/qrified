@@ -22,17 +22,12 @@ export const createCheckoutSession = async (productId: string) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Accept': 'application/json',
       },
-      body: JSON.stringify({ 
-        productId,
-        isLifetime: true // Always set to true for lifetime product
-      }),
+      body: JSON.stringify({ productId }),
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || 'Failed to create checkout session');
+      throw new Error('Failed to create checkout session');
     }
 
     const { sessionId } = await response.json();
