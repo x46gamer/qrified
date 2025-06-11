@@ -73,7 +73,7 @@ const PricingSection = () => {
         { name: "Full RTL Support", included: true },
       ],
       recommended: false,
-      ctaText: "Get 14 day free trial"
+      ctaText: "Get Started"
     },
     {
       name: "Pro",
@@ -90,7 +90,7 @@ const PricingSection = () => {
         { name: "1 Team Member Seat", included: true },
       ],
       recommended: true,
-      ctaText: "Get 14 day free trial"
+      ctaText: "Get Started"
     },
     {
       name: "Premium",
@@ -109,6 +109,13 @@ const PricingSection = () => {
       recommended: false,
       ctaText: "Contact Sales"
     }
+  ];
+
+  const features = [
+    { name: "No credit card required", included: true },
+    { name: "24/7 support", included: true },
+    { name: "Cancel anytime", included: true },
+    { name: "30-day money-back guarantee", included: true }
   ];
 
   return (

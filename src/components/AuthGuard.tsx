@@ -11,17 +11,37 @@ interface AuthGuardProps {
   requiredRole?: 'admin' | 'employee' | null;
 }
 
-// List of routes that should be accessible even after trial expiration (expired trial users can only access /plans and /logout)
+// List of routes that should be accessible even after trial expiration
 const ALLOWED_AFTER_TRIAL_EXPIRATION = [
   '/plans',
   '/logout',
+  '/lifetime',
 ];
 
-// List of routes that are allowed for users whose trial is not started (so they can activate their trial)
+// List of routes that are allowed for users whose trial is not started
 const ALLOWED_IF_TRIAL_NOT_STARTED = [
-  '/freetrial',
   '/login',
   '/signup',
+  '/lifetime',
+];
+
+// List of routes that are always allowed for authenticated users
+const ALWAYS_ALLOWED_ROUTES = [
+  '/logout',
+  '/lifetime',
+  '/login',
+  '/signup',
+];
+
+// List of routes that require an active subscription
+const SUBSCRIPTION_REQUIRED_ROUTES = [
+  '/stats',
+  '/dashboard',
+  '/settings',
+  '/domain-settings',
+  '/myaccount',
+  '/feedback',
+  '/scanlogs',
 ];
 
 const AuthGuard: React.FC<AuthGuardProps> = ({ children, requiredRole }) => {
@@ -43,11 +63,13 @@ const AuthGuard: React.FC<AuthGuardProps> = ({ children, requiredRole }) => {
     );
   }
 
+  // Handle unauthenticated users
   if (!user) {
-    if (!['/login', '/signup'].includes(location.pathname)) {
-        return <Navigate to="/login" state={{ from: location }} replace />;
+    // Store the intended destination (lifetime page) in the state
+    if (location.pathname !== '/login' && location.pathname !== '/signup') {
+      return <Navigate to="/login" state={{ from: '/lifetime' }} replace />;
     }
-    return <>{children}</>; 
+    return <>{children}</>;
   }
 
   // If a specific role is required and the user doesn't have it, redirect to unauthorized
@@ -55,21 +77,22 @@ const AuthGuard: React.FC<AuthGuardProps> = ({ children, requiredRole }) => {
     return <Navigate to="/unauthorized" replace />;
   }
 
-  // CRITICAL: If trial is active and user tries to access /freetrial, redirect them to stats
-  if (userProfile.trial_status === 'active' && location.pathname === '/freetrial') {
-    return <Navigate to="/stats" replace />;
+  // Check if the route requires a subscription
+  if (SUBSCRIPTION_REQUIRED_ROUTES.includes(location.pathname)) {
+    // Allow access if user has an active lifetime subscription
+    if (userProfile.subscription_type === 'lifetime' && userProfile.subscription_status === 'active') {
+      return <>{children}</>;
+    }
+    
+    // Redirect to lifetime page if no active subscription
+    toast.info('Please purchase a lifetime subscription to access this feature.');
+    return <Navigate to="/lifetime" replace />;
   }
 
-  // If trial is not started and user tries to access a non-allowed route, redirect to /freetrial
-  if (userProfile.trial_status === 'not_started' && !ALLOWED_IF_TRIAL_NOT_STARTED.includes(location.pathname)) {
-    toast.error('Please activate your free trial to access the app.');
-    return <Navigate to="/freetrial" replace />;
-  }
-
-  // If trial has expired and user tries to access a non-allowed route, redirect to /plans
-  if (userProfile.trial_status === 'expired' && !ALLOWED_AFTER_TRIAL_EXPIRATION.includes(location.pathname)) {
-    toast.error('Your trial period has ended. Please choose a plan to continue using the app.');
-    return <Navigate to="/plans" replace />;
+  // TEMPORARY: During lifetime deal, redirect all non-allowed routes to lifetime page
+  if (!ALWAYS_ALLOWED_ROUTES.includes(location.pathname) && 
+      !SUBSCRIPTION_REQUIRED_ROUTES.includes(location.pathname)) {
+    return <Navigate to="/lifetime" replace />;
   }
 
   return <>{children}</>;

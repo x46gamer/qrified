@@ -45,7 +45,6 @@ import FinalCTASection from './components/FinalCTASection';
 import Footer from './components/Footer';
 import { ScrollProgress } from './components/ScrollProgress';
 import Cursor from './components/Cursor';
-import FreeTrial from './pages/FreeTrial';
 import Plans from './pages/Plans';
 import LifetimePage from './pages/lifetime';
 
@@ -232,18 +231,6 @@ function App() {
                   <AuthGuard>
                     <AppLayout showFooter={false}>
                       <Plans />
-                    </AppLayout>
-                  </AuthGuard>
-                }
-              />
-
-              {/* Free trial route */}
-              <Route
-                path="/freetrial"
-                element={
-                  <AuthGuard>
-                    <AppLayout showFooter={false}>
-                      <FreeTrial />
                     </AppLayout>
                   </AuthGuard>
                 }

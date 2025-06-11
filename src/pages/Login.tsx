@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -11,16 +11,20 @@ import { AlertCircle } from 'lucide-react';
 const Login = () => {
   const { login, loginWithGoogle, loginWithRole, isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // If user is already authenticated, redirect to dashboard
+  // Get the intended destination from location state, default to lifetime page
+  const from = (location.state as any)?.from || '/lifetime';
+
+  // If user is already authenticated, redirect to lifetime page
   React.useEffect(() => {
     if (isAuthenticated) {
-      navigate('/dashboard');
+      navigate('/lifetime');
     }
   }, [isAuthenticated, navigate]);
 
@@ -30,7 +34,7 @@ const Login = () => {
       setError(null);
       setIsSubmitting(true);
       await login(email, password);
-      navigate('/dashboard');
+      navigate('/lifetime');
     } catch (err: any) {
       setError(err.message || 'Failed to login');
     } finally {
@@ -42,6 +46,7 @@ const Login = () => {
     try {
       setError(null);
       await loginWithGoogle();
+      // Note: Google OAuth redirect is handled in AuthContext
     } catch (err: any) {
       setError(err.message || 'Failed to login with Google');
     }

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,7 @@ import { AlertCircle } from 'lucide-react';
 const Signup = () => {
   const { signUp, isAuthenticated, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -19,10 +20,13 @@ const Signup = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
 
-  // If user is already authenticated, redirect to dashboard
+  // Get the intended destination from location state, default to lifetime page
+  const from = (location.state as any)?.from || '/lifetime';
+
+  // If user is already authenticated, redirect to lifetime page
   React.useEffect(() => {
     if (isAuthenticated) {
-      navigate('/dashboard');
+      navigate('/lifetime');
     }
   }, [isAuthenticated, navigate]);
 
@@ -48,7 +52,8 @@ const Signup = () => {
     try {
       setIsSubmitting(true);
       await signUp(email, password, name);
-      // Don't navigate - wait for email verification
+      // After successful signup, redirect to lifetime page
+      navigate('/lifetime');
     } catch (err: any) {
       setError(err.message || 'Failed to sign up');
     } finally {
@@ -65,6 +70,7 @@ const Signup = () => {
     try {
       setError(null);
       await loginWithGoogle();
+      // Note: Google OAuth redirect is handled in AuthContext
     } catch (err: any) {
       setError(err.message || 'Failed to sign up with Google');
     }
