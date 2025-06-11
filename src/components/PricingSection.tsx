@@ -62,8 +62,8 @@ const PricingSection = () => {
       description: "For individuals and small businesses taking their first step in brand protection.",
       monthlyPrice: 19,
       annualPrice: 15, // Approx 20% discount
-      monthlyProductId: "prod_STjyRAv61Ylnaf",
-      annualProductId: "prod_STjyRAv61Ylnaf",
+      monthlyProductId: "prod_SQ7xkoPstFb6EW",
+      annualProductId: "prod_ST3hw6HjjE2lnz",
       features: [
         { name: "Up to 1,000 QR Codes", included: true },
         { name: "Branded Subdomain (yourbrand.service.com)", included: true },
@@ -73,7 +73,7 @@ const PricingSection = () => {
         { name: "Full RTL Support", included: true },
       ],
       recommended: false,
-      ctaText: "Get Started"
+      ctaText: "Get 14 day free trial"
     },
     {
       name: "Pro",
@@ -90,7 +90,7 @@ const PricingSection = () => {
         { name: "1 Team Member Seat", included: true },
       ],
       recommended: true,
-      ctaText: "Get Started"
+      ctaText: "Get 14 day free trial"
     },
     {
       name: "Premium",
@@ -109,13 +109,6 @@ const PricingSection = () => {
       recommended: false,
       ctaText: "Contact Sales"
     }
-  ];
-
-  const features = [
-    { name: "No credit card required", included: true },
-    { name: "24/7 support", included: true },
-    { name: "Cancel anytime", included: true },
-    { name: "30-day money-back guarantee", included: true }
   ];
 
   return (
