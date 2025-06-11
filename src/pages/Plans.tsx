@@ -69,7 +69,7 @@ const Plans = () => {
       description: "For individuals and small businesses taking their first step in brand protection.",
       monthlyPrice: 19,
       annualPrice: 15, // Approx 20% discount
-      monthlyProductId: "prod_SQ7xkoPstFb6EW",
+      monthlyProductId: "prod_STnt7FFeqnDll5",
       annualProductId: "prod_ST3hw6HjjE2lnz",
       features: [
         { name: "Up to 1,000 QR Codes", included: true },
