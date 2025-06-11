@@ -15,6 +15,7 @@ import { loadStripe } from '@stripe/stripe-js';
 import { toast } from 'sonner';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { getStripe, createCheckoutSession } from '@/integrations/stripe/client';
 
 const LifetimePage = () => {
   const [timeLeft, setTimeLeft] = useState({
@@ -115,25 +116,12 @@ const LifetimePage = () => {
   const handleBuyNow = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch('http://localhost:54321/functions/v1/create-checkout-session', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          priceId: 'prod_STjyRAv61Ylnaf',
-          isLifetime: true 
-        }),
-      });
       
-      if (!response.ok) {
-        throw new Error('Failed to create checkout session');
-      }
-
-      const { sessionId } = await response.json();
+      // Use the same checkout session creation as PricingSection
+      const sessionId = await createCheckoutSession('prod_STjyRAv61Ylnaf'); // Using the lifetime product ID
       
       // Redirect to Stripe Checkout
-      const stripe = await loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
+      const stripe = await getStripe();
       if (!stripe) {
         throw new Error('Failed to load Stripe');
       }
