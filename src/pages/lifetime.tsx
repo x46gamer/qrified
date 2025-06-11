@@ -117,14 +117,14 @@ const LifetimePage = () => {
   const handleBuyNow = async () => {
     try {
       setIsLoading(true);
-      const productId = 'prod_STjyRAv61Ylnaf';
+      const priceId = 'price_1QxYv62eZvKYlo2CJQYwKZtX'; // Lifetime deal price ID
       
-      if (!productId) {
+      if (!priceId) {
         toast.error('This plan is not available for checkout');
         return;
       }
 
-      const sessionId = await createCheckoutSession(productId);
+      const sessionId = await createCheckoutSession(priceId);
       
       // Redirect to Stripe Checkout
       const stripe = await getStripe();
