@@ -47,6 +47,7 @@ import { ScrollProgress } from './components/ScrollProgress';
 import Cursor from './components/Cursor';
 import Plans from './pages/Plans';
 import LifetimePage from './pages/lifetime';
+import Cancel from './pages/Cancel';
 
 // Public Pages
 const CookiePolicyPage = lazy(() => import('./pages/CookiePolicyPage'));
@@ -112,6 +113,7 @@ function App() {
               <Route path="/blog" element={<AppLayout><BlogPage /></AppLayout>} />
               <Route path="/check" element={<ProductCheck />} />
               <Route path="/myaccount" element={<MyAccount />} />
+              <Route path="/cancel" element={<Cancel />} />
               {/* Authentication routes - only for non-authenticated users */}
               <Route path="/login" element={<AppLayout showFooter={false}><Login /></AppLayout>} />
               <Route path="/signup" element={<AppLayout showFooter={false}><Signup /></AppLayout>} />
