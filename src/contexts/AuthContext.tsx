@@ -363,13 +363,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setIsLoading(true);
       cleanupAuthState();
 
-      const { data: { user: newUser }, error } = await supabase.auth.signUp({
+      // First, sign up the user
+      const { data: { user: newUser, session }, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
             full_name: name,
-            avatar_url: avatarUrl // Pass avatar URL to Supabase user metadata
+            avatar_url: avatarUrl
           },
         },
       });
@@ -377,6 +378,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (error) throw error;
 
       if (newUser) {
+        // Wait for a short moment to ensure the session is established
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        // Get the current session
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        
+        if (!currentSession) {
+          throw new Error('Failed to establish session after signup');
+        }
+
+        // Now create the profile with the established session
         const { error: profileError } = await supabase
           .from('user_profiles')
           .insert({
@@ -384,7 +396,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             email: newUser.email,
             full_name: name,
             trial_status: 'not_started',
-            role: 'admin' // Set new sign-ups to admin
+            role: 'admin'
           });
 
         if (profileError) {
@@ -403,11 +415,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           updated_at: new Date().toISOString(),
           trial_started_at: null,
           trial_ended_at: null,
+          role: 'admin',
+          subscription_type: 'none',
+          subscription_status: 'inactive',
+          subscription_started_at: null,
+          subscription_ends_at: null,
+          stripe_customer_id: null,
+          stripe_subscription_id: null
         };
         setUserProfile(createdProfile);
         setUser(prev => {
           if (!prev) return null;
-          return { ...prev, role: 'admin' }; // Ensure local User object also reflects admin role
+          return { ...prev, role: 'admin' };
         });
 
         toast.success('Sign up successful! Please check your email to confirm your account.');

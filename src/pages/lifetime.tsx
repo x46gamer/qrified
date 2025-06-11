@@ -16,6 +16,9 @@ import { toast } from 'sonner';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { getStripe, createCheckoutSession } from '@/integrations/stripe/client';
+import { motion } from 'framer-motion';
+import { useInView } from 'react-intersection-observer';
+import { X } from 'lucide-react';
 
 const LifetimePage = () => {
   const [timeLeft, setTimeLeft] = useState({
@@ -27,6 +30,10 @@ const LifetimePage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const [ref, inView] = useInView({
+    threshold: 0.1,
+    triggerOnce: false
+  });
 
   // App screenshots for the gallery
   const screenshots = [
@@ -112,6 +119,42 @@ const LifetimePage = () => {
     "Anyone who wants to build a trusted, direct relationship with their customers."
   ];
 
+  const premiumPlans = [
+    {
+      name: "Premium Monthly",
+      description: "For businesses requiring enterprise-grade control and support.",
+      price: 99,
+      productId: "prod_SQ7xkoPstFb6EW",
+      features: [
+        { name: "Up to 100,000 QR Codes", included: true },
+        { name: "Use Your Own Custom Domain", included: true },
+        { name: "Customizable Analytics Dashboard", included: true },
+        { name: "Up to 5 Team Members", included: true },
+        { name: "Priority Support Queue", included: true },
+        { name: "All Premium Features", included: true },
+      ],
+      recommended: false,
+      ctaText: "Choose Monthly"
+    },
+    {
+      name: "Premium Annual",
+      description: "Best value for growing businesses with annual commitment.",
+      price: 82,
+      productId: "prod_ST3hw6HjjE2lnz",
+      features: [
+        { name: "Up to 100,000 QR Codes", included: true },
+        { name: "Use Your Own Custom Domain", included: true },
+        { name: "Customizable Analytics Dashboard", included: true },
+        { name: "Up to 5 Team Members", included: true },
+        { name: "Priority Support Queue", included: true },
+        { name: "All Premium Features", included: true },
+        { name: "Save 20% with Annual Billing", included: true },
+      ],
+      recommended: true,
+      ctaText: "Choose Annual"
+    }
+  ];
+
   // Add handler for Stripe checkout
   const handleBuyNow = async () => {
     try {
@@ -144,6 +187,28 @@ const LifetimePage = () => {
       return;
     }
     await handleBuyNow();
+  };
+
+  const handlePremiumCheckout = async (plan: typeof premiumPlans[0]) => {
+    try {
+      setIsLoading(true);
+      const sessionId = await createCheckoutSession(plan.productId);
+      
+      const stripe = await getStripe();
+      if (!stripe) {
+        throw new Error('Failed to load Stripe');
+      }
+
+      const { error } = await stripe.redirectToCheckout({ sessionId });
+      if (error) {
+        throw error;
+      }
+    } catch (error: any) {
+      console.error('Error creating checkout session:', error);
+      toast.error(error.message || 'Failed to start checkout process');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -208,6 +273,135 @@ const LifetimePage = () => {
           </div>
           
           <p className="text-xs md:text-sm text-blue-200 mt-3 px-2">30-Day Money-Back Guarantee</p>
+        </div>
+      </div>
+
+      {/* Add this new section after the hero section and before the app screenshots gallery */}
+      <div className="container mx-auto px-4 py-12 md:py-20 relative">
+        <div className="text-center mb-12">
+          <h2 className="text-2xl md:text-4xl font-bold mb-4 text-white">
+            Choose Your Path to Premium
+          </h2>
+          <p className="text-lg text-blue-100 max-w-3xl mx-auto">
+            Select between our limited-time lifetime deal or our premium subscription plans
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-7xl mx-auto">
+          {/* Lifetime Deal Card */}
+          <motion.div
+            initial={{ opacity: 1, y: 0 }}
+            animate={inView ? { opacity: 1, y: 0 } : { opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="relative bg-gradient-to-br from-pink-600 to-purple-600 rounded-xl p-8 shadow-2xl"
+          >
+            <div className="absolute -top-4 left-0 right-0 flex justify-center">
+              <div className="px-4 py-1 bg-yellow-400 text-black text-sm font-bold rounded-full">
+                LIMITED TIME OFFER
+              </div>
+            </div>
+
+            <div className="mb-6">
+              <h3 className="text-2xl font-bold mb-2 text-white">Lifetime Access</h3>
+              <p className="text-white/80 text-sm">One-time payment, lifetime access to all features</p>
+            </div>
+
+            <div className="mb-6">
+              <div className="flex items-end">
+                <span className="text-5xl font-bold text-white">$99</span>
+                <span className="text-white/80 ml-2 mb-1">one-time</span>
+              </div>
+            </div>
+
+            <ul className="space-y-3 mb-8">
+              {[
+                "Unlimited QR Codes Forever",
+                "All Premium Features",
+                "Use Your Own Custom Domain",
+                "Customizable Analytics Dashboard",
+                "Up to 5 Team Members",
+                "Priority Support Queue",
+                "Future Updates Included",
+                "No Recurring Payments"
+              ].map((feature, index) => (
+                <li key={index} className="flex items-start">
+                  <Check className="h-5 w-5 text-white mt-0.5 mr-2 flex-shrink-0" />
+                  <span className="text-white/90">{feature}</span>
+                </li>
+              ))}
+            </ul>
+
+            <Button
+              onClick={handleClaim}
+              disabled={isLoading}
+              className="w-full bg-white text-pink-600 hover:bg-white/90 text-lg font-semibold py-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
+            >
+              {isLoading ? 'Processing...' : 'CLAIM LIFETIME DEAL'}
+            </Button>
+
+            <p className="text-center text-white/80 text-sm mt-4">
+              30-Day Money-Back Guarantee
+            </p>
+          </motion.div>
+
+          {/* Premium Plan Cards */}
+          {premiumPlans.map((plan, index) => (
+            <motion.div
+              key={index}
+              initial={{ opacity: 1, y: 0 }}
+              animate={inView ? { opacity: 1, y: 0 } : { opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.1 * (index + 1) }}
+              className={`relative bg-neutral-900/50 backdrop-blur-sm border ${
+                plan.recommended ? 'border-primary-500' : 'border-neutral-800'
+              } rounded-xl p-8`}
+            >
+              {plan.recommended && (
+                <div className="absolute -top-4 left-0 right-0 flex justify-center">
+                  <div className="px-3 py-1 bg-primary-500 text-white text-xs font-medium rounded-full">
+                    Best Value
+                  </div>
+                </div>
+              )}
+
+              <div className="mb-6">
+                <h3 className="text-xl font-bold mb-2 text-white">{plan.name}</h3>
+                <p className="text-neutral-400 text-sm">{plan.description}</p>
+              </div>
+
+              <div className="mb-6">
+                <div className="flex items-end">
+                  <span className="text-4xl font-bold text-white">${plan.price}</span>
+                  <span className="text-neutral-400 ml-2 mb-1">/ month</span>
+                </div>
+                {plan.name.includes('Annual') && (
+                  <p className="text-sm text-primary-400 mt-1">
+                    Billed annually (${plan.price * 12}/year)
+                  </p>
+                )}
+              </div>
+
+              <ul className="space-y-3 mb-8">
+                {plan.features.map((feature, featureIndex) => (
+                  <li key={featureIndex} className="flex items-start">
+                    <Check className="h-5 w-5 text-primary-500 mt-0.5 mr-2 flex-shrink-0" />
+                    <span className="text-neutral-300">{feature.name}</span>
+                  </li>
+                ))}
+              </ul>
+
+              <Button
+                onClick={() => handlePremiumCheckout(plan)}
+                disabled={isLoading}
+                className={`w-full ${
+                  plan.recommended 
+                    ? 'bg-primary-500 hover:bg-primary-600' 
+                    : 'bg-neutral-800 hover:bg-neutral-700'
+                } text-white text-lg font-semibold py-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300`}
+              >
+                {isLoading ? 'Processing...' : plan.ctaText}
+              </Button>
+            </motion.div>
+          ))}
         </div>
       </div>
 
