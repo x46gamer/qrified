@@ -15,6 +15,7 @@ import { loadStripe } from '@stripe/stripe-js';
 import { toast } from 'sonner';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { getStripe, createCheckoutSession } from '@/integrations/stripe/client';
 
 const LifetimePage = () => {
   const [timeLeft, setTimeLeft] = useState({
@@ -116,32 +117,15 @@ const LifetimePage = () => {
     try {
       setIsLoading(true);
       
-      // Initialize Stripe
-      const stripe = await loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
+      // Use the same checkout session creation as PricingSection
+      const sessionId = await createCheckoutSession('prod_ST3hw6HjjE2lnz'); // Using the lifetime product ID
+      
+      // Redirect to Stripe Checkout
+      const stripe = await getStripe();
       if (!stripe) {
         throw new Error('Failed to load Stripe');
       }
 
-      // Create checkout session
-      const response = await fetch('https://xowxgbovrbnpsreqgrlt.supabase.co/functions/v1/create-checkout-session', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          priceId: 'price_1QxYwQwtObNE8T', // Replace with your actual price ID for the lifetime deal
-          isLifetime: true // This tells the Edge Function to create a one-time payment
-        }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to create checkout session');
-      }
-
-      const { sessionId } = await response.json();
-
-      // Redirect to Stripe Checkout
       const { error } = await stripe.redirectToCheckout({ sessionId });
       if (error) {
         throw error;
