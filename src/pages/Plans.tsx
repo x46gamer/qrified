@@ -43,6 +43,7 @@ const Plans = () => {
         return;
       }
 
+      const sessionId = await createCheckoutSession(productId);
       
       // Redirect to Stripe Checkout
       const stripe = await getStripe();
@@ -50,7 +51,10 @@ const Plans = () => {
         throw new Error('Failed to load Stripe');
       }
 
-      
+      const { error } = await stripe.redirectToCheckout({ sessionId });
+      if (error) {
+        throw error;
+      }
     } catch (error: any) {
       console.error('Error creating checkout session:', error);
       toast.error(error.message || 'Failed to start checkout process');
