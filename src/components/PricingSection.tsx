@@ -3,7 +3,8 @@ import { motion, HTMLMotionProps } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
 import { Check, X } from 'lucide-react';
 import { toast } from 'sonner';
-import { getStripe, createCheckoutSession } from '@/integrations/stripe/client';
+import { createCheckoutSession } from '@/integrations/stripe/client';
+import { loadStripe } from '@stripe/stripe-js';
 
 interface Plan {
   name: string;
@@ -39,7 +40,7 @@ const PricingSection = () => {
       const sessionId = await createCheckoutSession(productId);
       
       // Redirect to Stripe Checkout
-      const stripe = await getStripe();
+      const stripe = await loadStripe("pk_test_TYooMQauVDyHTNF7aGL6QoGx"); // Directly use test key
       if (!stripe) {
         throw new Error('Failed to load Stripe');
       }
@@ -62,8 +63,8 @@ const PricingSection = () => {
       description: "For individuals and small businesses taking their first step in brand protection.",
       monthlyPrice: 19,
       annualPrice: 15, // Approx 20% discount
-      monthlyProductId: "prod_SQ7xkoPstFb6EW",
-      annualProductId: "prod_ST3hw6HjjE2lnz",
+      monthlyProductId: "prod_STjyRAv61Ylnaf", // Updated to test product ID
+      annualProductId: "prod_STjyRAv61Ylnaf", // Updated to test product ID
       features: [
         { name: "Up to 1,000 QR Codes", included: true },
         { name: "Branded Subdomain (yourbrand.service.com)", included: true },
@@ -80,6 +81,8 @@ const PricingSection = () => {
       description: "For growing businesses ready to build customer trust and scale.",
       monthlyPrice: 49,
       annualPrice: 40, // Approx 20% discount
+      monthlyProductId: "prod_STjyRAv61Ylnaf", // Added and updated to test product ID
+      annualProductId: "prod_STjyRAv61Ylnaf", // Added and updated to test product ID
       features: [
         // Inherited & Upgraded Features
         { name: "Up to 10,000 QR Codes", included: true },
@@ -97,6 +100,8 @@ const PricingSection = () => {
       description: "For large organizations requiring enterprise-grade control and support.",
       monthlyPrice: 99,
       annualPrice: 82, // Approx 20% discount
+      monthlyProductId: "prod_STjyRAv61Ylnaf", // Added and updated to test product ID
+      annualProductId: "prod_STjyRAv61Ylnaf", // Added and updated to test product ID
       features: [
         // Inherited & Upgraded Features
         { name: "Up to 100,000 QR Codes", included: true },

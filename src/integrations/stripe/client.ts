@@ -1,8 +1,8 @@
 import { loadStripe } from '@stripe/stripe-js';
 
 // Initialize Stripe with your publishable key
-export const getStripe = () => {
-  const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
+export const getStripe = (stripeKey?: string) => {
+  const stripePromise = loadStripe(stripeKey || import.meta.env.VITE_STRIPE_PUBLIC_KEY);
   return stripePromise;
 };
 
