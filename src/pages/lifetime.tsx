@@ -142,7 +142,7 @@ const LifetimePage = () => {
     }
     try {
       setIsLoading(true);
-      const sessionId = await createCheckoutSession('prod_STs5s5pvMMY8sc');
+      const sessionId = await createCheckoutSession('prod_STZYwQwtObNE8T');
       const stripe = await getStripe();
       if (!stripe) throw new Error('Failed to load Stripe');
 
@@ -164,7 +164,7 @@ const LifetimePage = () => {
     }
     try {
       setIsLoading(true);
-      const sessionId = await createCheckoutSession('prod_STs5s5pvMMY8sc');
+      const sessionId = await createCheckoutSession('prod_STZYwQwtObNE8T');
       const stripe = await getStripe();
       if (!stripe) throw new Error('Failed to load Stripe');
 
