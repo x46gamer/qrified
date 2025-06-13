@@ -91,7 +91,7 @@ serve(async (req) => {
       mode: 'subscription',
       line_items: [{
         price: productId, // Assuming productId from frontend is already the recurring Price ID
-        quantity: 1,
+          quantity: 1,
       }],
       success_url: `${req.headers.get('referer')}success`,
       cancel_url: `${req.headers.get('referer')}cancel`,
