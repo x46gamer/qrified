@@ -79,13 +79,15 @@ const AuthGuard: React.FC<AuthGuardProps> = ({ children, requiredRole }) => {
 
   // Check if the route requires a subscription
   if (SUBSCRIPTION_REQUIRED_ROUTES.includes(location.pathname)) {
-    // Allow access if user has an active lifetime subscription
-    if (userProfile.subscription_type === 'lifetime' && userProfile.subscription_status === 'active') {
+    // Allow access if user has any active subscription (lifetime, monthly, or annual)
+    if (
+      userProfile.subscription_status === 'active' &&
+      ['lifetime', 'monthly', 'annual'].includes(userProfile.subscription_type)
+    ) {
       return <>{children}</>;
     }
-    
     // Redirect to lifetime page if no active subscription
-    toast.info('Please purchase a lifetime subscription to access this feature.');
+    toast.info('Please purchase a subscription to access this feature.');
     return <Navigate to="/lifetime" replace />;
   }
 

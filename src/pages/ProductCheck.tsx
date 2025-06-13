@@ -56,33 +56,35 @@ const ProductCheck = () => {
   };
   
   useEffect(() => {
-    const fetchQRCode = async () => {
+    let isMounted = true;
+    let mappedQr: QRCode | null = null;
+    let ownerSettings: AppearanceSettings = DEFAULT_SETTINGS;
+    let decryptedData: string | null = null;
+
+    const fetchQRCodeAndSettings = async () => {
       if (!qrId) {
-        setVerificationMessage('No QR code ID provided');
-        setIsLoading(false);
+        if (isMounted) {
+          setVerificationMessage('No QR code ID provided');
+          setIsLoading(false);
+        }
         return;
       }
-      
       try {
-        const { data, error } = await supabase
+        // Fetch QR code and settings in parallel
+        const qrPromise = supabase
           .from('qr_codes')
           .select('*, products(name)')
           .eq('id', qrId)
           .single();
-        
-        if (error) {
+        let settingsPromise: Promise<any> = Promise.resolve({ data: null });
+        // We'll get user_id after QR fetch, so settings fetch will be done after
+        const { data, error } = await qrPromise;
+        if (error || !data) {
           toast.error('Failed to fetch QR code data');
+          if (isMounted) setIsLoading(false);
           return;
         }
-        
-        if (!data) {
-          toast.error('QR code not found');
-          return;
-        }
-        
-        const templateValue = isTemplateType(data.template) ? data.template : 'classic';
-        
-        const mappedQr: QRCode = {
+        mappedQr = {
           id: data.id,
           sequential_number: data.sequential_number,
           encrypted_data: data.encrypted_data,
@@ -92,7 +94,7 @@ const ProductCheck = () => {
           created_at: data.created_at,
           scanned_at: data.scanned_at,
           data_url: data.data_url,
-          template: templateValue,
+          template: isTemplateType(data.template) ? data.template : 'classic',
           header_text: data.header_text,
           instruction_text: data.instruction_text,
           website_url: data.website_url,
@@ -108,138 +110,100 @@ const ProductCheck = () => {
           product_id: data.product_id,
           product: data.products
         };
-        
         setQrCode(mappedQr);
-        
-        // --- Fetch QR Code Owner's Settings ---
+        // Now fetch settings if user_id exists
         if (mappedQr.user_id) {
-          const { data: settingsData, error: settingsError } = await supabase
+          settingsPromise = supabase
             .from('app_settings')
             .select('settings')
-            .eq('id', mappedQr.user_id) // Fetch settings by QR code owner's user_id
+            .eq('id', mappedQr.user_id)
             .single();
-
-          if (settingsError && settingsError.code !== 'PGRST116') {
-          } else if (settingsData?.settings) {
-             const ownerSettings = settingsData.settings as unknown as AppearanceSettings;
-             setLocalSettings(ownerSettings);
-          } else {
-             setLocalSettings(DEFAULT_SETTINGS);
-          }
-        } else {
-           setLocalSettings(DEFAULT_SETTINGS);
         }
-        // --- End Fetch Logic ---
-        
+        const { data: settingsData, error: settingsError } = await settingsPromise;
+        if (!settingsError && settingsData?.settings) {
+          ownerSettings = settingsData.settings as unknown as AppearanceSettings;
+        }
+        setLocalSettings(ownerSettings);
         // Check if QR code is valid for verification
         if (!mappedQr.is_enabled) {
           setIsVerified(false);
           setVerificationMessage(
-            localSettings.isRtl 
-              ? `تم مسح رمز QR هذا بالفعل في ${mappedQr.scanned_at ? new Date(mappedQr.scanned_at).toLocaleString() : 'تاريخ غير معروف'}` 
+            ownerSettings.isRtl
+              ? `تم مسح رمز QR هذا بالفعل في ${mappedQr.scanned_at ? new Date(mappedQr.scanned_at).toLocaleString() : 'تاريخ غير معروف'}`
               : `This QR code was already scanned on ${mappedQr.scanned_at ? new Date(mappedQr.scanned_at).toLocaleString() : 'unknown date'}`
           );
           setIsLoading(false);
-          // Increment failed attempts if disabled
           incrementFailedAttempts(qrId);
           return;
         }
-        
-        // If already scanned, show as not authentic
         if (mappedQr.is_scanned) {
           setIsVerified(false);
           setVerificationMessage(
-            localSettings.isRtl 
-              ? `تم مسح رمز QR هذا بالفعل في ${mappedQr.scanned_at ? new Date(mappedQr.scanned_at).toLocaleString() : 'تاريخ غير معروف'}` 
+            ownerSettings.isRtl
+              ? `تم مسح رمز QR هذا بالفعل في ${mappedQr.scanned_at ? new Date(mappedQr.scanned_at).toLocaleString() : 'تاريخ غير معروف'}`
               : `This QR code was already scanned on ${mappedQr.scanned_at ? new Date(mappedQr.scanned_at).toLocaleString() : 'unknown date'}`
           );
           setIsLoading(false);
-          // Increment failed attempts if already scanned
           incrementFailedAttempts(qrId);
           return;
         }
-        
-        // QR code is valid and not yet scanned - proceed with verification
+        // Decrypt as soon as possible
         try {
-          const decryptedData = await decryptData(mappedQr.encrypted_data);
-          
+          decryptedData = await decryptData(mappedQr.encrypted_data);
           setProductData(decryptedData);
-          
-          // Mark as scanned ONLY after successful decryption
-          const updateTimestamp = new Date().toISOString();
-          
-          let ipData = {};
-          try {
-              // Get user's IP address
-              const ipResponse = await fetch('https://api.ipify.org?format=json');
-              const ipJson = await ipResponse.json();
-              const ipAddress = ipJson.ip;
-
-              if (ipAddress) {
-                  // Get geolocation details using the IP
-                  const geoResponse = await fetch(`https://freeipapi.com/api/json/${ipAddress}`);
-                  const geoJson = await geoResponse.json();
-
-                  // Prepare IP and geolocation data for update
-                  ipData = {
-                      scanned_ip: ipAddress,
-                      scanned_isp: geoJson.isp || null,
-                      scanned_location: geoJson.regionName || null, // Map regionName to scanned_location
-                      scanned_city: geoJson.cityName || null, // Map cityName to scanned_city
-                      scanned_country: geoJson.countryName || null, // Map countryName to scanned_country
-                  };
-              }
-          } catch (geoError) {
-              toast.warning('Failed to capture IP and geolocation details.');
-          }
-
-          // Prepare the update payload including scan status and geolocation data
-          const updatePayload = {
-              is_scanned: true,
-              scanned_at: updateTimestamp,
-              ...ipData, // Include the captured IP/geo data
-          };
-
-          const { error: updateError, data: updateData } = await supabase
-            .from('qr_codes')
-            .update(updatePayload) // Use the combined payload
-            .eq('id', qrId)
-            .eq('is_scanned', false) // Race condition protection
-            .select();
-          
-          if (updateError) {
-            setIsVerified(true);
-            setVerificationMessage('Product verified successfully (scan status update failed)');
-            // Increment failed attempts on update error
-            incrementFailedAttempts(qrId);
-          } else if (!updateData || updateData.length === 0) {
-            setIsVerified(false);
-            setVerificationMessage('This QR code was just scanned by another request');
-            // Increment failed attempts on race condition
-            incrementFailedAttempts(qrId);
-          } else {
-            setIsVerified(true);
-            setVerificationMessage('Product verified successfully');
-            // DO NOT increment failed attempts on successful scan
-          }
-              
+          setIsVerified(true);
+          setVerificationMessage('Product verified successfully');
         } catch (decryptError) {
           setIsVerified(false);
           setVerificationMessage('Failed to decrypt QR code data - may be corrupted or invalid');
-          // Increment failed attempts on decryption error
           incrementFailedAttempts(qrId);
+          setIsLoading(false);
+          return;
         }
+        setIsLoading(false);
+        // Defer scan update and geo fetch to background
+        setTimeout(() => {
+          (async () => {
+            let ipData = {};
+            try {
+              const ipResponse = await fetch('https://api.ipify.org?format=json');
+              const ipJson = await ipResponse.json();
+              const ipAddress = ipJson.ip;
+              if (ipAddress) {
+                const geoResponse = await fetch(`https://freeipapi.com/api/json/${ipAddress}`);
+                const geoJson = await geoResponse.json();
+                ipData = {
+                  scanned_ip: ipAddress,
+                  scanned_isp: geoJson.isp || null,
+                  scanned_location: geoJson.regionName || null,
+                  scanned_city: geoJson.cityName || null,
+                  scanned_country: geoJson.countryName || null,
+                };
+              }
+            } catch {}
+            try {
+              const updatePayload = {
+                is_scanned: true,
+                scanned_at: new Date().toISOString(),
+                ...ipData,
+              };
+              await supabase
+                .from('qr_codes')
+                .update(updatePayload)
+                .eq('id', qrId)
+                .eq('is_scanned', false);
+            } catch {}
+          })();
+        }, 0);
       } catch (err) {
         setIsVerified(false);
         setVerificationMessage(`Unexpected error: ${err instanceof Error ? err.message : String(err)}`);
-        // Increment failed attempts on unexpected error during fetch
         incrementFailedAttempts(qrId);
-      } finally {
         setIsLoading(false);
       }
     };
-    
-    fetchQRCode();
+    fetchQRCodeAndSettings();
+    return () => { isMounted = false; };
   }, [qrId]);
   
   // Get the active settings to use
