@@ -149,7 +149,7 @@ const LifetimePage = () => {
   ];
 
   const useCases = [
-     ];
+  ];
 
   // Add handler for Stripe checkout
   const handleBuyNow = async () => {
@@ -339,7 +339,7 @@ const LifetimePage = () => {
         <div className="flex items-center space-x-2">
           <QrCode className="h-8 w-8 text-purple-600" />
           <span className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">Qrified</span>
-        </div>
+      </div>
         <nav className="hidden md:flex space-x-6 text-sm">
           <a href="#features" className="text-gray-700 hover:text-purple-600 transition-colors">Features</a>
           <a href="#testimonials" className="text-gray-700 hover:text-purple-600 transition-colors">Testimonials</a>
@@ -414,7 +414,7 @@ const LifetimePage = () => {
           <div className="flex justify-center lg:justify-end">
             <div className="relative w-full lg:w-[600px] h-auto aspect-video rounded-lg shadow-lg border border-gray-200 bg-white flex items-center justify-center">
               <img
-                src="https://xowxgbovrbnpsreqgrlt.supabase.co/storage/v1/object/public/content//Screenshot%202025-06-13%20014253.png"
+                src="https://xowxgbovrbnpsreqgrlt.supabase.co/storage/v1/object/public/content//Screenshot%202025-06-15%20101743.png"
                 alt="QR Code Generation"
                 className="max-w-full max-h-full object-contain rounded-lg"
               />
@@ -492,8 +492,8 @@ const LifetimePage = () => {
                     alt={`Product ${i + 1}`}
                     className="w-16 h-16 rounded-md object-cover"
                     draggable="false"
-                  />
-                </div>
+                          />
+                        </div>
               ))}
             </motion.div>
 
@@ -511,9 +511,9 @@ const LifetimePage = () => {
                     alt={`Product ${i + 1}`}
                     className="w-16 h-16 rounded-md object-cover"
                     draggable="false"
-                  />
-                </div>
-              ))}
+                          />
+                        </div>
+                ))}
             </motion.div>
           </div>
         </div>
@@ -639,9 +639,9 @@ const LifetimePage = () => {
               </p>
               <a href="#" className="text-purple-600 font-semibold hover:text-purple-700 transition-colors flex items-center">
                 Explore Details <span className="ml-1 text-sm">›</span>
-              </a>
-            </div>
-          </div>
+                    </a>
+                  </div>
+                </div>
         </div>
       </section>
 
@@ -756,77 +756,77 @@ What Do You Get For 99$           </h2>
      
       <div className="w-full py-4 bg-purple-100 text-center text-purple-800 font-bold text-xl md:text-2xl tracking-wide shadow-md">
           <p className="mt-2 text-3xl md:text-5xl font-extrabold text-purple-900 animate">
-          Join the Movement to Build a More Authentic World
+              Join the Movement to Build a More Authentic World
           </p>
         </div>
-            
+
       {/* Your Exclusive Lifetime Offer Section */}
       <section id="pricing" className="bg-white py-12 md:py-20 relative z-10">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
+        <div className="text-center mb-12">
             <h2 className="text-3xl md:text-5xl font-bold mb-4 text-gray-900">
-              Your Exclusive Lifetime Offer
-            </h2>
+            Your Exclusive Lifetime Offer
+          </h2>
             <p className="text-lg text-gray-700 max-w-3xl mx-auto">
-              Secure your unprecedented lifetime access to Qrified.
-            </p>
-          </div>
+            Secure your unprecedented lifetime access to Qrified.
+          </p>
+        </div>
 
-          <div className="flex justify-center max-w-7xl mx-auto">
-            {/* Lifetime Deal Card */}
-            <motion.div
-              initial={{ opacity: 1, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.6 }}
+        <div className="flex justify-center max-w-7xl mx-auto">
+          {/* Lifetime Deal Card */}
+          <motion.div
+            initial={{ opacity: 1, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.6 }}
               className="relative bg-white rounded-xl p-8 shadow-2xl w-full md:w-1/2 lg:w-1/3 border border-gray-200"
-            >
-              <div className="absolute -top-4 left-0 right-0 flex justify-center">
+          >
+            <div className="absolute -top-4 left-0 right-0 flex justify-center">
                 
               </div>
 
-              <div className="mb-6">
+            <div className="mb-6">
                 <h3 className="text-2xl font-bold mb-2 text-gray-900">Lifetime Access</h3>
                 <p className="text-gray-600 text-sm">One-time payment, lifetime access to all features</p>
               </div>
 
-              <div className="mb-6">
-                <div className="flex items-end">
+            <div className="mb-6">
+              <div className="flex items-end">
                   <span className="text-6xl font-bold text-gray-900">$99</span>
                   <span className="text-gray-600 ml-2 mb-2">one-time</span>
                 </div>
-              </div>
+            </div>
 
-              <ul className="space-y-3 mb-8">
-                {[
-                  "100,000 QR Codes Monthly for Life, Forever!",
-                  "4 Different Printable Templates",
-                  "Advanced Analytics System",
-                  "Domain Link Shown in QR Code Sticker",
-                  "Fully White Label",
-                  "Full Verification Page Customization",
-                  "QR Code Manager With Bulk Actions",
-                  "Reviews and Feedback System",
-                  "No Recurring Payments"
-                ].map((feature, index) => (
-                  <li key={index} className="flex items-start">
-                    <Check className="h-5 w-5 text-green-400 mt-0.5 mr-2 flex-shrink-0" />
+            <ul className="space-y-3 mb-8">
+              {[
+                "100,000 QR Codes Monthly for Life, Forever!",
+                "4 Different Printable Templates",
+                "Advanced Analytics System",
+                "Domain Link Shown in QR Code Sticker",
+                "Fully White Label",
+                "Full Verification Page Customization",
+                "QR Code Manager With Bulk Actions",
+                "Reviews and Feedback System",
+                "No Recurring Payments"
+              ].map((feature, index) => (
+                <li key={index} className="flex items-start">
+                  <Check className="h-5 w-5 text-green-400 mt-0.5 mr-2 flex-shrink-0" />
                     <span className="text-gray-900/90">{feature}</span>
-                  </li>
-                ))}
-              </ul>
+                </li>
+              ))}
+            </ul>
 
-              <Button
-                onClick={handleClaim}
-                disabled={isLoading}
+            <Button
+              onClick={handleClaim}
+              disabled={isLoading}
                 className="w-full bg-gray-900 text-white hover:bg-gray-800 text-lg font-semibold py-4 rounded-md shadow-lg hover:shadow-xl transition-all duration-300"
-              >
-                {isLoading ? 'Processing...' : 'CLAIM LIFETIME DEAL'}
-              </Button>
-            
+            >
+              {isLoading ? 'Processing...' : 'CLAIM LIFETIME DEAL'}
+            </Button>
+          
               <p className="text-center text-gray-600 text-sm mt-4">
-                30-Day Money-Back Guarantee
-              </p>
-            </motion.div>
+              30-Day Money-Back Guarantee
+            </p>
+          </motion.div>
           </div>
         </div>
       </section>
@@ -895,38 +895,38 @@ What Do You Get For 99$           </h2>
         <div className="container mx-auto px-4 text-center">
           <h3 className="text-3xl font-bold mb-3 text-purple-600">QRIFIED</h3>
           <p className="text-md text-gray-700 mb-6 max-w-2xl mx-auto">
-            The gold standard for product authenticity and anti-counterfeiting through secure, dynamic QR codes.
-          </p>
-                                
-          {/* Social Media Links */}
+              The gold standard for product authenticity and anti-counterfeiting through secure, dynamic QR codes.
+            </p>
+            
+            {/* Social Media Links */}
           <div className="flex justify-center space-x-6 mb-6">
-            <a 
-              href="https://instagram.com/qrified.app" 
-              target="_blank" 
-              rel="noopener noreferrer"
+              <a 
+                href="https://instagram.com/qrified.app" 
+                target="_blank" 
+                rel="noopener noreferrer"
               className="text-purple-600 hover:text-purple-700 transition-all duration-300 hover:scale-110 transform"
-            >
+              >
               <Instagram className="h-7 w-7" />
-            </a>
-            <a 
-              href="https://tiktok.com/@qrified" 
-              target="_blank" 
-              rel="noopener noreferrer"
+              </a>
+              <a 
+                href="https://tiktok.com/@qrified" 
+                target="_blank" 
+                rel="noopener noreferrer"
               className="text-purple-600 hover:text-purple-700 transition-all duration-300 hover:scale-110 transform"
-            >
+              >
               <svg className="h-7 w-7" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M19.589 6.686a4.793 4.793 0 01-3.77-4.245V2h-3.445v13.672a2.896 2.896 0 01-5.201 1.743l-.002-.001.002.001a2.895 2.895 0 013.183-4.51v-3.5a6.329 6.329 0 00-1.183-.11 6.44 6.44 0 106.44 6.44V8.206a8.238 8.238 0 004.976 1.686v-3.206z"/>
-              </svg>
-            </a>
-            <a 
-              href="https://www.linkedin.com/in/soufianehm/" 
-              target="_blank" 
-              rel="noopener noreferrer"
+                  <path d="M19.589 6.686a4.793 4.793 0 01-3.77-4.245V2h-3.445v13.672a2.896 2.896 0 01-5.201 1.743l-.002-.001.002.001a2.895 2.895 0 013.183-4.51v-3.5a6.329 6.329 0 00-1.183-.11 6.44 6.44 0 106.44 6.44V8.206a8.238 8.238 0 004.976 1.686v-3.206z"/>
+                </svg>
+              </a>
+              <a 
+                href="https://www.linkedin.com/in/soufianehm/" 
+                target="_blank" 
+                rel="noopener noreferrer"
               className="text-purple-600 hover:text-purple-700 transition-all duration-300 hover:scale-110 transform"
-            >
+              >
               <Linkedin className="h-7 w-7" />
-            </a>
-          </div>
+              </a>
+            </div>
             
           <div className="space-y-2 mb-6 text-sm">
             <p className="text-gray-700">Contact: contact@qrified.app</p>
@@ -937,11 +937,11 @@ What Do You Get For 99$           </h2>
               <span className="text-gray-400">|</span>
               <span className="text-purple-600 hover:text-purple-700 transition-colors cursor-pointer">Cookie Policy</span>
             </div>
-          </div>
+            </div>
             
           <p className="text-xs text-gray-500">
-            © 2025 Qrified. All rights reserved. | London, England
-          </p>
+              © 2025 Qrified. All rights reserved. | London, England
+            </p>
         </div>
       </footer>
     </div>

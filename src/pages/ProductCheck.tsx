@@ -64,8 +64,8 @@ const ProductCheck = () => {
     const fetchQRCodeAndSettings = async () => {
       if (!qrId) {
         if (isMounted) {
-          setVerificationMessage('No QR code ID provided');
-          setIsLoading(false);
+        setVerificationMessage('No QR code ID provided');
+        setIsLoading(false);
         }
         return;
       }
@@ -123,13 +123,13 @@ const ProductCheck = () => {
         if (!settingsError && settingsData?.settings) {
           ownerSettings = settingsData.settings as unknown as AppearanceSettings;
         }
-        setLocalSettings(ownerSettings);
+             setLocalSettings(ownerSettings);
         // Check if QR code is valid for verification
         if (!mappedQr.is_enabled) {
           setIsVerified(false);
           setVerificationMessage(
             ownerSettings.isRtl
-              ? `تم مسح رمز QR هذا بالفعل في ${mappedQr.scanned_at ? new Date(mappedQr.scanned_at).toLocaleString() : 'تاريخ غير معروف'}`
+              ? `تم مسح رمز QR هذا بالفعل في ${mappedQr.scanned_at ? new Date(mappedQr.scanned_at).toLocaleString() : 'تاريخ غير معروف'}` 
               : `This QR code was already scanned on ${mappedQr.scanned_at ? new Date(mappedQr.scanned_at).toLocaleString() : 'unknown date'}`
           );
           setIsLoading(false);
@@ -140,7 +140,7 @@ const ProductCheck = () => {
           setIsVerified(false);
           setVerificationMessage(
             ownerSettings.isRtl
-              ? `تم مسح رمز QR هذا بالفعل في ${mappedQr.scanned_at ? new Date(mappedQr.scanned_at).toLocaleString() : 'تاريخ غير معروف'}`
+              ? `تم مسح رمز QR هذا بالفعل في ${mappedQr.scanned_at ? new Date(mappedQr.scanned_at).toLocaleString() : 'تاريخ غير معروف'}` 
               : `This QR code was already scanned on ${mappedQr.scanned_at ? new Date(mappedQr.scanned_at).toLocaleString() : 'unknown date'}`
           );
           setIsLoading(false);
@@ -164,33 +164,33 @@ const ProductCheck = () => {
         // Defer scan update and geo fetch to background
         setTimeout(() => {
           (async () => {
-            let ipData = {};
-            try {
+          let ipData = {};
+          try {
               const ipResponse = await fetch('https://api.ipify.org?format=json');
               const ipJson = await ipResponse.json();
               const ipAddress = ipJson.ip;
               if (ipAddress) {
-                const geoResponse = await fetch(`https://freeipapi.com/api/json/${ipAddress}`);
-                const geoJson = await geoResponse.json();
-                ipData = {
-                  scanned_ip: ipAddress,
-                  scanned_isp: geoJson.isp || null,
+                  const geoResponse = await fetch(`https://freeipapi.com/api/json/${ipAddress}`);
+                  const geoJson = await geoResponse.json();
+                  ipData = {
+                      scanned_ip: ipAddress,
+                      scanned_isp: geoJson.isp || null,
                   scanned_location: geoJson.regionName || null,
                   scanned_city: geoJson.cityName || null,
                   scanned_country: geoJson.countryName || null,
-                };
+                  };
               }
             } catch {}
             try {
-              const updatePayload = {
-                is_scanned: true,
+          const updatePayload = {
+              is_scanned: true,
                 scanned_at: new Date().toISOString(),
                 ...ipData,
-              };
+          };
               await supabase
-                .from('qr_codes')
+            .from('qr_codes')
                 .update(updatePayload)
-                .eq('id', qrId)
+            .eq('id', qrId)
                 .eq('is_scanned', false);
             } catch {}
           })();

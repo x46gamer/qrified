@@ -32,9 +32,9 @@ export const QRCodeTemplatePreview: React.FC<QRCodeTemplatePreviewProps> = ({
   const getTemplateStyles = () => {
     // Base styles shared by all templates
     const baseStyles = {
-      containerClass: 'flex flex-col items-center text-black font-sans overflow-hidden rounded-lg shadow-md w-[250px] h-[400px]',
-      headerSectionClass: 'w-full bg-gray-400 text-black text-center pt-3 px-2 text-xl font-bold uppercase',
-      middleSectionClass: 'flex flex-col items-center bg-gray-400 w-full pb-4 px-2',
+      containerClass: 'flex flex-col items-center text-black font-sans overflow-hidden mb-8 rounded-lg shadow-md w-[250px] h-[400px]',
+      headerSectionClass: 'w-full bg-gray-400 text-black text-center px-2 text-xl font-bold uppercase',
+      middleSectionClass: 'flex flex-col items-center bg-gray-400 w-full px-2',
       instructionClass: 'text-sm text-center mt-1 px-1 font-bold',
       websiteClass: 'w-full bg-black text-white text-center text-sm font-bold py-1 break-all',
       bottomSectionClass: 'w-full text-white text-center text-xs py-1 flex flex-col items-center',
@@ -88,13 +88,14 @@ export const QRCodeTemplatePreview: React.FC<QRCodeTemplatePreviewProps> = ({
           </div>
         
       {/* Middle Section: QR Code, Instruction Text */}
-      <div className={`${styles.middleSectionClass} flex-grow`}>
+      <div className={`${styles.middleSectionClass} flex-grow`} style={{marginTop: 0, paddingTop: 0}}>
         {qrCodeDataUrl && (
-          <div className="relative w-full h-auto flex justify-center items-center">
+          <div className="relative w-full h-auto flex justify-center items-center" style={{marginTop: 0, paddingTop: 0}}>
             <img 
               src={qrCodeDataUrl} 
               alt="QR Code" 
-              className="w-full h-auto max-w-[300px]"
+              className="w-full h-auto max-w-[300px]" 
+              style={{marginTop: 0, paddingTop: 0}}
               onError={(e) => {
                 console.error("Error loading QR code image");
                 (e.target as HTMLImageElement).src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2YwZjBmMCIgLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1zaXplPSIxNiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iIGZpbGw9IiM5OTkiPlFSIENvZGUgRXJyb3I8L3RleHQ+PC9zdmc+';

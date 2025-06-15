@@ -39,6 +39,7 @@ const SUBSCRIPTION_REQUIRED_ROUTES = [
   '/dashboard',
   '/settings',
   '/domain-settings',
+  '/domains',
   '/myaccount',
   '/feedback',
   '/scanlogs',
